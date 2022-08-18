@@ -32,3 +32,20 @@ The following resources serves as sources of knowledge and technical information
 | Amazon Kinesis Documentation                                          | HTML/PDF      | [AWS Documentation Portal](https://docs.aws.amazon.com/kinesis/?id=docs_gateway) | Regularly Updated | Kinesis documentation and API reference                                                 |
 
 _**Note**_: More resources will be added as I find them
+
+# Current Status
+
+> Early Exploration
+
+This project started on 2022-08-18 and I am still in the early stages of collecting theoretical knowledge.
+
+More information will be provided on an ongoing bases.
+
+I expect this project to have the following stages:
+
+* Early Exploration (In Progress)
+* Lab Design (based on learnings from documentation)
+* Manual Lab Resource Provisioning (AWS API and AWS Console)
+* Infrastructure as Code Lab Resource Provisioning (CloudFormation)
+* Finalize documentation
+* Maintenance Phase (long term)
