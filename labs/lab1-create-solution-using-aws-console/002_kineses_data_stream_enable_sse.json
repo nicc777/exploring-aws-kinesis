@@ -1,0 +1,5 @@
+{
+    "StreamName": "data_recorder_01",
+    "KeyId": "alias/aws/kinesis",
+    "EncryptionType": "KMS"
+}

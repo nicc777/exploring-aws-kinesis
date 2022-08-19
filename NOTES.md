@@ -37,3 +37,18 @@ Using the [AWS Serverless Application Repository](https://aws.amazon.com/serverl
 
 The Lambda function create API calls was not captured, as I already know how to define a Lambda function in CloudFormation very well, and I will just use what I already have. I will however attempt to record permissions change API calls when creating Kinesis resources as these will be important for the final CloudFormation template.
 
+## Resource: Kinesis Data Stream
+
+I created a data stream with all the initial settings left at their defaults. The second call was after initial creation that enabled server side encryption (SSE)
+
+| Call Order | URL                                                     | Method | Request Data                                                                                                                    | Action Description  |
+|:----------:|---------------------------------------------------------|:------:|---------------------------------------------------------------------------------------------------------------------------------|---------------------|
+| 001        | https://kinesis.eu-central-1.amazonaws.com/             | `POST` | [001_kineses_data_stream_call.json](labs/lab1-create-solution-using-aws-console/001_kineses_data_stream_call.json)              | Create Data Stream  |
+| 002        | https://kinesis.eu-central-1.amazonaws.com/             | `POST` | [002_kineses_data_stream_enable_sse.json](labs/lab1-create-solution-using-aws-console/002_kineses_data_stream_enable_sse.json)  | Enable SSE          |
+
+## Resource: Kinesis Firehose Delivery Stream
+
+> _**NOTE**_: I got a warning at this stage to increase the Lambda timeout to 1 minute or more. I did that first and then returned to this process.
+
+
+
