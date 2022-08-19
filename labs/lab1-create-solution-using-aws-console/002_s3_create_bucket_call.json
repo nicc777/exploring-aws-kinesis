@@ -1,0 +1,15 @@
+{
+    "cwsRequestId": "**********",
+    "bucketsPayload": [
+        {
+            "bucket": "data-recorder-bucket-gf376g",
+            "region": "eu-central-1"
+        }
+    ],
+    "publicAccessSettings": {
+        "blockPublicAcls": true,
+        "blockPublicPolicy": true,
+        "ignorePublicAcls": true,
+        "restrictPublicBuckets": true
+    }
+}

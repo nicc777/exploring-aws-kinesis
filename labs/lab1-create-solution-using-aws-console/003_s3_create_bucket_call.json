@@ -1,0 +1,20 @@
+{
+    "headers": {
+        "X-Amz-User-Agent": "aws-sdk-js/2.853.0 promise",
+        "Content-Type": "application/json; charset=UTF-8",
+        "x-amz-s3-console-request-id": "**********",
+        "x-amz-s3-console-op-id": "**********",
+        "x-amz-s3-console-op-name": "PutBucketEncryption",
+        "x-xsrf-token": "**********",
+        "s3v3": "s3v3",
+        "Content-MD5": "**********"
+    },
+    "path": "/data-recorder-bucket-gf376g",
+    "method": "PUT",
+    "region": "eu-central-1",
+    "params": {
+        "encryption": ""
+    },
+    "contentString": "<ServerSideEncryptionConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Rule><ApplyServerSideEncryptionByDefault><SSEAlgorithm>AES256</SSEAlgorithm></ApplyServerSideEncryptionByDefault></Rule></ServerSideEncryptionConfiguration>",
+    "operation": "putBucketEncryption"
+}
