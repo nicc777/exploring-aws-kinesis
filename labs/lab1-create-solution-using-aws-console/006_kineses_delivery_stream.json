@@ -1,0 +1,29 @@
+{
+    "REQUEST": {
+        "RoleName": "KinesisFirehoseServiceRole-KDS-S3-Ubm-eu-central-1-1660891479173",
+        "ServicePrincipalName": "firehose.amazonaws.com",
+        "TemplateName": "AmazonKinesisFirehoseConsoleS3",
+        "TemplateVersion": 5
+    },
+    "RESPONSE": {
+        "Role": {
+            "Arn": "arn:aws:iam::000000000000:role/service-role/KinesisFirehoseServiceRole-KDS-S3-Ubm-eu-central-1-1660891479173",
+            "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "firehose.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "CreateDate": 1.660891529E9,
+            "Path": "/service-role/",
+            "RoleId": "XXXXXXXXXX",
+            "RoleName": "KinesisFirehoseServiceRole-KDS-S3-Ubm-eu-central-1-1660891479173"
+        }
+    }
+}

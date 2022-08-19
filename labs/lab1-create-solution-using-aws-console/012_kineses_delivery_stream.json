@@ -1,0 +1,60 @@
+{
+    "REQUEST": {
+        "DeliveryStreamName": "KDS-S3-UbmNY",
+        "DeliveryStreamType": "KinesisStreamAsSource",
+        "KinesisStreamSourceConfiguration": {
+            "KinesisStreamARN": "arn:aws:kinesis:eu-central-1:000000000000:stream/data_recorder_01",
+            "RoleARN": "arn:aws:iam::000000000000:role/service-role/KinesisFirehoseServiceRole-KDS-S3-Ubm-eu-central-1-1660891479173"
+        },
+        "ExtendedS3DestinationConfiguration": {
+            "BucketARN": "arn:aws:s3:::data-recorder-bucket-gf376g",
+            "RoleARN": "arn:aws:iam::000000000000:role/service-role/KinesisFirehoseServiceRole-KDS-S3-Ubm-eu-central-1-1660891479173",
+            "BufferingHints": {
+                "IntervalInSeconds": 300,
+                "SizeInMBs": 5
+            },
+            "ProcessingConfiguration": {
+                "Enabled": true,
+                "Processors": [
+                    {
+                        "Type": "Lambda",
+                        "Parameters": [
+                            {
+                                "ParameterName": "LambdaArn",
+                                "ParameterValue": "arn:aws:lambda:eu-central-1:000000000000:function:data_recorder_kconvert:$LATEST"
+                            },
+                            {
+                                "ParameterName": "RoleArn",
+                                "ParameterValue": "arn:aws:iam::000000000000:role/service-role/KinesisFirehoseServiceRole-KDS-S3-Ubm-eu-central-1-1660891479173"
+                            },
+                            {
+                                "ParameterName": "BufferSizeInMBs",
+                                "ParameterValue": "1"
+                            },
+                            {
+                                "ParameterName": "BufferIntervalInSeconds",
+                                "ParameterValue": "60"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "Prefix": "",
+            "ErrorOutputPrefix": "",
+            "CompressionFormat": "UNCOMPRESSED",
+            "CloudWatchLoggingOptions": {
+                "Enabled": true,
+                "LogGroupName": "/aws/kinesisfirehose/KDS-S3-UbmNY",
+                "LogStreamName": "DestinationDelivery"
+            },
+            "EncryptionConfiguration": {
+                "NoEncryptionConfig": "NoEncryption"
+            },
+            "S3BackupMode": "Disabled",
+            "DataFormatConversionConfiguration": {
+                "Enabled": false
+            }
+        }
+    },
+    "RESPONSE": null
+}

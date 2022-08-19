@@ -1,0 +1,139 @@
+{
+    "REQUEST": {
+        "RoleName": "KinesisFirehoseServiceRole-KDS-S3-Ubm-eu-central-1-1660891479173",
+        "ServicePrincipalName": "firehose.amazonaws.com",
+        "TemplateName": "AmazonKinesisFirehoseConsoleS3",
+        "TemplateVersion": 5,
+        "PolicyName": "KinesisFirehoseServicePolicy-KDS-S3-UbmNY-eu-central-1",
+        "PermissionsPolicySingleValueReplacements": {
+            "glueRegion": "eu-central-1",
+            "glueAccountId": "000000000000",
+            "glueDatabaseName": "%FIREHOSE_POLICY_TEMPLATE_PLACEHOLDER%",
+            "glueTableName": "%FIREHOSE_POLICY_TEMPLATE_PLACEHOLDER%",
+            "lambdaFunctionArn": "arn:aws:lambda:eu-central-1:000000000000:function:data_recorder_kconvert:$LATEST",
+            "s3Region": "eu-central-1",
+            "bucketName": "%FIREHOSE_POLICY_TEMPLATE_PLACEHOLDER%",
+            "kmsKeyArn": "arn:aws:kms:eu-central-1:000000000000:key/%FIREHOSE_POLICY_TEMPLATE_PLACEHOLDER%",
+            "firehoseRegion": "eu-central-1",
+            "logGroupAccountId": "000000000000",
+            "logGroupName": "/aws/kinesisfirehose/KDS-S3-UbmNY",
+            "backupLogGroupName": "%FIREHOSE_POLICY_TEMPLATE_PLACEHOLDER%",
+            "streamName": "data_recorder_01",
+            "streamRegion": "eu-central-1",
+            "streamAccountId": "000000000000",
+            "streamSseKeyArn": "arn:aws:kms:eu-central-1:000000000000:key/b4fe967a-8163-419e-8316-a0de3d8c03ae"
+        },
+        "PermissionsPolicyMultiValueReplacements": {
+            "bucketNameList": [
+                "data-recorder-bucket-gf376g"
+            ]
+        }
+    },
+    "RESPONSE": {
+        "PolicyArn": "arn:aws:iam::000000000000:policy/service-role/KinesisFirehoseServicePolicy-KDS-S3-UbmNY-eu-central-1",
+        "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Action": [
+                        "glue:GetTable",
+                        "glue:GetTableVersion",
+                        "glue:GetTableVersions"
+                    ],
+                    "Resource": [
+                        "arn:aws:glue:eu-central-1:000000000000:catalog",
+                        "arn:aws:glue:eu-central-1:000000000000:database/%FIREHOSE_POLICY_TEMPLATE_PLACEHOLDER%",
+                        "arn:aws:glue:eu-central-1:000000000000:table/%FIREHOSE_POLICY_TEMPLATE_PLACEHOLDER%/%FIREHOSE_POLICY_TEMPLATE_PLACEHOLDER%"
+                    ]
+                },
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Action": [
+                        "s3:AbortMultipartUpload",
+                        "s3:GetBucketLocation",
+                        "s3:GetObject",
+                        "s3:ListBucket",
+                        "s3:ListBucketMultipartUploads",
+                        "s3:PutObject"
+                    ],
+                    "Resource": [
+                        "arn:aws:s3:::data-recorder-bucket-gf376g",
+                        "arn:aws:s3:::data-recorder-bucket-gf376g/*"
+                    ]
+                },
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Action": [
+                        "lambda:InvokeFunction",
+                        "lambda:GetFunctionConfiguration"
+                    ],
+                    "Resource": "arn:aws:lambda:eu-central-1:000000000000:function:data_recorder_kconvert:$LATEST"
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "kms:GenerateDataKey",
+                        "kms:Decrypt"
+                    ],
+                    "Resource": [
+                        "arn:aws:kms:eu-central-1:000000000000:key/%FIREHOSE_POLICY_TEMPLATE_PLACEHOLDER%"
+                    ],
+                    "Condition": {
+                        "StringEquals": {
+                            "kms:ViaService": "s3.eu-central-1.amazonaws.com"
+                        },
+                        "StringLike": {
+                            "kms:EncryptionContext:aws:s3:arn": [
+                                "arn:aws:s3:::%FIREHOSE_POLICY_TEMPLATE_PLACEHOLDER%/*",
+                                "arn:aws:s3:::%FIREHOSE_POLICY_TEMPLATE_PLACEHOLDER%"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Action": [
+                        "logs:PutLogEvents"
+                    ],
+                    "Resource": [
+                        "arn:aws:logs:eu-central-1:000000000000:log-group:/aws/kinesisfirehose/KDS-S3-UbmNY:log-stream:*",
+                        "arn:aws:logs:eu-central-1:000000000000:log-group:%FIREHOSE_POLICY_TEMPLATE_PLACEHOLDER%:log-stream:*"
+                    ]
+                },
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Action": [
+                        "kinesis:DescribeStream",
+                        "kinesis:GetShardIterator",
+                        "kinesis:GetRecords",
+                        "kinesis:ListShards"
+                    ],
+                    "Resource": "arn:aws:kinesis:eu-central-1:000000000000:stream/data_recorder_01"
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "kms:Decrypt"
+                    ],
+                    "Resource": [
+                        "arn:aws:kms:eu-central-1:000000000000:key/b4fe967a-8163-419e-8316-a0de3d8c03ae"
+                    ],
+                    "Condition": {
+                        "StringEquals": {
+                            "kms:ViaService": "kinesis.eu-central-1.amazonaws.com"
+                        },
+                        "StringLike": {
+                            "kms:EncryptionContext:aws:kinesis:arn": "arn:aws:kinesis:eu-central-1:000000000000:stream/data_recorder_01"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

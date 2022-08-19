@@ -1,0 +1,6 @@
+{
+    "REQUEST": {
+        "logGroupName": "/aws/kinesisfirehose/KDS-S3-UbmNY"
+    },
+    "RESPONSE": null
+}

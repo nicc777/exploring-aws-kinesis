@@ -1,0 +1,14 @@
+{
+    "REQUEST": {
+        "logGroupName": "/aws/kinesisfirehose/KDS-S3-UbmNY",
+        "logStreamName": "DestinationDelivery",
+        "limit": 750,
+        "startTime": 1660891541565,
+        "startFromHead": false
+    },
+    "RESPONSE": {
+        "events":[],
+        "nextBackwardToken":"b/XXXXXXXXXX",
+        "nextForwardToken":"f/XXXXXXXXXX"
+    }
+}

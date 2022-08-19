@@ -1,0 +1,7 @@
+{
+    "REQUEST": {
+        "logGroupName": "/aws/kinesisfirehose/KDS-S3-UbmNY",
+        "logStreamName": "BackupDelivery"
+    },
+    "RESPONSE": null
+}
