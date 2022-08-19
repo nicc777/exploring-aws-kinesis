@@ -37,7 +37,7 @@ _**Note**_: More resources will be added as I find them
 
 # Current Status
 
-> Early Exploration
+> Manual Lab Resource Provisioning
 
 This project started on 2022-08-18 and I am still in the early stages of collecting theoretical knowledge.
 
