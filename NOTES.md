@@ -11,6 +11,8 @@ I used the AWS Web Console with the eim to record all the request in order to re
 
 I did this by using the developer tools in firefox to record a HAR file. I can't share the HAR file on GitHub since it includes a lot sensitive information, but the API calls I will document as best I can.
 
+As a side note: I used the [Google HAR Analyzer](https://toolbox.googleapps.com/apps/har_analyzer/) for the actual analysis, and even though it does have a feature to download a redacted version of the HAR file, AWS API calls still contain a lot of sensitive information in the POST data Payload, so it is not safe to share publicly.
+
 ## Initial Design Goal
 
 After much reading, I settled on the following initial design:
