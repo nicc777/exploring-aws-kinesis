@@ -46,7 +46,7 @@ More information will be provided on an ongoing bases.
 I expect this project to have the following stages:
 
 * ~~Early Exploration~~ 
-* Lab Design (based on learnings from documentation) (`Vusy with Refinement`)
+* Lab Design (based on learnings from documentation) (`Busy with Refinement`)
 * Manual Lab Resource Provisioning (AWS API and AWS Console) (`In Progress`)
 * Infrastructure as Code Lab Resource Provisioning (CloudFormation)
 * Finalize documentation
