@@ -108,6 +108,94 @@ Note: Unnecessary use of -X or --request, POST is already inferred.
 {"message": "ok"}%     
 ```
 
+The data that the Lambda will receive (in the `event`):
+
+```json
+{
+    "version": "1.0",
+    "resource": "/data_recorder_01",
+    "path": "/sandbox/data_recorder_01",
+    "httpMethod": "POST",
+    "headers": {
+        "Content-Length": "22",
+        "Content-Type": "application/json",
+        "Host": "x4nbaf67j9.execute-api.eu-central-1.amazonaws.com",
+        "User-Agent": "curl/7.68.0",
+        "X-Amzn-Trace-Id": "CCCCCCCCCCCCCCCC",
+        "X-Forwarded-For": "81.204.143.12",
+        "X-Forwarded-Port": "443",
+        "X-Forwarded-Proto": "https",
+        "accept": "*/*"
+    },
+    "multiValueHeaders": {
+        "Content-Length": [
+            "22"
+        ],
+        "Content-Type": [
+            "application/json"
+        ],
+        "Host": [
+            "x4nbaf67j9.execute-api.eu-central-1.amazonaws.com"
+        ],
+        "User-Agent": [
+            "curl/7.68.0"
+        ],
+        "X-Amzn-Trace-Id": [
+            "CCCCCCCCCCCCCCCC"
+        ],
+        "X-Forwarded-For": [
+            "NNN.NNN.NNN.NNN"
+        ],
+        "X-Forwarded-Port": [
+            "443"
+        ],
+        "X-Forwarded-Proto": [
+            "https"
+        ],
+        "accept": [
+            "*/*"
+        ]
+    },
+    "queryStringParameters": null,
+    "multiValueQueryStringParameters": null,
+    "requestContext": {
+        "accountId": "000000000000",
+        "apiId": "x4nbaf67j9",
+        "domainName": "x4nbaf67j9.execute-api.eu-central-1.amazonaws.com",
+        "domainPrefix": "x4nbaf67j9",
+        "extendedRequestId": "XKVA0jtIliAEPtA=",
+        "httpMethod": "POST",
+        "identity": {
+            "accessKey": null,
+            "accountId": null,
+            "caller": null,
+            "cognitoAmr": null,
+            "cognitoAuthenticationProvider": null,
+            "cognitoAuthenticationType": null,
+            "cognitoIdentityId": null,
+            "cognitoIdentityPoolId": null,
+            "principalOrgId": null,
+            "sourceIp": "NNN.NNN.NNN.NNN",
+            "user": null,
+            "userAgent": "curl/7.68.0",
+            "userArn": null
+        },
+        "path": "/sandbox/data_recorder_01",
+        "protocol": "HTTP/1.1",
+        "requestId": "XKVA0jtIliAEPtA=",
+        "requestTime": "20/Aug/2022:12:08:49 +0000",
+        "requestTimeEpoch": 1660997329897,
+        "resourceId": "ANY /data_recorder_01",
+        "resourcePath": "/data_recorder_01",
+        "stage": "sandbox"
+    },
+    "pathParameters": null,
+    "stageVariables": null,
+    "body": "{\"Message\": \"Test123\"}",
+    "isBase64Encoded": false
+}
+```
+
 ## Resource: SNS Topic
 
 I initially wanted to integrate the Lambda function to the Kinesis stream directly, but it appears it is better to do this via SNS. This makes sens as one could later use the SNS Fan Out if required.
