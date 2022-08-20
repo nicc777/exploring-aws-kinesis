@@ -107,3 +107,7 @@ Note: Unnecessary use of -X or --request, POST is already inferred.
 * Connection #0 to host x4nbaf67j9.execute-api.eu-central-1.amazonaws.com left intact
 {"message": "ok"}%     
 ```
+
+## Resource: SNS Topic
+
+I initially wanted to integrate the Lambda function to the Kinesis stream directly, but it appears it is better to do this via SNS. This makes sens as one could later use the SNS Fan Out if required.
