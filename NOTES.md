@@ -80,3 +80,30 @@ First, linking the API Gateway to the Lambda Function (Trigger):
 | 018        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [018_api_gateway_lambda_integration.json](labs/lab1-create-solution-using-aws-console/018_api_gateway_lambda_integration.json)  | Get Integration Policy                                                                                                                                   |
 | 019        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [019_api_gateway_lambda_integration.json](labs/lab1-create-solution-using-aws-console/019_api_gateway_lambda_integration.json)  | List API Gateway Routes (only one exists, so the association is easy to make)                                                                            |
 
+At this point I updated the Lambda function to add logging [as per AWS Documentation](https://docs.aws.amazon.com/lambda/latest/dg/python-logging.html#python-logging-lib) and test teh API Gateway integration with a simple JSON POST.
+
+Once the trigger for the API Gateway to the Lambda function is build, one can test with something like the following:
+
+```shell
+curl -vvv -d '{"Message": "Test123"}' -H "Content-Type: application/json" -X POST https://x4nbaf67j9.execute-api.eu-central-1.amazonaws.com/sandbox/data_recorder_01       
+Note: Unnecessary use of -X or --request, POST is already inferred.
+*   SSL DEBUG MESSAGES OMITTED
+> POST /sandbox/data_recorder_01 HTTP/2
+> Host: x4nbaf67j9.execute-api.eu-central-1.amazonaws.com
+> user-agent: curl/7.68.0
+> accept: */*
+> content-type: application/json
+> content-length: 22
+> 
+* Connection state changed (MAX_CONCURRENT_STREAMS == 128)!
+* We are completely uploaded and fine
+< HTTP/2 201 
+< date: Sat, 20 Aug 2022 12:08:50 GMT
+< content-type: application/json
+< content-length: 17
+< x-custom-header: my custom header value
+< apigw-requestid: XKVA0jtIliAEPtA=
+< 
+* Connection #0 to host x4nbaf67j9.execute-api.eu-central-1.amazonaws.com left intact
+{"message": "ok"}%     
+```
