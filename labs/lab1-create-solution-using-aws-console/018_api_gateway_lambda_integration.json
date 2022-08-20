@@ -1,0 +1,17 @@
+{
+    "REQUEST": {
+        "service": "lambda.AWSLambda",
+        "api": "getPolicy",
+        "ignoredErrorCode": "ResourceNotFoundException",
+        "payload": {
+            "functionName": "data_recorder_01"
+        },
+        "operation": "proxyAwsCall"
+    },
+    "RESPONSE": {
+        "sdkResponseMetadata": null,
+        "sdkHttpMetadata": null,
+        "policy": "{\"Version\":\"2012-10-17\",\"Id\":\"default\",\"Statement\":[{\"Sid\":\"lambda-9d6a5bd9-5e14-42c9-b6b8-bc20663be463\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"apigateway.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:eu-central-1:000000000000:function:data_recorder_01\",\"Condition\":{\"ArnLike\":{\"AWS:SourceArn\":\"arn:aws:execute-api:eu-central-1:000000000000:x4nbaf67j9/*/*/data_recorder_01\"}}}]}",
+        "revisionId": "6b1c0fd7-ab1d-496c-9b8b-49834eec9121"
+    }
+}

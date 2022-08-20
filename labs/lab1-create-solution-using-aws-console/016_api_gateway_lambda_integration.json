@@ -1,0 +1,20 @@
+{
+    "REQUEST": {
+        "source": "api-gateway/x4nbaf67j9/*/*/data_recorder_01",
+        "target": "arn:aws:lambda:eu-central-1:000000000000:function:data_recorder_01",
+        "type": "trigger",
+        "data": "{\"targetType\":\"aws/lambda\",\"cors\":false,\"detailedMetricsEnabled\":false,\"existingApi\":\"x4nbaf67j9\",\"target\":\"arn:aws:lambda:eu-central-1:000000000000:function:data_recorder_01\",\"authorizationType\":\"NONE\",\"apiType\":\"HTTP\",\"sourceType\":\"aws/apigateway\",\"intent\":\"EXISTING\",\"stage\":\"sandbox\"}",
+        "operation": "createRelation"
+    },
+    "RESPONSE": {
+        "sdkResponseMetadata": null,
+        "sdkHttpMetadata": null,
+        "relation": {
+            "data": "{\"targetType\":\"aws/lambda\",\"cors\":false,\"detailedMetricsEnabled\":false,\"existingApi\":\"x4nbaf67j9\",\"target\":\"arn:aws:lambda:eu-central-1:000000000000:function:data_recorder_01\",\"authorizationType\":\"NONE\",\"apiType\":\"HTTP\",\"sourceType\":\"aws/apigateway\",\"intent\":\"EXISTING\",\"stage\":\"sandbox\",\"servicePrincipal\":\"apigateway.amazonaws.com\",\"sid\":\"lambda-9d6a5bd9-5e14-42c9-b6b8-bc20663be463\",\"sourceName\":\"data_recorder\",\"sourceUrl\":\"https://eu-central-1.console.aws.amazon.com/apigateway/main/api-detail?api=x4nbaf67j9&region=eu-central-1\",\"method\":\"ANY\",\"path\":\"/data_recorder_01\",\"invokeUrl\":\"https://x4nbaf67j9.execute-api.eu-central-1.amazonaws.com/sandbox/data_recorder_01\"}",
+            "exception": null,
+            "source": "arn:aws:execute-api:eu-central-1:000000000000:x4nbaf67j9/*/*/data_recorder_01",
+            "target": "arn:aws:lambda:eu-central-1:000000000000:function:data_recorder_01",
+            "type": "trigger"
+        }
+    }
+}

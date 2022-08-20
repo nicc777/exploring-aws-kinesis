@@ -71,4 +71,12 @@ The initial basic setup of the Lambda function was done manually without recordi
 
 I also manually created a basic HTTP API Gateway, not yet integrated with the Lambda function. I will record the integration steps.
 
+First, linking the API Gateway to the Lambda Function (Trigger):
+
+| Call Order | URL                                                              | Method | Request Data                                                                                                                    | Action Description                                                                                                                                       |
+|:----------:|------------------------------------------------------------------|:------:|---------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 016        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [016_api_gateway_lambda_integration.json](labs/lab1-create-solution-using-aws-console/016_api_gateway_lambda_integration.json)  | Create a trigger                                                                                                                                         |
+| 017        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [017_api_gateway_lambda_integration.json](labs/lab1-create-solution-using-aws-console/017_api_gateway_lambda_integration.json)  | List Relations                                                                                                                                           |
+| 018        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [018_api_gateway_lambda_integration.json](labs/lab1-create-solution-using-aws-console/018_api_gateway_lambda_integration.json)  | Get Integration Policy                                                                                                                                   |
+| 019        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [019_api_gateway_lambda_integration.json](labs/lab1-create-solution-using-aws-console/019_api_gateway_lambda_integration.json)  | List API Gateway Routes (only one exists, so the association is easy to make)                                                                            |
 
