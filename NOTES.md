@@ -62,3 +62,9 @@ I created a data stream with all the initial settings left at their defaults. Th
 | 013        | https://firehose.eu-central-1.amazonaws.com/            | `POST` | [013_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/013_kineses_delivery_stream.json)  | Delivery Stream - Finally succeeded                                                                                                                      |
 | 014        | https://firehose.eu-central-1.amazonaws.com/            | `POST` | [014_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/014_kineses_delivery_stream.json)  | Unsure of what this request is for...                                                                                                                    |
 | 015        | https://logs.eu-central-1.amazonaws.com/                | `POST` | [015_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/015_kineses_delivery_stream.json)  | Appears to be getting logs - no events were returned                                                                                                     |
+
+## Resource: Lambda Function for API Gateway Proxy Requests Handling
+
+Essentially this function just extracts the JSON/FORM data from the API Gateway Proxy request and submits it to the Kinesis Data Stream.
+
+
