@@ -262,8 +262,8 @@ The lambda IAM policy required to work end-to-end (JSON):
                 "logs:CreateLogGroup"
             ],
             "Resource": [
-                "arn:aws:kinesis:*:342872205792:stream/*",
-                "arn:aws:logs:eu-central-1:342872205792:*"
+                "arn:aws:kinesis:*:000000000000:stream/*",
+                "arn:aws:logs:eu-central-1:000000000000:*"
             ]
         },
         {
@@ -273,7 +273,7 @@ The lambda IAM policy required to work end-to-end (JSON):
                 "logs:CreateLogStream",
                 "logs:PutLogEvents"
             ],
-            "Resource": "arn:aws:logs:eu-central-1:342872205792:log-group:/aws/lambda/data_recorder_01:*"
+            "Resource": "arn:aws:logs:eu-central-1:000000000000:log-group:/aws/lambda/data_recorder_01:*"
         }
     ]
 }
