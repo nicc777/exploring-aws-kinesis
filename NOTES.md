@@ -63,8 +63,12 @@ I created a data stream with all the initial settings left at their defaults. Th
 | 014        | https://firehose.eu-central-1.amazonaws.com/            | `POST` | [014_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/014_kineses_delivery_stream.json)  | Unsure of what this request is for...                                                                                                                    |
 | 015        | https://logs.eu-central-1.amazonaws.com/                | `POST` | [015_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/015_kineses_delivery_stream.json)  | Appears to be getting logs - no events were returned                                                                                                     |
 
-## Resource: Lambda Function for API Gateway Proxy Requests Handling
+## Resource: HTTP API Gateway and Lambda Function for API Gateway Proxy Requests Handling
 
 Essentially this function just extracts the JSON/FORM data from the API Gateway Proxy request and submits it to the Kinesis Data Stream.
+
+The initial basic setup of the Lambda function was done manually without recording the session, as I already know very well how this part works in IaC.
+
+I also manually created a basic HTTP API Gateway, not yet integrated with the Lambda function. I will record the integration steps.
 
 
