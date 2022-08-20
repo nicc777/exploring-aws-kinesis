@@ -1,3 +1,13 @@
+
+- [Field Notes](#field-notes)
+- [Manually Creating Components](#manually-creating-components)
+  - [Initial Design Goal](#initial-design-goal)
+  - [Resource: S3 Bucket](#resource-s3-bucket)
+  - [Resource: Lambda function for Kinesis Data Transformation](#resource-lambda-function-for-kinesis-data-transformation)
+  - [Resource: Kinesis Data Stream](#resource-kinesis-data-stream)
+  - [Resource: Kinesis Firehose Delivery Stream](#resource-kinesis-firehose-delivery-stream)
+  - [Resource: HTTP API Gateway and Lambda Function for API Gateway Proxy Requests Handling](#resource-http-api-gateway-and-lambda-function-for-api-gateway-proxy-requests-handling)
+
 # Field Notes
 
 I use this file to track observations, ideas etc.
