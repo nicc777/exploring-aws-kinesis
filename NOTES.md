@@ -196,3 +196,88 @@ The data that the Lambda will receive (in the `event`):
 }
 ```
 
+<<<<<<< HEAD
+=======
+Lambda Function (Source Code):
+
+```python
+import json
+import logging
+import boto3
+import hashlib
+import traceback
+
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+
+def lambda_handler(event, context):
+    logger.debug('event={}'.format(event))
+    client = boto3.client('kinesis')
+    incoming_data = dict()
+    incoming_data['amazonTraceId'] = event['headers']['X-Amzn-Trace-Id']
+    incoming_data['numberOfFields'] = 0
+    incoming_data['fieldNames'] = ""
+    try:
+        body_data = json.loads(event['body'])
+        keys = list(body_data.keys())
+        incoming_data['numberOfFields'] = len(keys)
+        incoming_data['fieldNames'] = ",".join(keys)
+        response = client.put_record(
+            StreamName='data_recorder_01',
+            Data='{}'.format(json.dumps(incoming_data)).encode('utf-8'),
+            PartitionKey=hashlib.md5('{}'.format(json.dumps(incoming_data)).encode('utf-8')).hexdigest()
+        )
+        logger.debug('response={}'.format(response))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    result = dict()
+    return_object = {
+        'statusCode': 201,
+        'headers': {
+            'x-custom-header' : 'my custom header value',
+            'content-type': 'application/json',
+        },
+        'body': result,
+        'isBase64Encoded': False,
+    }
+    
+    result['message'] = 'ok'
+    return_object['body'] = json.dumps(result)
+    return return_object
+
+```
+
+The lambda IAM policy required to work end-to-end (JSON):
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "kinesis:PutRecord",
+                "kinesis:PutRecords",
+                "logs:CreateLogGroup"
+            ],
+            "Resource": [
+                "arn:aws:kinesis:*:000000000000:stream/*",
+                "arn:aws:logs:eu-central-1:000000000000:*"
+            ]
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "arn:aws:logs:eu-central-1:000000000000:log-group:/aws/lambda/data_recorder_01:*"
+        }
+    ]
+}
+```
+>>>>>>> doc: field notes for kinesis data streaming
