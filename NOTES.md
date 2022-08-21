@@ -18,7 +18,7 @@ I use this file to track observations, ideas etc.
 
 Here is some notes of how I manually created components.
 
-I used the AWS Web Console with the eim to record all the request in order to record the API calls.
+I used the AWS Web Console with the aim to record all the request in order to record the API calls.
 
 I did this by using the developer tools in firefox to record a HAR file. I can't share the HAR file on GitHub since it includes a lot sensitive information, but the API calls I will document as best I can.
 
@@ -30,7 +30,7 @@ After much reading, I settled on the following initial design:
 
 ![design](images/manual_creating_components/design.drawio.png)
 
-I will start with the S3 bucket and work my way first to the left. 
+I will start with the S3 bucket and work my way first to the left. Components to the right is already familiar to me, so I will not spend time on manually creating those. [Lab 2](labs/lab2-construct-cloudformation-template-from-lab1-findings/README.md) will have the CloudFormation template implementation of the design.
 
 ## Resource: S3 Bucket
 
