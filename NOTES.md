@@ -7,6 +7,7 @@
   - [Resource: Kinesis Data Stream](#resource-kinesis-data-stream)
   - [Resource: Kinesis Firehose Delivery Stream](#resource-kinesis-firehose-delivery-stream)
   - [Resource: HTTP API Gateway and Lambda Function for API Gateway Proxy Requests Handling](#resource-http-api-gateway-and-lambda-function-for-api-gateway-proxy-requests-handling)
+  - [Observation on Cost](#observation-on-cost)
 
 # Field Notes
 
@@ -288,3 +289,7 @@ Lambda permissions (policy) in JSON:
     ]
 }
 ```
+
+## Observation on Cost
+
+I ran the first experiment with manually provisioned resources for just over a day. I then looked at my billing dashboard amd saw a cost defined as `Amazon Kinesis OnDemandStreamHr` which recorded `33.585 StreamHr` at `US$ 0.048` per hour for a total of `US$ 34.56` for the Frankfurt region (`eu-central-1`).
