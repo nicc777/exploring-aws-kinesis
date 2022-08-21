@@ -40,7 +40,7 @@ _**Note**_: More resources will be added as I find them
 The various practical exercises I did is located in the `labs` directory. All lab notes is in the file [NOTES.md](NOTES.md). Below is a short description of what each lab directory contains:
 
 | Lab Session | Description                                                                                                                            | Status      |
-|:-----------:|----------------------------------------------------------------------------------------------------------------------------------------|-------------|
+|:-----------:|----------------------------------------------------------------------------------------------------------------------------------------|:-----------:|
 | Lab 1       | Creating resources via the AWS Console to get an initial idea of what is required, how it works and the settings required              | Complete    |
 | Lab 2       | Take learnings from Lab 1 and produce a CloudFormation template (or templates) to easily create more streams ingested from API Gateway | In Progress |
 | Lab 3       | A lower volume example without Kinesis - ideal for a mixed environment                                                                 | Not Started |
