@@ -1,6 +1,6 @@
 
 - [Field Notes](#field-notes)
-- [Manually Creating Components](#manually-creating-components)
+- [Lab 1: Manually Creating Components](#lab-1-manually-creating-components)
   - [Initial Design Goal](#initial-design-goal)
   - [Resource: S3 Bucket](#resource-s3-bucket)
   - [Resource: Lambda function for Kinesis Data Transformation](#resource-lambda-function-for-kinesis-data-transformation)
@@ -14,7 +14,7 @@
 I use this file to track observations, ideas etc.
 
 
-# Manually Creating Components
+# Lab 1: Manually Creating Components
 
 Here is some notes of how I manually created components.
 
