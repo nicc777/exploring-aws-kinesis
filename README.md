@@ -58,7 +58,9 @@ I expect this project to have the following stages:
 
 * ~~Early Exploration~~ 
 * ~~Lab Design (based on learnings from documentation)~~
-* ~~Manual Lab Resource Provisioning (AWS API and AWS Console)~~
-* Infrastructure as Code Lab Resource Provisioning (CloudFormation) (`In Progress`)
-* Finalize documentation
+* ~~Lab 1: Manual Lab Resource Provisioning (AWS API and AWS Console)~~
+* Lab 2: Infrastructure as Code Lab Resource Provisioning (CloudFormation) (`In Progress`)
+* Lab 3: Adapt lab 2 to create a hybrid Kinesis and direct S3 put solution (splitting high volume and low volume data ingestion processes).
+* Lab 4: Evaluate Athena as a tool to query and replay old captured events
+* Finalize documentation, findings, conclusions and refactor final designs and artifacts
 * Maintenance Phase (long term)
