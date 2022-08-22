@@ -42,10 +42,14 @@ Resources:
               KMSMasterKeyID: "aws/s3"
               SSEAlgorithm: "aws:kms"
       BucketName: !Ref S3BucketNameParam
-      CorsConfiguration: 
-        CorsConfiguration
       IntelligentTieringConfigurations: 
-        - IntelligentTieringConfiguration
+        - Id: !Sub "${S3BucketNameParam}-tiering"
+          Status: "Enabled"
+          Tierings: 
+          - AccessTier: "ARCHIVE_ACCESS"
+            Days: 7
+          - AccessTier: "DEEP_ARCHIVE_ACCESS"
+            Days: 14
       InventoryConfigurations: 
         - InventoryConfiguration
       LifecycleConfiguration: 
