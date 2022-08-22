@@ -7,7 +7,7 @@ Description: >
   turn will do some very basic translation/conversion before persisting the data in S3. The S3 bucket will send events
   via SNS and SQS to another Lambda function intended as the final data processing operation. The incoming data up to
   the S3 bucket is about capturing the event streams and everything after the S3 bucket is about processing and 
-  consuming the event data. 
+  consuming the event data. Objects are encrypted and when relevant, AWS KMS keys are used.
 
 # Metadata:
 #   template metadata
