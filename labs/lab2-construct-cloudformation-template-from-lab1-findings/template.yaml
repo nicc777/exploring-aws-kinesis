@@ -13,7 +13,10 @@ Description: >
 #   template metadata
 
 Parameters:
-  S3BucketNameParam:
+  S3InventoryBucketNameParam:
+    Type: String
+    Description: "The name of the S3 bucket the CSV inventory of all other buckets are stored"
+  S3EventBucketForProcessABCNameParam:
     Type: String
     Description: "The name of the S3 bucket where the incoming event data will be stored. This is the Event store. "
 
@@ -31,8 +34,14 @@ Parameters:
 
 Resources:
 
+  S3EventsInventoryBucket:
+    Type: "AWS::S3::Bucket"
+    Properties: 
+      BucketName: !Ref S3InventoryBucketNameParam
+
   S3EventStoreBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
     Properties: 
       AccessControl: "Private"
       BucketEncryption: 
@@ -41,9 +50,9 @@ Resources:
             ServerSideEncryptionByDefault: 
               KMSMasterKeyID: "aws/s3"
               SSEAlgorithm: "aws:kms"
-      BucketName: !Ref S3BucketNameParam
+      BucketName: !Ref S3EventBucketForProcessABCNameParam
       IntelligentTieringConfigurations: 
-        - Id: !Sub "${S3BucketNameParam}-tiering"
+        - Id: !Sub "${S3EventBucketForProcessABCNameParam}-tiering"
           Status: "Enabled"
           Tierings: 
           - AccessTier: "ARCHIVE_ACCESS"
