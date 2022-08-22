@@ -13,9 +13,6 @@ Description: >
 #   template metadata
 
 Parameters:
-  S3InventoryBucketNameParam:
-    Type: String
-    Description: "The name of the S3 bucket the CSV inventory of all other buckets are stored"
   S3EventBucketForProcessABCNameParam:
     Type: String
     Description: "The name of the S3 bucket where the incoming event data will be stored. This is the Event store. "
@@ -34,10 +31,38 @@ Parameters:
 
 Resources:
 
-  S3EventsInventoryBucket:
-    Type: "AWS::S3::Bucket"
+  S3EventStoreNotificationQueue:
+    Type: AWS::SQS::Queue
     Properties: 
-      BucketName: !Ref S3InventoryBucketNameParam
+      ContentBasedDeduplication: Boolean
+      DeduplicationScope: String
+      DelaySeconds: Integer
+      FifoQueue: Boolean
+      FifoThroughputLimit: String
+      KmsDataKeyReusePeriodSeconds: Integer
+      KmsMasterKeyId: String
+      MaximumMessageSize: Integer
+      MessageRetentionPeriod: Integer
+      QueueName: String
+      ReceiveMessageWaitTimeSeconds: Integer
+      RedriveAllowPolicy: Json
+      RedrivePolicy: Json
+      SqsManagedSseEnabled: Boolean
+      Tags: 
+        - Tag
+      VisibilityTimeout: Integer
+
+
+  S3EventStoreNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties: 
+      DisplayName: "S3EventStoreNotificationTopic"
+      FifoTopic: false
+      KmsMasterKeyId: "alias/aws/sns"
+      # Subscription: 
+      #   - Subscription
+      TopicName: "S3EventStoreNotification"
+
 
   S3EventStoreBucket:
     Type: AWS::S3::Bucket
@@ -52,22 +77,17 @@ Resources:
               KMSMasterKeyID: "aws/s3"
               SSEAlgorithm: "aws:kms"
       BucketName: !Ref S3EventBucketForProcessABCNameParam
-      IntelligentTieringConfigurations: 
-        - Id: !Sub "${S3EventBucketForProcessABCNameParam}-tiering"
-          Status: "Enabled"
-          Tierings: 
-          - AccessTier: "ARCHIVE_ACCESS"
-            Days: 7
-          - AccessTier: "DEEP_ARCHIVE_ACCESS"
-            Days: 14
-      InventoryConfigurations: 
-        - InventoryConfiguration
       LifecycleConfiguration: 
-        LifecycleConfiguration
-      LoggingConfiguration: 
-        LoggingConfiguration
-      MetricsConfigurations: 
-        - MetricsConfiguration
+        Rules: 
+        - AbortIncompleteMultipartUpload: 
+            DaysAfterInitiation: 1
+          Id: !Sub "${S3EventBucketForProcessABCNameParam}-archive-lifecycle-01"
+          Status: "Enabled"
+          Transitions: 
+          - StorageClass: "GLACIER"
+            TransitionInDays: 7
+          - StorageClass: "DEEP_ARCHIVE"
+            TransitionInDays: 14
       NotificationConfiguration: 
         NotificationConfiguration
       ObjectLockConfiguration: 
