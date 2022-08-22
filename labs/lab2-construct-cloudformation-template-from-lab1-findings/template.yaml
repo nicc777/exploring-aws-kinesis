@@ -9,26 +9,69 @@ Description: >
   the S3 bucket is about capturing the event streams and everything after the S3 bucket is about processing and 
   consuming the event data. 
 
-Metadata:
-  template metadata
+# Metadata:
+#   template metadata
 
 Parameters:
-  set of parameters
+  S3BucketNameParam:
+    Type: String
+    Description: "The name of the S3 bucket where the incoming event data will be stored. This is the Event store. "
 
-Rules:
-  set of rules
+# Rules:
+#   set of rules
 
-Mappings:
-  set of mappings
+# Mappings:
+#   set of mappings
 
-Conditions:
-  set of conditions
+# Conditions:
+#   set of conditions
 
-Transform:
-  set of transforms
+# Transform:
+#   set of transforms
 
 Resources:
-  set of resources
+
+  S3EventStoreBucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      AccessControl: "Private"
+      BucketEncryption: 
+          ServerSideEncryptionConfiguration: 
+          - BucketKeyEnabled: true
+            ServerSideEncryptionByDefault: 
+              KMSMasterKeyID: "aws/s3"
+              SSEAlgorithm: "aws:kms"
+      BucketName: !Ref S3BucketNameParam
+      CorsConfiguration: 
+        CorsConfiguration
+      IntelligentTieringConfigurations: 
+        - IntelligentTieringConfiguration
+      InventoryConfigurations: 
+        - InventoryConfiguration
+      LifecycleConfiguration: 
+        LifecycleConfiguration
+      LoggingConfiguration: 
+        LoggingConfiguration
+      MetricsConfigurations: 
+        - MetricsConfiguration
+      NotificationConfiguration: 
+        NotificationConfiguration
+      ObjectLockConfiguration: 
+        ObjectLockConfiguration
+      ObjectLockEnabled: Boolean
+      OwnershipControls: 
+        OwnershipControls
+      PublicAccessBlockConfiguration: 
+        PublicAccessBlockConfiguration
+      ReplicationConfiguration: 
+        ReplicationConfiguration
+      Tags: 
+        - Tag
+      VersioningConfiguration: 
+        VersioningConfiguration
+      WebsiteConfiguration: 
+        WebsiteConfiguration
+
 
 Outputs:
   set of outputs
