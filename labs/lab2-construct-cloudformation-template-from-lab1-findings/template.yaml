@@ -34,23 +34,13 @@ Resources:
   S3EventStoreNotificationQueue:
     Type: AWS::SQS::Queue
     Properties: 
-      ContentBasedDeduplication: Boolean
-      DeduplicationScope: String
-      DelaySeconds: Integer
-      FifoQueue: Boolean
-      FifoThroughputLimit: String
-      KmsDataKeyReusePeriodSeconds: Integer
-      KmsMasterKeyId: String
-      MaximumMessageSize: Integer
-      MessageRetentionPeriod: Integer
-      QueueName: String
-      ReceiveMessageWaitTimeSeconds: Integer
+      KmsMasterKeyId: "alias/aws/sqs"
+      MessageRetentionPeriod: 86400
+      QueueName: "S3EventStoreNotificationQueue"
       RedriveAllowPolicy: Json
       RedrivePolicy: Json
-      SqsManagedSseEnabled: Boolean
-      Tags: 
-        - Tag
-      VisibilityTimeout: Integer
+      SqsManagedSseEnabled: true
+      VisibilityTimeout: 60
 
 
   S3EventStoreNotificationTopic:
