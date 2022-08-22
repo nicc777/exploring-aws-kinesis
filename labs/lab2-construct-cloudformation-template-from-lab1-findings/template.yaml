@@ -1,0 +1,34 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This template is an attempt to define all IaC services in AWS required for a basic demonstration of processing data 
+  incoming via API Gateway and then through a Lambda handler the data is extracted and submitted to Kineses, which in 
+  turn will do some very basic translation/conversion before persisting the data in S3. The S3 bucket will send events
+  via SNS and SQS to another Lambda function intended as the final data processing operation. The incoming data up to
+  the S3 bucket is about capturing the event streams and everything after the S3 bucket is about processing and 
+  consuming the event data. 
+
+Metadata:
+  template metadata
+
+Parameters:
+  set of parameters
+
+Rules:
+  set of rules
+
+Mappings:
+  set of mappings
+
+Conditions:
+  set of conditions
+
+Transform:
+  set of transforms
+
+Resources:
+  set of resources
+
+Outputs:
+  set of outputs
