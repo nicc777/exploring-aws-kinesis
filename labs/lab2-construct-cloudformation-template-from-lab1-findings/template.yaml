@@ -143,4 +143,4 @@ Outputs:
     Description: "Bucket DomainName"
     Value: !GetAtt S3EventStoreBucket.DomainName
     Export:
-      Name: !Sub "${AWS::StackName}-${S3EventStoreBucket}"
+      Name: !Sub "${AWS::StackName}-S3EventStoreBucketDomainName"
