@@ -31,14 +31,31 @@ Parameters:
 
 Resources:
 
+  S3EventStoreNotificationDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      KmsMasterKeyId: "alias/aws/sqs"
+      MessageRetentionPeriod: 86400
+      QueueName: "S3EventStoreNotificationDeadLetterQueue"
+      SqsManagedSseEnabled: true
+      VisibilityTimeout: 60
+
   S3EventStoreNotificationQueue:
     Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties: 
       KmsMasterKeyId: "alias/aws/sqs"
       MessageRetentionPeriod: 86400
       QueueName: "S3EventStoreNotificationQueue"
-      RedriveAllowPolicy: Json
-      RedrivePolicy: Json
+      RedriveAllowPolicy:
+        redrivePermission: "byQueue"
+        sourceQueueArns: !GetAtt S3EventStoreNotificationDeadLetterQueue.Arn
+      RedrivePolicy:
+        deadLetterTargetArn : !GetAtt S3EventStoreNotificationDeadLetterQueue.Arn
+        maxReceiveCount : 3
       SqsManagedSseEnabled: true
       VisibilityTimeout: 60
 
@@ -49,10 +66,42 @@ Resources:
       DisplayName: "S3EventStoreNotificationTopic"
       FifoTopic: false
       KmsMasterKeyId: "alias/aws/sns"
-      # Subscription: 
-      #   - Subscription
+      Subscription:
+      - Protocol: sqs
+        Endpoint: !GetAtt S3EventStoreNotificationQueue.Arn
       TopicName: "S3EventStoreNotification"
 
+  S3EventStoreNotificationPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: "s3.amazonaws.com"
+            Action: sns:Publish
+            Resource: !Ref S3EventStoreNotificationTopic
+      Topics:
+        - !Ref S3EventStoreNotificationTopic
+
+  SnsToSqsPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "Allow SNS publish to SQS"
+            Effect: Allow
+            Principal:
+              Service: "sns.amazonaws.com"
+            Resource: !GetAtt S3EventStoreNotificationQueue.Arn
+            Action: SQS:SendMessage
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref S3EventStoreNotificationTopic
+      Queues:
+      - Ref: S3EventStoreNotificationQueue
 
   S3EventStoreBucket:
     Type: AWS::S3::Bucket
