@@ -109,7 +109,7 @@ Resources:
           ServerSideEncryptionConfiguration: 
           - BucketKeyEnabled: true
             ServerSideEncryptionByDefault: 
-              KMSMasterKeyID: "aws/s3"
+              KMSMasterKeyID: "alias/aws/s3"
               SSEAlgorithm: "aws:kms"
       BucketName: !Ref S3EventBucketParam
       LifecycleConfiguration: 
