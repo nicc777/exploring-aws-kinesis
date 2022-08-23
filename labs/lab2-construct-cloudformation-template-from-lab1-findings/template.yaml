@@ -39,7 +39,6 @@ Resources:
       KmsMasterKeyId: "alias/aws/sqs"
       MessageRetentionPeriod: 86400
       QueueName: "S3EventStoreNotificationDeadLetterQueue"
-      SqsManagedSseEnabled: true
       VisibilityTimeout: 60
 
   S3EventStoreNotificationQueue:
@@ -56,7 +55,6 @@ Resources:
       RedrivePolicy:
         deadLetterTargetArn : !GetAtt S3EventStoreNotificationDeadLetterQueue.Arn
         maxReceiveCount : 3
-      SqsManagedSseEnabled: true
       VisibilityTimeout: 60
 
   S3EventStoreNotificationTopic:
