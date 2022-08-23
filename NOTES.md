@@ -181,7 +181,7 @@ The parameters to pass into the CloudFOrmation template during deployment must b
 }
 ```
 
-Command to deploy the cloudformation template:
+Assuming you are in the root of this repository, the command to deploy the cloudformation template is as follow:
 
 ```shell
 aws cloudformation deploy \
