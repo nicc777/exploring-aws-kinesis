@@ -13,9 +13,9 @@ Description: >
 #   template metadata
 
 Parameters:
-  S3EventBucketForProcessABCNameParam:
+  S3EventBucketParam:
     Type: String
-    Description: "The name of the S3 bucket where the incoming event data will be stored. This is the Event store. "
+    Description: "The name of the S3 bucket where the incoming event data will be stored. This is the Event store."
 
 # Rules:
 #   set of rules
@@ -66,12 +66,12 @@ Resources:
             ServerSideEncryptionByDefault: 
               KMSMasterKeyID: "aws/s3"
               SSEAlgorithm: "aws:kms"
-      BucketName: !Ref S3EventBucketForProcessABCNameParam
+      BucketName: !Ref S3EventBucketParam
       LifecycleConfiguration: 
         Rules: 
         - AbortIncompleteMultipartUpload: 
             DaysAfterInitiation: 1
-          Id: !Sub "${S3EventBucketForProcessABCNameParam}-archive-lifecycle-01"
+          Id: !Sub "${S3EventBucketParam}-archive-lifecycle-01"
           Status: "Enabled"
           Transitions: 
           - StorageClass: "GLACIER"
@@ -79,23 +79,20 @@ Resources:
           - StorageClass: "DEEP_ARCHIVE"
             TransitionInDays: 14
       NotificationConfiguration: 
-        NotificationConfiguration
-      ObjectLockConfiguration: 
-        ObjectLockConfiguration
-      ObjectLockEnabled: Boolean
-      OwnershipControls: 
-        OwnershipControls
-      PublicAccessBlockConfiguration: 
-        PublicAccessBlockConfiguration
-      ReplicationConfiguration: 
-        ReplicationConfiguration
+        TopicConfigurations: 
+        - Event: "s3:ObjectCreated:*"   # See https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
+          Topic: !Ref S3EventStoreNotificationTopic
       Tags: 
-        - Tag
-      VersioningConfiguration: 
-        VersioningConfiguration
-      WebsiteConfiguration: 
-        WebsiteConfiguration
+      - Key: Purpose
+        Value: EventStore
+      - Key: BusinessProcess
+        Value: ProcessABC
 
 
 Outputs:
-  set of outputs
+
+  S3EventStoreBucketDomainName:
+    Description: "Bucket DomainName"
+    Value: !GetAtt S3EventStoreBucket.DomainName
+    Export:
+      Name: !Sub "${AWS::StackName}-${S3EventStoreBucket}"
