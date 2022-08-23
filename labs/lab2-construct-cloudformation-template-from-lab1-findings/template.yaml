@@ -50,8 +50,7 @@ Resources:
       MessageRetentionPeriod: 86400
       QueueName: "S3EventStoreNotificationQueue"
       RedriveAllowPolicy:
-        redrivePermission: "byQueue"
-        sourceQueueArns: !GetAtt S3EventStoreNotificationDeadLetterQueue.Arn
+        redrivePermission: "allowAll"
       RedrivePolicy:
         deadLetterTargetArn : !GetAtt S3EventStoreNotificationDeadLetterQueue.Arn
         maxReceiveCount : 3
