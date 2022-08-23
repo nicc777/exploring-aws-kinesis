@@ -188,4 +188,5 @@ aws cloudformation deploy \
     --stack-name $STACK_NAME \
     --template-file labs/lab2-construct-cloudformation-template-from-lab1-findings/template.yaml \
     --parameter-overrides file://$PARAMETERS_FILE \
+    --capabilities CAPABILITY_IAM
 ```
