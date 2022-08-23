@@ -59,7 +59,6 @@ Resources:
       SqsManagedSseEnabled: true
       VisibilityTimeout: 60
 
-
   S3EventStoreNotificationTopic:
     Type: AWS::SNS::Topic
     Properties: 
