@@ -121,7 +121,7 @@ Resources:
           Transitions: 
           - StorageClass: "GLACIER"
             TransitionInDays: 7
-          - StorageClass: "DEEP_ARCHIVE"  # Days' in the 'Transition' action for StorageClass 'DEEP_ARCHIVE' for filter '(prefix=)' must be 90 days more than 'filter '(prefix=)'' in the 'Transition' action for StorageClass 'GLACIER' 
+          - StorageClass: "DEEP_ARCHIVE"  # Days' in the 'Transition' action for StorageClass 'DEEP_ARCHIVE' for filter must be 90 days more than 'Transition' action for StorageClass 'GLACIER' 
             TransitionInDays: 97
       NotificationConfiguration: 
         TopicConfigurations: 
