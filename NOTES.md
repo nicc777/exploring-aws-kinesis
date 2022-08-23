@@ -8,6 +8,7 @@
   - [Resource: Kinesis Firehose Delivery Stream](#resource-kinesis-firehose-delivery-stream)
   - [Resource: HTTP API Gateway and Lambda Function for API Gateway Proxy Requests Handling](#resource-http-api-gateway-and-lambda-function-for-api-gateway-proxy-requests-handling)
   - [Observation on Cost](#observation-on-cost)
+- [Lab 2: Infrastructure as Code Lab Resource Provisioning (CloudFormation)](#lab-2-infrastructure-as-code-lab-resource-provisioning-cloudformation)
 
 # Field Notes
 
@@ -158,3 +159,33 @@ Lambda permissions (policy) in JSON:
 ## Observation on Cost
 
 I ran the first experiment with manually provisioned resources for just over a day. I then looked at my billing dashboard amd saw a cost defined as `Amazon Kinesis OnDemandStreamHr` which recorded `33.585 StreamHr` at `US$ 0.048` per hour for a total of `US$ 34.56` for the Frankfurt region (`eu-central-1`).
+
+# Lab 2: Infrastructure as Code Lab Resource Provisioning (CloudFormation)
+
+The following environment variables is assumed in the command examples:
+
+| Environment Variable Example      | Description                                      |
+|-----------------------------------|--------------------------------------------------|
+| `export AWS_PROFILE="..."`        | The AWS Credentials Profile to use               |
+| `export AWS_REGION="..."`         | The AWS Region to deploy resources to            |
+| `export STACK_NAME="..."`         | The name of the CloudFormation stack             |
+| `export PARAMETERS_FILE="..."`    | The file containing the stack parameters         |
+
+The parameters to pass into the CloudFOrmation template during deployment must be defined using the following template:
+
+```json
+{
+    "Parameters": {
+      "S3EventBucketParam": "..."
+    }
+}
+```
+
+Command to deploy the cloudformation template:
+
+```shell
+aws cloudformation deploy \
+    --stack-name $STACK_NAME \
+    --template-file labs/lab2-construct-cloudformation-template-from-lab1-findings/template.yaml \
+    --parameter-overrides file://$PARAMETERS_FILE \
+```
