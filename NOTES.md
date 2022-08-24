@@ -196,6 +196,10 @@ aws cloudformation deploy \
 
 ## S3 Events to Lambda (Testing S3 events by just uploading a normal TXT file from the AWS Console)
 
+Looking just at the S3 events and how that is handled downstream, the following CloudFormation resources are relevant:
+
+![resources](images/lab2-s3-events.png)
+
 When the final Lambda function (right at the tail end of this whole series of events) receives the S3 event, the `event` has the following structure:
 
 ```json
