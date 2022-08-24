@@ -31,31 +31,11 @@ Parameters:
 
 Resources:
 
-  LabKmsKey:
-    Type: AWS::KMS::Key
-    Properties: 
-      Description: "KMS Key to use"
-      Enabled: true
-      EnableKeyRotation: true
-      KeyPolicy:
-        Version: "2012-10-17"
-        Id: "lab-key"
-        Statement:
-        - Sid: "Allow Account Resources to use this key"
-          Effect: "Allow"
-          Principal:
-            AWS: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
-          Action: kms:*
-          Resource: "*"
-      MultiRegion: false
-      PendingWindowInDays: 7
-
   S3EventStoreNotificationDeadLetterQueue:
     Type: AWS::SQS::Queue
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties: 
-      KmsMasterKeyId: !Ref LabKmsKey
       MessageRetentionPeriod: 86400
       QueueName: "S3EventStoreNotificationDeadLetterQueue"
       VisibilityTimeout: 60
@@ -65,7 +45,6 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties: 
-      KmsMasterKeyId: !Ref LabKmsKey
       MessageRetentionPeriod: 86400
       QueueName: "S3EventStoreNotificationQueue"
       RedriveAllowPolicy:
@@ -80,7 +59,6 @@ Resources:
     Properties: 
       DisplayName: "S3EventStoreNotificationTopic"
       FifoTopic: false
-      KmsMasterKeyId: !Ref LabKmsKey
       Subscription:
       - Protocol: sqs
         Endpoint: !GetAtt S3EventStoreNotificationQueue.Arn
@@ -124,12 +102,6 @@ Resources:
     UpdateReplacePolicy: Retain
     Properties: 
       AccessControl: "Private"
-      BucketEncryption: 
-          ServerSideEncryptionConfiguration: 
-          - BucketKeyEnabled: true
-            ServerSideEncryptionByDefault: 
-              KMSMasterKeyID: !Ref LabKmsKey
-              SSEAlgorithm: "aws:kms"
       BucketName: !Ref S3EventBucketParam
       LifecycleConfiguration: 
         Rules: 
