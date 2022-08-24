@@ -130,7 +130,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-        - Sid: "EventMockProcessingLambdaFunctionRole"
+        - Sid: "EventMockProcessingLambdaFunctionRoleAssumeRolePolicyDocument"
           Effect: "Allow"
           Principal:
             Service: "lambda.amazonaws.com"
@@ -179,7 +179,7 @@ Resources:
       FunctionName: "EventMockProcessingLambdaFunction"
       Handler: "index.lambda_handler"
       MemorySize: 128
-      Role: !Ref EventMockProcessingLambdaFunctionRole
+      Role: !GetAtt EventMockProcessingLambdaFunctionRole.Arn
       Runtime: "python3.8"
       Timeout: 30
 
