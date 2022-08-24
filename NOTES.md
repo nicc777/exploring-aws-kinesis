@@ -9,6 +9,7 @@
   - [Resource: HTTP API Gateway and Lambda Function for API Gateway Proxy Requests Handling](#resource-http-api-gateway-and-lambda-function-for-api-gateway-proxy-requests-handling)
   - [Observation on Cost](#observation-on-cost)
 - [Lab 2: Infrastructure as Code Lab Resource Provisioning (CloudFormation)](#lab-2-infrastructure-as-code-lab-resource-provisioning-cloudformation)
+  - [S3 Events to Lambda (Testing S3 events by just uploading a normal TXT file from the AWS Console)](#s3-events-to-lambda-testing-s3-events-by-just-uploading-a-normal-txt-file-from-the-aws-console)
 
 # Field Notes
 
@@ -192,3 +193,122 @@ aws cloudformation deploy \
 ```
 
 > Progress on 2022-08-24: I tried using KMS, but I seem to miss some kind of permission or policy as I could not get SNS to send messages to SQS, even when both services referenced the same KMS key. See commit 62ce58db5db99e6db91d2b92b4767438d1f258d6 (2022-08-24 05:38) for the config used. I will figure this out at a later stage. I may need to look [at this blog post](https://sbstjn.com/blog/aws-secured-sqs-sns-subscription-with-kms/) for some inspiration to get this to work.
+
+## S3 Events to Lambda (Testing S3 events by just uploading a normal TXT file from the AWS Console)
+
+When the final Lambda function (right at the tail end of this whole series of events) receives the S3 event, the `event` has the following structure:
+
+```json
+{
+    "Records": [
+        {
+            "messageId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "receiptHandle": "aaaaaaaaaaaaaaaaaaaa",
+            "body": "--BODY--",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "SentTimestamp": "1661316591605",
+                "SenderId": "AAAAAAAAAAAAAAAAAAAAA",
+                "ApproximateFirstReceiveTimestamp": "1661316591611"
+            },
+            "messageAttributes": {},
+            "md5OfBody": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:eu-central-1:000000000000:S3EventStoreNotificationQueue",
+            "awsRegion": "eu-central-1"
+        }
+    ]
+}
+```
+
+> _**Note**_: The CloudFormation template configured the Lambda function to receive up to 10 records at a time.
+
+The `--BODY--` portion of the message was JSON text with the following content:
+
+```json
+{
+    "Type": "Notification",
+    "MessageId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "TopicArn": "arn:aws:sns:eu-central-1:000000000000:S3EventStoreNotification",
+    "Subject": "Amazon S3 Notification",
+    "Message": "--MESSAGE--",
+    "Timestamp": "2022-08-24T04:49:51.569Z",
+    "SignatureVersion": "1",
+    "Signature": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "SigningCertURL": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "UnsubscribeURL": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}
+```
+
+So, we can see this is specifically an S3 notification. This is handy for ensuring we process only the appropriate messages in the Lambda function
+
+The `--MESSAGE--` is another JSON message with the following structure:
+
+```json
+{
+    "Records": [
+        {
+            "eventVersion": "2.1",
+            "eventSource": "aws:s3",
+            "awsRegion": "eu-central-1",
+            "eventTime": "2022-08-24T04: 49: 50.944Z",
+            "eventName": "ObjectCreated:Put",
+            "userIdentity": {
+                "principalId": "AWS:AAAAAAAAAAAAAAAAAAAA"
+            },
+            "requestParameters": {
+                "sourceIPAddress": "nnn.nnn.nnn.nnn"
+            },
+            "responseElements": {
+                "x-amz-request-id": "aaaaaaaaaaaaaaaa",
+                "x-amz-id-2": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "s3": {
+                "s3SchemaVersion": "1.0",
+                "configurationId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                "bucket": {
+                    "name": "--BUCKET-NAME--",
+                    "ownerIdentity": {
+                        "principalId": "aaaaaaaaaaaaaa"
+                    },
+                    "arn": "arn:aws:s3:::--BUCKET-NAME--"
+                },
+                "object": {
+                    "key": "test_file.txt",
+                    "size": 80,
+                    "eTag": "0565a595fc3db300b1a0a3f392496e9d",
+                    "sequencer": "006305ADEEE5B6E47A"
+                }
+            }
+        }
+    ]
+}
+```
+
+Here are some Python code to manage the event:
+
+```python
+# Assuming the original event is in the variable `event`
+record_nr = 0
+for record in event['Records']:
+    record_nr += 1
+    event_body = json.loads(record['body']) 
+    s3_message = json.loads(event_body['Message'])
+    print('Record nr {}'.format(record_nr))
+    print('\tType       : {}'.format(event_body['Type']))
+    print('\tSubject    : {}'.format(event_body['Subject']))
+    for s3_record in s3_message['Records']:
+        print('\t\tS3 Bucket Name : {}'.format(s3_record['s3']['bucket']['name']))
+        print('\t\tEvent Key      : {}'.format(s3_record['s3']['object']['key']))
+```
+
+The output from the above looks something like:
+
+```text
+Record nr 1
+        Type       : Notification
+        Subject    : Amazon S3 Notification
+                S3 Bucket Name : --BUCKET-NAME--
+                Event Key      : test_file.txt
+
+```
