@@ -138,25 +138,26 @@ Resources:
       Description: "Lambda role EventMockProcessingLambdaFunction"
       Policies:
       - PolicyName: EventMockProcessingLambdaFunctionPolicy01
-        PolicyDocument:  
+        PolicyDocument:
+          Version: '2012-10-17'
           Statement:
-          - Action:
+          - Effect: "Allow"
+            Action:
             - "logs:CreateLogGroup"
             - "logs:CreateLogStream"
             - "logs:PutLogEvents"
-            Effect: "Allow"
-            Resource: "arn:aws:logs:*:*:*"
+            Resource: arn:aws:logs:*:*:*
       - PolicyName: EventMockProcessingLambdaFunctionPolicy02
-        PolicyDocument:  
+        PolicyDocument:
+          Version: '2012-10-17'
           Statement:
-          - Effect: Allow
+          - Effect: "Allow"
             Action:
-            - sqs:ReceiveMessage
-            - sqs:DeleteMessage
-            - sqs:GetQueueAttributes
-            - sqs:ChangeMessageVisibility
+            - "sqs:ReceiveMessage"
+            - "sqs:DeleteMessage"
+            - "sqs:GetQueueAttributes"
+            - "sqs:ChangeMessageVisibility"
             Resource: !GetAtt S3EventStoreNotificationQueue.Arn
-        
       RoleName: EventMockProcessingLambdaFunctionRole
 
   EventMockProcessingLambdaFunction:
