@@ -191,4 +191,4 @@ aws cloudformation deploy \
     --capabilities CAPABILITY_IAM
 ```
 
-> Progress on 2022-08-24: I tried using KMS, but I seem to miss some kind of permission or policy as I could not get SNS to send messages to SQS, even when both services referenced the same KMS key.
+> Progress on 2022-08-24: I tried using KMS, but I seem to miss some kind of permission or policy as I could not get SNS to send messages to SQS, even when both services referenced the same KMS key. See commit 62ce58db5db99e6db91d2b92b4767438d1f258d6 for the config used. I will figure this out at a later stage.
