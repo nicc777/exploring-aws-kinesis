@@ -124,6 +124,72 @@ Resources:
       - Key: BusinessProcess
         Value: ProcessABC
 
+  EventMockProcessingLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "EventMockProcessingLambdaFunctionRole"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role EventMockProcessingLambdaFunction"
+      Policies:
+      - PolicyName: EventMockProcessingLambdaFunctionPolicy01
+        PolicyDocument:  
+          Statement:
+          - Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Effect: "Allow"
+            Resource: "arn:aws:logs:*:*:*"
+      - PolicyName: EventMockProcessingLambdaFunctionPolicy02
+        PolicyDocument:  
+          Statement:
+          - Effect: Allow
+            Action:
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+            - sqs:ChangeMessageVisibility
+            Resource: !GetAtt S3EventStoreNotificationQueue.Arn
+        
+      RoleName: EventMockProcessingLambdaFunctionRole
+
+  EventMockProcessingLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Code: 
+        ZipFile: |
+          import json
+          import logging
+          import traceback
+          logger = logging.getLogger()
+          logger.setLevel(logging.DEBUG)
+          def lambda_handler(event, context):
+              logger.debug('event={}'.format(event))
+              return "ok"
+      Description: "Function to process our events from S3. This function basically just logs the messages - no actual processing is done."
+      FunctionName: "EventMockProcessingLambdaFunction"
+      Handler: "index.lambda_handler"
+      MemorySize: 128
+      Role: !Ref EventMockProcessingLambdaFunctionRole
+      Runtime: "python3.8"
+      Timeout: 30
+
+  EventMockProcessingLambdaFunctionEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      Enabled: true
+      EventSourceArn: !GetAtt S3EventStoreNotificationQueue.Arn
+      FunctionName: !GetAtt EventMockProcessingLambdaFunction.Arn
+
 
 Outputs:
 
