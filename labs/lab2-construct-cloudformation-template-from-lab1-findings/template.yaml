@@ -245,6 +245,9 @@ Resources:
     Properties: 
       Architectures: 
       - "arm64"
+      Environment:
+          Variables: 
+            TARGET_STREAM_NAME : not-set
       Code: 
         ZipFile: |
           import json
@@ -252,6 +255,7 @@ Resources:
           import boto3
           import hashlib
           import traceback
+          import os
           logger = logging.getLogger()
           logger.setLevel(logging.DEBUG)
           def lambda_handler(event, context):
@@ -267,7 +271,7 @@ Resources:
                   incoming_data['numberOfFields'] = len(keys)
                   incoming_data['fieldNames'] = ",".join(keys)
                   response = client.put_record(
-                      StreamName='data_recorder_01',
+                      StreamName='{}'.format(os.getenv('TARGET_STREAM_NAME', 'not-set')),
                       Data='{}'.format(json.dumps(incoming_data)).encode('utf-8'),
                       PartitionKey=hashlib.md5('{}'.format(json.dumps(incoming_data)).encode('utf-8')).hexdigest()
                   )
