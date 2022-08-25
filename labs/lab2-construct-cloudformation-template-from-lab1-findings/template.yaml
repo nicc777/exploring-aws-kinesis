@@ -200,11 +200,109 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
+###                                           API GATEWAY LAMBDA FUNCTIONS                                          ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  ApiTest01EventLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "EventMockProcessingLambdaFunctionRoleAssumeRolePolicyDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role EventMockProcessingLambdaFunction"
+      Policies:
+      - PolicyName: EventMockProcessingLambdaFunctionPolicy01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+      - PolicyName: EventMockProcessingLambdaFunctionPolicy02
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "sqs:ReceiveMessage"
+            - "sqs:DeleteMessage"
+            - "sqs:GetQueueAttributes"
+            - "sqs:ChangeMessageVisibility"
+            Resource: !GetAtt S3EventStoreNotificationQueue.Arn
+      RoleName: EventMockProcessingLambdaFunctionRole
+
+  ApiTest01EventLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Code: 
+        ZipFile: |
+          import json
+          import logging
+          import boto3
+          import hashlib
+          import traceback
+          logger = logging.getLogger()
+          logger.setLevel(logging.DEBUG)
+          def lambda_handler(event, context):
+              logger.debug('event={}'.format(event))
+              client = boto3.client('kinesis')
+              incoming_data = dict()
+              incoming_data['amazonTraceId'] = event['headers']['X-Amzn-Trace-Id']
+              incoming_data['numberOfFields'] = 0
+              incoming_data['fieldNames'] = ""
+              try:
+                  body_data = json.loads(event['body'])
+                  keys = list(body_data.keys())
+                  incoming_data['numberOfFields'] = len(keys)
+                  incoming_data['fieldNames'] = ",".join(keys)
+                  response = client.put_record(
+                      StreamName='data_recorder_01',
+                      Data='{}'.format(json.dumps(incoming_data)).encode('utf-8'),
+                      PartitionKey=hashlib.md5('{}'.format(json.dumps(incoming_data)).encode('utf-8')).hexdigest()
+                  )
+                  logger.debug('response={}'.format(response))
+              except:
+                  logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+              result = dict()
+              return_object = {
+                  'statusCode': 201,
+                  'headers': {
+                      'x-custom-header' : 'my custom header value',
+                      'content-type': 'application/json',
+                  },
+                  'body': result,
+                  'isBase64Encoded': False,
+              }
+              result['message'] = 'ok'
+              return_object['body'] = json.dumps(result)
+              return return_object
+      Description: "Handle the test event and emit event data to AWS Kinesis"
+      FunctionName: "ApiTest01EventLambdaFunction"
+      Handler: "index.lambda_handler"
+      MemorySize: 128
+      Role: !GetAtt ApiTest01EventLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 30
+
+
+#######################################################################################################################
+###                                                                                                                 ###
 ###                     ENTRY POINT FOR EVENTS - API HTTP GATEWAY WITH PROXY TO LAMBDA FUNCTION                     ###
 ###                                                                                                                 ###
 #######################################################################################################################
 
-  EventApiGateway:
+  PublicEventApiGateway:
     Type: AWS::ApiGatewayV2::Api
     Properties: 
       CorsConfiguration:
@@ -228,19 +326,35 @@ Resources:
         - "Date"
         - "x-api-id"
         MaxAge: 86400
+      Description: "The Internet facing HTTP API for publishing events from external sources, like web sites"
+      DisableExecuteApiEndpoint: true # For production, this will typically be disabled/false to force clients to use the custom domain
+      DisableSchemaValidation: true   # For production use we would have proper models defined and enforce validation
+      FailOnWarnings: false
+      Name: "public-events"
+      ProtocolType: "HTTP"
+      Version: "v1"
 
-      CredentialsArn: String
-      Description: String
-      DisableExecuteApiEndpoint: Boolean
-      DisableSchemaValidation: Boolean
-      FailOnWarnings: Boolean
-      Name: String
-      ProtocolType: String
-      RouteKey: String
-      RouteSelectionExpression: String
-      Tags: Json
+  PublicApiEVentRouteTest01:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: 
+      ApiId: !Ref PublicEventApiGateway
+      ApiKeyRequired: false
+      OperationName: "test-public-event-operation"
+      RouteKey: "POST /test01"
       Target: String
-      Version: String
+
+  PublicApiEventIntegrationTest01:  # NOTE: The maximum (and default) timeout is 30 seconds
+    Type: AWS::ApiGatewayV2::Integration
+    Properties: 
+      ApiId: !Ref PublicEventApiGateway
+      Description: Lambda Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: 
+        Fn::Sub: 
+        - "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${functionArn}/invocations"
+        - functionArn: !GetAtt ApiTest01EventLambdaFunction.Arn
+      IntegrationMethod: POST
+      PayloadFormatVersion: '2.0'
 
 
 Outputs:
@@ -250,3 +364,9 @@ Outputs:
     Value: !GetAtt S3EventStoreBucket.DomainName
     Export:
       Name: !Sub "${AWS::StackName}-S3EventStoreBucketDomainName"
+
+  PublicEventApiGatewayApiEndpoint:
+    Description: "The default endpoint for API PublicEventApiGateway"
+    Value: !GetAtt PublicEventApiGateway.ApiEndpoint
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicEventApiGatewayApiEndpoint"
