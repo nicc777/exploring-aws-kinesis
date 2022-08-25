@@ -33,7 +33,7 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
-###        RIGHT SIDE - S3 BUCKET WITH SNS TOPIC AND LAMBDA FOR PROCESSING NEW EVENTS IN THE EVENT STORE (S3)       ###
+###              S3 BUCKET WITH SNS TOPIC AND LAMBDA FOR PROCESSING NEW EVENTS IN THE EVENT STORE (S3)              ###
 ###                                                                                                                 ###
 #######################################################################################################################
 
