@@ -247,7 +247,7 @@ Resources:
       - "arm64"
       Environment:
           Variables: 
-            TARGET_STREAM_NAME : not-set
+            TARGET_STREAM_NAME : not-set  # TODO - set the name to the Kinesis stream name still to be defined
       Code: 
         ZipFile: |
           import json
