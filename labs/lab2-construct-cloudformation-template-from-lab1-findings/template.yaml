@@ -31,6 +31,12 @@ Parameters:
 
 Resources:
 
+#######################################################################################################################
+###                                                                                                                 ###
+###        RIGHT SIDE - S3 BUCKET WITH SNS TOPIC AND LAMBDA FOR PROCESSING NEW EVENTS IN THE EVENT STORE (S3)       ###
+###                                                                                                                 ###
+#######################################################################################################################
+
   S3EventStoreNotificationDeadLetterQueue:
     Type: AWS::SQS::Queue
     DeletionPolicy: Delete
@@ -190,6 +196,14 @@ Resources:
       Enabled: true
       EventSourceArn: !GetAtt S3EventStoreNotificationQueue.Arn
       FunctionName: !GetAtt EventMockProcessingLambdaFunction.Arn
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                     ENTRY POINT FOR EVENTS - API HTTP GATEWAY WITH PROXY TO LAMBDA FUNCTION                     ###
+###                                                                                                                 ###
+#######################################################################################################################
+
 
 
 Outputs:
