@@ -360,6 +360,39 @@ Resources:
       IntegrationMethod: POST
       PayloadFormatVersion: '2.0'
 
+  PublicEventApiGatewaySandboxStageDeployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    Properties: 
+      ApiId: !Ref PublicEventApiGateway
+      Description: "Sandbox Deployment"
+      StageName: "sandbox"
+
+  PublicEventApiGatewaySandboxStageLogs:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      RetentionInDays: 90
+
+  PublicEventApiGatewaySandboxStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties: 
+      AccessLogSettings: 
+        DestinationArn: !GetAtt PublicEventApiGatewaySandboxStageLogs.Arn
+        Format: $context.stage $context.integrationErrorMessage $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId $context.extendedRequestId
+      AccessPolicyId: String
+      ApiId: !Ref PublicEventApiGateway
+      AutoDeploy: true
+      DeploymentId: !Ref PublicEventApiGatewaySandboxStageDeployment
+      Description: "Testing Stage - Not for Production"
+      StageName: "sandbox"
+      DefaultRouteSettings:
+        DetailedMetricsEnabled: true
+        LoggingLevel: INFO
+        DataTraceEnabled: false
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 10
+
 
 Outputs:
 
