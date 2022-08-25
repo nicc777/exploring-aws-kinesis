@@ -204,6 +204,43 @@ Resources:
 ###                                                                                                                 ###
 #######################################################################################################################
 
+  EventApiGateway:
+    Type: AWS::ApiGatewayV2::Api
+    Properties: 
+      CorsConfiguration:
+        AllowCredentials: true
+        AllowHeaders: 
+        - "Content-Type"
+        - "X-Amz-Date"
+        - "Authorization"
+        - "X-Api-Key"
+        - "X-Amz-Security-Token"
+        AllowMethods: 
+        - OPTIONS
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        AllowOrigins: 
+        - "localhost"
+        - "localhost:9000"
+        ExposeHeaders: 
+        - "Date"
+        - "x-api-id"
+        MaxAge: 86400
+
+      CredentialsArn: String
+      Description: String
+      DisableExecuteApiEndpoint: Boolean
+      DisableSchemaValidation: Boolean
+      FailOnWarnings: Boolean
+      Name: String
+      ProtocolType: String
+      RouteKey: String
+      RouteSelectionExpression: String
+      Tags: Json
+      Target: String
+      Version: String
 
 
 Outputs:
