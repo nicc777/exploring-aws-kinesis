@@ -32,6 +32,7 @@ The following resources serves as sources of knowledge and technical information
 | Amazon Kinesis Documentation                                          | HTML/PDF      | [AWS Documentation Portal](https://docs.aws.amazon.com/kinesis/?id=docs_gateway)                                                           | Regularly Updated | Kinesis documentation and API reference                                                 |
 | AWS Serverless Application Repository                                 | HTML          | [AWS Serverless Application Repository Portal](https://aws.amazon.com/serverless/serverlessrepo/)                                          | Regularly Updated | Examples and blueprints for common applications that can be re-used                     |
 | Amazon Kinesis Data Firehose Data Transformation                      | HTML          | [Amazon Kinesis Data Firehose Data Transformation Documentation](https://docs.aws.amazon.com/firehose/latest/dev/data-transformation.html) | Regularly Updated | Notes about data transformation requirements for Lambda functions                       |
+| Cross-Origin Resource Sharing (CORS)                                  | HTML          | [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)                                                                     | Regularly Updated | CORS configuration is required for the API Gateway and this is a great resource         |
 
 _**Note**_: More resources will be added as I find them
 
