@@ -166,6 +166,18 @@ Resources:
             Resource: !GetAtt S3EventStoreNotificationQueue.Arn
       RoleName: EventMockProcessingLambdaFunctionRole
 
+  EventMockProcessingLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    DependsOn: EventMockProcessingLambdaFunction
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref EventMockProcessingLambdaFunction
+      RetentionInDays: 7
+
   EventMockProcessingLambdaFunction:
     Type: AWS::Lambda::Function
     Properties: 
