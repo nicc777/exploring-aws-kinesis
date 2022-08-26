@@ -361,7 +361,11 @@ Resources:
       ApiKeyRequired: false
       OperationName: "test-public-event-operation"
       RouteKey: "POST /test01"
-      Target: String
+      Target: 
+        Fn::Join:
+        - /
+        - - integrations
+          - !Ref PublicApiEventIntegrationTest01
 
   PublicApiEventIntegrationTest01:  # NOTE: The maximum (and default) timeout is 30 seconds
     Type: AWS::ApiGatewayV2::Integration
