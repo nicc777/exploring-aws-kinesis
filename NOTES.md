@@ -189,7 +189,7 @@ aws cloudformation deploy \
     --stack-name $STACK_NAME \
     --template-file labs/lab2-construct-cloudformation-template-from-lab1-findings/template.yaml \
     --parameter-overrides file://$PARAMETERS_FILE \
-    --capabilities CAPABILITY_IAM
+    --capabilities CAPABILITY_NAMED_IAM
 ```
 
 > Progress on 2022-08-24: I tried using KMS, but I seem to miss some kind of permission or policy as I could not get SNS to send messages to SQS, even when both services referenced the same KMS key. See commit 62ce58db5db99e6db91d2b92b4767438d1f258d6 (2022-08-24 05:38) for the config used. I will figure this out at a later stage. I may need to look [at this blog post](https://sbstjn.com/blog/aws-secured-sqs-sns-subscription-with-kms/) for some inspiration to get this to work.
