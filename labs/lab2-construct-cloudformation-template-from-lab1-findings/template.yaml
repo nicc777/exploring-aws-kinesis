@@ -342,8 +342,8 @@ Resources:
         - PUT
         - DELETE
         AllowOrigins: 
-        - "localhost"
-        - "localhost:9000"
+        - "http://localhost"
+        - "http://localhost:9000"
         ExposeHeaders: 
         - "Date"
         - "x-api-id"
@@ -381,7 +381,7 @@ Resources:
     Properties: 
       ApiId: !Ref PublicEventApiGateway
       Description: "Sandbox Deployment"
-      StageName: "sandbox"
+      # StageName: "sandbox"
 
   PublicEventApiGatewaySandboxStageLogs:
     Type: AWS::Logs::LogGroup
