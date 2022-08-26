@@ -127,8 +127,6 @@ Resources:
       Tags: 
       - Key: Purpose
         Value: EventStore
-      - Key: BusinessProcess
-        Value: ProcessABC
 
   EventMockProcessingLambdaFunctionRole:
     Type: AWS::IAM::Role
