@@ -350,7 +350,6 @@ Resources:
         MaxAge: 86400
       Description: "The Internet facing HTTP API for publishing events from external sources, like web sites"
       DisableExecuteApiEndpoint: false  # For production, this will typically be disabled/true to force clients to use the custom domain
-      DisableSchemaValidation: true     # For production use we would have proper models defined and enforce validation
       Name: "public-events"
       ProtocolType: "HTTP"
       Version: "v1"
