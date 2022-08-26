@@ -170,7 +170,6 @@ Resources:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
-    DependsOn: EventMockProcessingLambdaFunction
     Properties:
       LogGroupName:
         Fn::Sub:
