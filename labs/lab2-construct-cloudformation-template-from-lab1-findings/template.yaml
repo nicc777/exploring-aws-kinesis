@@ -190,7 +190,7 @@ Resources:
           def lambda_handler(event, context):
               logger.debug('event={}'.format(event))
               return "ok"
-      Description: "Function to process our events from S3. This function basically just logs the messages - no actual processing is done."
+      Description: "Function to process our events from S3. This function basically just logs the messages - no actual processing is done. Typically this function will look at the event and route it to an appropriate event handler via SNS."
       FunctionName: "EventMockProcessingLambdaFunction"
       Handler: "index.lambda_handler"
       MemorySize: 128
