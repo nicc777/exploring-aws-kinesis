@@ -367,7 +367,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Integration
     Properties: 
       ApiId: !Ref PublicEventApiGateway
-      Description: Lambda Integration
+      Description: "Lambda Integration"
       IntegrationType: AWS_PROXY
       IntegrationUri: 
         Fn::Sub: 
@@ -378,6 +378,7 @@ Resources:
 
   PublicEventApiGatewaySandboxStageDeployment:
     Type: AWS::ApiGatewayV2::Deployment
+    DependsOn: PublicApiEVentRouteTest01
     Properties: 
       ApiId: !Ref PublicEventApiGateway
       Description: "Sandbox Deployment"
