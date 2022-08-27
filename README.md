@@ -64,5 +64,6 @@ I expect this project to have the following stages:
 * Lab 2: Infrastructure as Code Lab Resource Provisioning (CloudFormation) (`In Progress`)
 * Lab 3: Adapt lab 2 to create a hybrid Kinesis and direct S3 put solution (splitting high volume and low volume data ingestion processes).
 * Lab 4: Evaluate Athena as a tool to query and replay old captured events
+* Lab 5: Reorganize the CloudFormation stacks to a manageable set of files. Invest some time to figure out [AWS::CloudFormation::Stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-stack.html). The aim of this is to see how we can add more events in future in a structured way, with some inheritance and resource project organization.
 * Finalize documentation, findings, conclusions and refactor final designs and artifacts
 * Maintenance Phase (long term)
