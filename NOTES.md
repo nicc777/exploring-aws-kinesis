@@ -329,7 +329,7 @@ The configuration allows for both HTTP Access Logs as well as Lambda logging.
 A typical `curl` test is demonstrated below:
 
 ```shell
-# Get the PAI ID...
+# Get the API ID...
 export API_URL=`aws cloudformation --region "$AWS_REGION" describe-stacks --stack-name $STACK_NAME --output json | jq ".Stacks[0].Outputs[].OutputValue" | egrep "^\"https" | awk -F\" '{print $2}'`
 
 curl -vvv -d '{"Message": "Test123"}' -H "Content-Type: application/json" -X POST $API_URL/sandbox/test01
