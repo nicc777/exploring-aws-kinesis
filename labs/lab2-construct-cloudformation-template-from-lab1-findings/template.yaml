@@ -401,7 +401,6 @@ Resources:
       AccessLogSettings: 
         DestinationArn: !GetAtt PublicEventApiGatewaySandboxStageLogs.Arn
         Format: $context.stage $context.integrationErrorMessage $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId $context.extendedRequestId
-      AccessPolicyId: String
       ApiId: !Ref PublicEventApiGateway
       AutoDeploy: true
       DeploymentId: !Ref PublicEventApiGatewaySandboxStageDeployment
