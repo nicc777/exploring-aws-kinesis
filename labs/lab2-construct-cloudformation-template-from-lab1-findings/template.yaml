@@ -615,7 +615,7 @@ Resources:
       MemorySize: 128
       Role: !GetAtt EventKinesisDeliveryStreamProcessingLambdaFunctionRole.Arn
       Runtime: "python3.8"
-      Timeout: 30
+      Timeout: 30 
 
 
 Outputs:
