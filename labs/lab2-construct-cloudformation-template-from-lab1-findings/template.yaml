@@ -16,6 +16,10 @@ Parameters:
   S3EventBucketParam:
     Type: String
     Description: "The name of the S3 bucket where the incoming event data will be stored. This is the Event store."
+  Test01RouteKey:
+    Type: String
+    Description: "The API Route Path"
+    Default: "test01"
 
 # Rules:
 #   set of rules
@@ -280,7 +284,8 @@ Resources:
               logger.debug('event={}'.format(event))
               client = boto3.client('kinesis')
               incoming_data = dict()
-              incoming_data['amazonTraceId'] = event['headers']['X-Amzn-Trace-Id']
+              if 'X-Amzn-Trace-Id' in event['headers']:
+                incoming_data['amazonTraceId'] = event['headers']['X-Amzn-Trace-Id']
               incoming_data['numberOfFields'] = 0
               incoming_data['fieldNames'] = ""
               try:
@@ -360,12 +365,25 @@ Resources:
       ApiId: !Ref PublicEventApiGateway
       ApiKeyRequired: false
       OperationName: "test-public-event-operation"
-      RouteKey: "POST /test01"
+      RouteKey: !Sub "POST /${Test01RouteKey}"
       Target: 
         Fn::Join:
         - /
         - - integrations
           - !Ref PublicApiEventIntegrationTest01
+
+  PublicApiEventIntegrationTest01Permission:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !GetAtt ApiTest01EventLambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn:
+        Fn::Sub:
+        -  "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGwId}/*/*/${Test01RouteKey}"
+        - ApiGwId: !Ref PublicEventApiGateway
+
 
   PublicApiEventIntegrationTest01:  # NOTE: The maximum (and default) timeout is 30 seconds
     Type: AWS::ApiGatewayV2::Integration
