@@ -440,7 +440,6 @@ Resources:
     Properties: 
       Name: "EventKinesisStream"
       RetentionPeriodHours: 24
-      ShardCount: 2
       StreamModeDetails: 
           StreamMode: "ON_DEMAND"
 
