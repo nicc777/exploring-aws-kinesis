@@ -323,3 +323,14 @@ Record nr 1
 The following stack portion was added that would add resources to get traffic from the Internet into the environment.
 
 ![API Gateway Resources](images/lab2-api-gw-ingress.png)
+
+The configuration allows for both HTTP Access Logs as well as Lambda logging.
+
+A typical `curl` test is demonstrated below:
+
+```shell
+# Get the PAI ID...
+export API_URL=`aws cloudformation --region "$AWS_REGION" describe-stacks --stack-name $STACK_NAME --output json | jq ".Stacks[0].Outputs[].OutputValue" | egrep "^\"https" | awk -F\" '{print $2}'`
+
+curl -vvv -d '{"Message": "Test123"}' -H "Content-Type: application/json" -X POST $API_URL/sandbox/test01
+```
