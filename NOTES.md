@@ -10,6 +10,7 @@
   - [Observation on Cost](#observation-on-cost)
 - [Lab 2: Infrastructure as Code Lab Resource Provisioning (CloudFormation)](#lab-2-infrastructure-as-code-lab-resource-provisioning-cloudformation)
   - [S3 Events to Lambda (Testing S3 events by just uploading a normal TXT file from the AWS Console)](#s3-events-to-lambda-testing-s3-events-by-just-uploading-a-normal-txt-file-from-the-aws-console)
+  - [Internet Facing API Gateway to Lambda API Gateway Integration Handler](#internet-facing-api-gateway-to-lambda-api-gateway-integration-handler)
 
 # Field Notes
 
@@ -316,3 +317,9 @@ Record nr 1
                 Event Key      : test_file.txt
 
 ```
+
+## Internet Facing API Gateway to Lambda API Gateway Integration Handler
+
+The following stack portion was added that would add resources to get traffic from the Internet into the environment.
+
+![API Gateway Resources](images/lab2-api-gw-ingress.png)
