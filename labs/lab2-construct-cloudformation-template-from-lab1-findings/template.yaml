@@ -269,7 +269,7 @@ Resources:
       - "arm64"
       Environment:
           Variables: 
-            TARGET_STREAM_NAME : not-set  # TODO - set the name to the Kinesis stream name still to be defined
+            TARGET_STREAM_NAME : !Ref EventKinesisStream
       Code: 
         ZipFile: |
           import json
@@ -444,6 +444,79 @@ Resources:
       StreamModeDetails: 
           StreamMode: "ON_DEMAND"
 
+  EventKinesisDeliveryStreamS3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: firehose.amazonaws.com
+          Action: 'sts:AssumeRole'
+          Condition:
+            StringEquals: 
+              'sts:ExternalId': !Ref 'AWS::AccountId'
+
+  EventKinesisDeliveryStreamS3Policy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: "EventKinesisDeliveryStreamPolicy"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Action:
+          - "s3:AbortMultipartUpload"
+          - "s3:GetBucketLocation"
+          - "s3:GetObject"
+          - "s3:ListBucket"
+          - "s3:ListBucketMultipartUploads"
+          - "s3:PutObject"
+          Resource:
+          - !Sub "arn:${AWS::Partition}:s3:::${S3EventStoreBucket}"
+          - !Sub "arn:${AWS::Partition}:s3:::${S3EventStoreBucket}*"
+        - Effect: Allow
+          Action:
+          - "lambda:InvokeFunction"
+          - "lambda:GetFunctionConfiguration"
+          Resource:
+          - !Sub "${EventKinesisDeliveryStreamProcessingLambdaFunction.Arn}*"
+      Roles:
+      - !Ref EventKinesisDeliveryStreamS3Role
+
+  EventKinesisDeliveryStreamSourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: firehose.amazonaws.com
+          Action: "sts:AssumeRole"
+          Condition:
+            StringEquals: 
+              "sts:ExternalId": !Ref "AWS::AccountId"
+
+  EventKinesisDeliveryStreamSourcePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: "EventKinesisDeliveryStreamPolicy"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Action:
+          - "kinesis:DescribeStream"
+          - "kinesis:GetShardIterator"
+          - "kinesis:GetRecords"
+          Resource: !GetAtt EventKinesisStream.Arn
+      Roles:
+      - !Ref EventKinesisDeliveryStreamSourceRole
+
   EventKinesisDeliveryStream:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties: 
@@ -455,26 +528,94 @@ Resources:
           IntervalInSeconds: 60
           SizeInMBs: 1
         CompressionFormat: "GZIP" # Take into consideration https://docs.aws.amazon.com/athena/latest/ug/compression-formats.html
-        DataFormatConversionConfiguration: 
-          DataFormatConversionConfiguration
-        DynamicPartitioningConfiguration: 
-          DynamicPartitioningConfiguration
-        EncryptionConfiguration: 
-          EncryptionConfiguration
-        ErrorOutputPrefix: String
-        Prefix: String
         ProcessingConfiguration: 
-          ProcessingConfiguration
-        RoleARN: String
-        S3BackupConfiguration: 
-          S3DestinationConfiguration
-        S3BackupMode: String
-
+          Enabled: true
+          Processors: 
+          - Parameters: 
+            - ParameterName: LambdaArn
+              ParameterValue: !GetAtt EventKinesisDeliveryStreamProcessingLambdaFunction.Arn
+            Type: "Lambda"
+        RoleARN: !GetAtt EventKinesisDeliveryStreamS3Role.Arn
       KinesisStreamSourceConfiguration: 
         KinesisStreamARN: !GetAtt EventKinesisStream.Arn
-        RoleARN: String
+        RoleARN: !GetAtt EventKinesisDeliveryStreamSourceRole.Arn
 
+  EventKinesisDeliveryStreamProcessingLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "EventKinesisDeliveryStreamProcessingLambdaFunctionRoleDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role EventMockProcessingLambdaFunction"
+      Policies:
+      - PolicyName: EventKinesisDeliveryStreamProcessingLambdaFunction01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+      RoleName: EventKinesisDeliveryStreamProcessingLambdaFunctionRole
 
+  EventKinesisDeliveryStreamProcessingLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref EventKinesisDeliveryStreamProcessingLambdaFunction
+      RetentionInDays: 7
+
+  EventKinesisDeliveryStreamProcessingLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Code: 
+        ZipFile: |
+          """
+              Using example from https://github.com/amazon-archives/serverless-app-examples/blob/master/python/kinesis-analytics-process-record-python/lambda_function.py
+              Adapted to add a more AWS and Python logging function for CloudWatch (replacing the print statements)
+          """
+          import base64
+          import logging
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          logger.info('Loading function')
+          def lambda_handler(event, context):
+              logger.info('event={}'.format(event))
+              output = []
+              for record in event['records']:
+                  payload = base64.b64decode(record['data'])
+                  logger.info('Pre-processed payload: {}'.format(payload))
+                  # Do custom processing on the record payload here
+                  logger.info('Processed payload: {}'.format(payload))
+                  output_record = {
+                      'recordId': record['recordId'],
+                      'result': 'Ok',
+                      'data': base64.b64encode(payload)
+                  }
+                  logger.info('Processed output record: {}'.format(output_record))
+                  output.append(output_record)
+              logger.info('Successfully processed {} records.'.format(len(event['records'])))
+              return {'records': output}
+      Description: "Function to process Kinesis Streams in flight for delivery to S3. The idea is to convert the incoming data in to our custom event format."
+      FunctionName: "EventKinesisDeliveryStreamProcessingLambdaFunction"
+      Handler: "index.lambda_handler"
+      MemorySize: 128
+      Role: !GetAtt EventKinesisDeliveryStreamProcessingLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 30
 
 
 Outputs:
