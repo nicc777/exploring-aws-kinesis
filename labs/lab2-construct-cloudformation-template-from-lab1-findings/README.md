@@ -173,6 +173,14 @@ export API_URL=`aws cloudformation --region "$AWS_REGION" describe-stacks --stac
 curl -vvv -d '{"Message": "Test123"}' -H "Content-Type: application/json" -X POST $API_URL/sandbox/test01
 ```
 
+## Integrating the Kinesis Components
+
+The final part of the CloudFormation template is to add the AWS Kinesis components, as depicted in the following diagram:
+
+![kinesis](../../images/lab2-kinesis.png)
+
+The Lambda function from the API Gateway will be the producer of events and the events will be processed in the Kinesis stream by a Lambda function before being persisted in S3.
+
 ## Final Testing and Verification
 
 Once the entire stack is deployed, the results can be verified with the `curl` command from the previous section, and then use the following commands to validate the test.
