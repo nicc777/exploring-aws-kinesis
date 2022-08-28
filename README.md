@@ -51,6 +51,10 @@ The various practical exercises I did is located in the `labs` directory. All la
 | Lab 5       | Project Management and DevOps Topic                                                                                                    | Not Started |
 | Lab 6       | Tightening up security. Encryption of data in flight and at rest everywhere.                                                           | Not Started |
 | Lab 7       | A practical application and Load Test                                                                                                  | Not Started |
+| Lab 8       | Add private (internal) SNS Topics for events only originating from internal systems                                                    | Not Started |
+| Lab 9       | Add a custom domain and protect the API Gateway from being called from the AWS URL                                                     | Not Started |
+| Lab 10      | Add authentication and authorization                                                                                                   | Not Started |
+| Lab 11      | Observability                                                                                                                          | Not Started |
 
 # Current Status
 
@@ -69,7 +73,11 @@ I expect this project to have the following stages:
 * Lab 3: Adapt lab 2 to create a hybrid Kinesis and direct S3 put solution (splitting high volume and low volume data ingestion processes).
 * Lab 4: Evaluate Athena as a tool to query and replay old captured events
 * Lab 5: Reorganize the CloudFormation stacks to a manageable set of files. Invest some time to figure out [AWS::CloudFormation::Stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-stack.html). The aim of this is to see how we can add more events in future in a structured way, with some inheritance and resource project organization.
-* Lab 6: Use private KMS in all areas to encrypt data
+* Lab 6: Use private KMS in all areas to encrypt data. Introduce data models to enforce input and output validation.
 * Lab 7: A practical example with some real logic and a CloudFormation template to setup and run load tests via something like [Locust](https://locust.io/)
+* Lab 8: Look at adding SNS Topics or other ingress services for events generated internally (not publicly exposed). Adapt examples - see if some of the external event processing can generate an internal only event. Explore how failures are handled.
+* Lab 9: Add a custom domain and look at ways to protect the AWS URL for API Gateway. Also consider ACM and digital certificates.
+* Lab 10: Adapt end-points and processing to expose public endpoints (not authorization), and protected end-points (requires API key or authorization token). 
+* Lab 11: Play with X-Ray to trace events. Look at how to build dashboards and alerts to monitor when things go wrong. Create specific artificial errors in test for: a) Incorrect input models; b) Valid input model with invalid data (processing failure); c) Authentication/Authorization failures; d) Artificial processing slow down
 * Finalize documentation, findings, conclusions and refactor final designs and artifacts
 * Maintenance Phase (long term)
