@@ -45,9 +45,10 @@ The various practical exercises I did is located in the `labs` directory. All la
 | Lab Session | Description                                                                                                                            | Status      |
 |:-----------:|----------------------------------------------------------------------------------------------------------------------------------------|:-----------:|
 | Lab 1       | Creating resources via the AWS Console to get an initial idea of what is required, how it works and the settings required              | Complete    |
-| Lab 2       | Take learnings from Lab 1 and produce a CloudFormation template (or templates) to easily create more streams ingested from API Gateway | In Progress |
-| Lab 3       | A lower volume example without Kinesis - ideal for a mixed environment                                                                 | Not Started |
+| Lab 2       | Take learnings from Lab 1 and produce a CloudFormation template (or templates) to easily create more streams ingested from API Gateway | Complete    |
+| Lab 3       | A lower volume example without Kinesis - ideal for a mixed environment                                                                 | In Progress |
 | Lab 4       | Operations: replaying old events                                                                                                       | Not Started |
+| Lab 5       | Project Management and DevOps Topic                                                                                                    | Not Started |
 
 # Current Status
 
@@ -62,7 +63,7 @@ I expect this project to have the following stages:
 * ~~Early Exploration~~ 
 * ~~Lab Design (based on learnings from documentation)~~
 * ~~Lab 1: Manual Lab Resource Provisioning (AWS API and AWS Console)~~
-* Lab 2: Infrastructure as Code Lab Resource Provisioning (CloudFormation) (`In Progress`)
+* ~~Lab 2: Infrastructure as Code Lab Resource Provisioning (CloudFormation)~~
 * Lab 3: Adapt lab 2 to create a hybrid Kinesis and direct S3 put solution (splitting high volume and low volume data ingestion processes).
 * Lab 4: Evaluate Athena as a tool to query and replay old captured events
 * Lab 5: Reorganize the CloudFormation stacks to a manageable set of files. Invest some time to figure out [AWS::CloudFormation::Stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-stack.html). The aim of this is to see how we can add more events in future in a structured way, with some inheritance and resource project organization.
