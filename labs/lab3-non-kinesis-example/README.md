@@ -24,6 +24,21 @@ Each of the API endpoints is services by a Lambda function.
 
 What is of particular interest for me here is how I can split the business logic (Docker image, Lambda functions etc.) from Infrastructure (the rest).
 
+From a high level process perspective refer to the following diagram:
+
+![scenario 1](../../images/scenario_01.png)
+
+Physical world scenario walk through:
+
+* A new employee does not have an access card. They are physically present in a building where the card will be issued.
+* The new employee meets up with an authorized representative that will issue an access card to the employee
+* The authorized representative captures the data in the system before handing over the access card to the new employee
+* When the authorized representative can confirm that the card has been issued, the physical card is now actually issued to the employee
+
+From an infrastructure and application perspective, we have the following context diagram:
+
+![scenario 1 architecture context diagram](../../images/scenario_01_design.png)
+
 ## DynamoDB Design
 
 TODO
