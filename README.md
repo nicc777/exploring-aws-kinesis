@@ -133,7 +133,7 @@ The various practical exercises I did is located in the `labs` directory. Click 
 
 # Current Status
 
-> Infrastructure as Code Lab Resource Provisioning
+> Adapt lab 2 to create a hybrid Kinesis and direct S3 put solution
 
 This project started on 2022-08-18 and I am still in the early stages of collecting theoretical knowledge.
 
