@@ -40,21 +40,21 @@ _**Note**_: More resources will be added as I find them
 
 # Labs
 
-The various practical exercises I did is located in the `labs` directory. All lab notes is in the file [NOTES.md](NOTES.md). Below is a short description of what each lab directory contains:
+The various practical exercises I did is located in the `labs` directory. Click on the link for each lab to view the detailed documentation and findings for that lab. Below is a short description of what each lab directory contains:
 
-| Lab Session | Description                                                                                                                            | Status      |
-|:-----------:|----------------------------------------------------------------------------------------------------------------------------------------|:-----------:|
-| Lab 1       | Creating resources via the AWS Console to get an initial idea of what is required, how it works and the settings required              | Complete    |
-| Lab 2       | Take learnings from Lab 1 and produce a CloudFormation template (or templates) to easily create more streams ingested from API Gateway | Complete    |
-| Lab 3       | A lower volume example without Kinesis - ideal for a mixed environment                                                                 | In Progress |
-| Lab 4       | Operations: replaying old events                                                                                                       | Not Started |
-| Lab 5       | Project Management and DevOps Topic                                                                                                    | Not Started |
-| Lab 6       | Tightening up security. Encryption of data in flight and at rest everywhere.                                                           | Not Started |
-| Lab 7       | A practical application and Load Test                                                                                                  | Not Started |
-| Lab 8       | Add private (internal) SNS Topics for events only originating from internal systems                                                    | Not Started |
-| Lab 9       | Add a custom domain and protect the API Gateway from being called from the AWS URL                                                     | Not Started |
-| Lab 10      | Add authentication and authorization                                                                                                   | Not Started |
-| Lab 11      | Observability                                                                                                                          | Not Started |
+| Lab Session                                                                       | Description                                                                                                                            | Status      |
+|:---------------------------------------------------------------------------------:|----------------------------------------------------------------------------------------------------------------------------------------|:-----------:|
+| [Lab 1](labs/lab1-create-solution-using-aws-console/README.md)                    | Creating resources via the AWS Console to get an initial idea of what is required, how it works and the settings required              | Complete    |
+| [Lab 2](labs/lab2-construct-cloudformation-template-from-lab1-findings/README.md) | Take learnings from Lab 1 and produce a CloudFormation template (or templates) to easily create more streams ingested from API Gateway | Complete    |
+| Lab 3                                                                             | A lower volume example without Kinesis - ideal for a mixed environment                                                                 | In Progress |
+| Lab 4                                                                             | Operations: replaying old events                                                                                                       | Not Started |
+| Lab 5                                                                             | Project Management and DevOps Topic                                                                                                    | Not Started |
+| Lab 6                                                                             | Tightening up security. Encryption of data in flight and at rest everywhere.                                                           | Not Started |
+| Lab 7                                                                             | A practical application and Load Test                                                                                                  | Not Started |
+| Lab 8                                                                             | Add private (internal) SNS Topics for events only originating from internal systems                                                    | Not Started |
+| Lab 9                                                                             | Add a custom domain and protect the API Gateway from being called from the AWS URL                                                     | Not Started |
+| Lab 10                                                                            | Add authentication and authorization                                                                                                   | Not Started |
+| Lab 11                                                                            | Observability                                                                                                                          | Not Started |
 
 # Current Status
 
