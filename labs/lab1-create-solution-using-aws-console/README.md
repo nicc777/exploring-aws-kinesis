@@ -20,15 +20,15 @@ I will start with the S3 bucket and work my way first to the left. Components to
 
 I Created a bucket with public access disabled and encryption enabled (using AWS keys). These were the API calls made:
 
-| Call Order | URL                                                     | Method | Request Data                                                                                                  | Action Description  |
-|:----------:|---------------------------------------------------------|:------:|---------------------------------------------------------------------------------------------------------------|---------------------|
-| 001        | https://eu-central-1.console.aws.amazon.com/s3/proxy    | `POST` | [001_s3_create_bucket_call.json](labs/lab1-create-solution-using-aws-console/001_s3_create_bucket_call.json)  | Create Bucket       |
-| 002        | https://eu-central-1.console.aws.amazon.com/s3/command  | `POST` | [002_s3_create_bucket_call.json](labs/lab1-create-solution-using-aws-console/002_s3_create_bucket_call.json)  | Block Public Access |
-| 003        | https://eu-central-1.console.aws.amazon.com/s3/proxy    | `POST` | [003_s3_create_bucket_call.json](labs/lab1-create-solution-using-aws-console/003_s3_create_bucket_call.json)  | Enable Encryption   |
+| Call Order | URL                                                     | Method | Request Data                                                      | Action Description  |
+|:----------:|---------------------------------------------------------|:------:|-------------------------------------------------------------------|---------------------|
+| 001        | https://eu-central-1.console.aws.amazon.com/s3/proxy    | `POST` | [001_s3_create_bucket_call.json](001_s3_create_bucket_call.json)  | Create Bucket       |
+| 002        | https://eu-central-1.console.aws.amazon.com/s3/command  | `POST` | [002_s3_create_bucket_call.json](002_s3_create_bucket_call.json)  | Block Public Access |
+| 003        | https://eu-central-1.console.aws.amazon.com/s3/proxy    | `POST` | [003_s3_create_bucket_call.json](003_s3_create_bucket_call.json)  | Enable Encryption   |
 
 ## Resource: Lambda function for Kinesis Data Transformation
 
-Using the [AWS Serverless Application Repository](https://aws.amazon.com/serverless/serverlessrepo/), I created a [Lambda Function](labs/lab1-create-solution-using-aws-console/lambda_functions/data_recorder_kconvert/data_recorder_kconvert_v1.py) to just log the payload and pass it through to the S3 bucket. I will later modify this function to convert the data to CSV suitable for Athena.
+Using the [AWS Serverless Application Repository](https://aws.amazon.com/serverless/serverlessrepo/), I created a [Lambda Function](lambda_functions/data_recorder_kconvert/data_recorder_kconvert_v1.py) to just log the payload and pass it through to the S3 bucket. I will later modify this function to convert the data to CSV suitable for Athena.
 
 The Lambda function create API calls was not captured, as I already know how to define a Lambda function in CloudFormation very well, and I will just use what I already have. I will however attempt to record permissions change API calls when creating Kinesis resources as these will be important for the final CloudFormation template.
 
@@ -36,27 +36,27 @@ The Lambda function create API calls was not captured, as I already know how to 
 
 I created a data stream with all the initial settings left at their defaults. The second call was after initial creation that enabled server side encryption (SSE)
 
-| Call Order | URL                                                     | Method | Request Data                                                                                                                    | Action Description  |
-|:----------:|---------------------------------------------------------|:------:|---------------------------------------------------------------------------------------------------------------------------------|---------------------|
-| 004        | https://kinesis.eu-central-1.amazonaws.com/             | `POST` | [001_kineses_data_stream_call.json](labs/lab1-create-solution-using-aws-console/001_kineses_data_stream_call.json)              | Create Data Stream  |
-| 005        | https://kinesis.eu-central-1.amazonaws.com/             | `POST` | [002_kineses_data_stream_enable_sse.json](labs/lab1-create-solution-using-aws-console/002_kineses_data_stream_enable_sse.json)  | Enable SSE          |
+| Call Order | URL                                                     | Method | Request Data                                                                        | Action Description  |
+|:----------:|---------------------------------------------------------|:------:|-------------------------------------------------------------------------------------|---------------------|
+| 004        | https://kinesis.eu-central-1.amazonaws.com/             | `POST` | [001_kineses_data_stream_call.json](001_kineses_data_stream_call.json)              | Create Data Stream  |
+| 005        | https://kinesis.eu-central-1.amazonaws.com/             | `POST` | [002_kineses_data_stream_enable_sse.json](002_kineses_data_stream_enable_sse.json)  | Enable SSE          |
 
 ## Resource: Kinesis Firehose Delivery Stream
 
 > _**NOTE**_: I got a warning at this stage to increase the Lambda timeout to 1 minute or more. I did that first and then returned to this process.
 
-| Call Order | URL                                                     | Method | Request Data                                                                                                      | Action Description                                                                                                                                       |
-|:----------:|---------------------------------------------------------|:------:|-------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 006        | https://iamadmin.amazonaws.com/                         | `POST` | [006_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/006_kineses_delivery_stream.json)  | IAM Permissions                                                                                                                                          |
-| 007        | https://iamadmin.amazonaws.com/                         | `POST` | [007_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/007_kineses_delivery_stream.json)  | IAM Permissions                                                                                                                                          |
-| 008        | https://logs.eu-central-1.amazonaws.com/                | `POST` | [008_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/008_kineses_delivery_stream.json)  | Log Group                                                                                                                                                |
-| 009        | https://logs.eu-central-1.amazonaws.com/                | `POST` | [009_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/009_kineses_delivery_stream.json)  | Log Group                                                                                                                                                |
-| 010        | https://logs.eu-central-1.amazonaws.com/                | `POST` | [010_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/010_kineses_delivery_stream.json)  | Log Group                                                                                                                                                |
-| 011        | https://firehose.eu-central-1.amazonaws.com/            | `POST` | [011_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/011_kineses_delivery_stream.json)  | Delivery Stream - generated a 400 response                                                                                                               |
-| 012        | https://firehose.eu-central-1.amazonaws.com/            | `POST` | [012_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/012_kineses_delivery_stream.json)  | Repeat of request 011 - repeated several times... Each time a 400 response was created. I assume the process is waiting for the IAM permission to apply. |
-| 013        | https://firehose.eu-central-1.amazonaws.com/            | `POST` | [013_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/013_kineses_delivery_stream.json)  | Delivery Stream - Finally succeeded                                                                                                                      |
-| 014        | https://firehose.eu-central-1.amazonaws.com/            | `POST` | [014_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/014_kineses_delivery_stream.json)  | Unsure of what this request is for...                                                                                                                    |
-| 015        | https://logs.eu-central-1.amazonaws.com/                | `POST` | [015_kineses_delivery_stream.json](labs/lab1-create-solution-using-aws-console/015_kineses_delivery_stream.json)  | Appears to be getting logs - no events were returned                                                                                                     |
+| Call Order | URL                                                     | Method | Request Data                                                          | Action Description                                                                                                                                       |
+|:----------:|---------------------------------------------------------|:------:|-----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 006        | https://iamadmin.amazonaws.com/                         | `POST` | [006_kineses_delivery_stream.json](006_kineses_delivery_stream.json)  | IAM Permissions                                                                                                                                          |
+| 007        | https://iamadmin.amazonaws.com/                         | `POST` | [007_kineses_delivery_stream.json](007_kineses_delivery_stream.json)  | IAM Permissions                                                                                                                                          |
+| 008        | https://logs.eu-central-1.amazonaws.com/                | `POST` | [008_kineses_delivery_stream.json](008_kineses_delivery_stream.json)  | Log Group                                                                                                                                                |
+| 009        | https://logs.eu-central-1.amazonaws.com/                | `POST` | [009_kineses_delivery_stream.json](009_kineses_delivery_stream.json)  | Log Group                                                                                                                                                |
+| 010        | https://logs.eu-central-1.amazonaws.com/                | `POST` | [010_kineses_delivery_stream.json](010_kineses_delivery_stream.json)  | Log Group                                                                                                                                                |
+| 011        | https://firehose.eu-central-1.amazonaws.com/            | `POST` | [011_kineses_delivery_stream.json](011_kineses_delivery_stream.json)  | Delivery Stream - generated a 400 response                                                                                                               |
+| 012        | https://firehose.eu-central-1.amazonaws.com/            | `POST` | [012_kineses_delivery_stream.json](012_kineses_delivery_stream.json)  | Repeat of request 011 - repeated several times... Each time a 400 response was created. I assume the process is waiting for the IAM permission to apply. |
+| 013        | https://firehose.eu-central-1.amazonaws.com/            | `POST` | [013_kineses_delivery_stream.json](013_kineses_delivery_stream.json)  | Delivery Stream - Finally succeeded                                                                                                                      |
+| 014        | https://firehose.eu-central-1.amazonaws.com/            | `POST` | [014_kineses_delivery_stream.json](014_kineses_delivery_stream.json)  | Unsure of what this request is for...                                                                                                                    |
+| 015        | https://logs.eu-central-1.amazonaws.com/                | `POST` | [015_kineses_delivery_stream.json](015_kineses_delivery_stream.json)  | Appears to be getting logs - no events were returned                                                                                                     |
 
 ## Resource: HTTP API Gateway and Lambda Function for API Gateway Proxy Requests Handling
 
@@ -68,12 +68,12 @@ I also manually created a basic HTTP API Gateway, not yet integrated with the La
 
 First, linking the API Gateway to the Lambda Function (Trigger):
 
-| Call Order | URL                                                              | Method | Request Data                                                                                                                    | Action Description                                                                                                                                       |
-|:----------:|------------------------------------------------------------------|:------:|---------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 016        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [016_api_gateway_lambda_integration.json](labs/lab1-create-solution-using-aws-console/016_api_gateway_lambda_integration.json)  | Create a trigger                                                                                                                                         |
-| 017        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [017_api_gateway_lambda_integration.json](labs/lab1-create-solution-using-aws-console/017_api_gateway_lambda_integration.json)  | List Relations                                                                                                                                           |
-| 018        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [018_api_gateway_lambda_integration.json](labs/lab1-create-solution-using-aws-console/018_api_gateway_lambda_integration.json)  | Get Integration Policy                                                                                                                                   |
-| 019        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [019_api_gateway_lambda_integration.json](labs/lab1-create-solution-using-aws-console/019_api_gateway_lambda_integration.json)  | List API Gateway Routes (only one exists, so the association is easy to make)                                                                            |
+| Call Order | URL                                                              | Method | Request Data                                                                        | Action Description                                                                                                                                       |
+|:----------:|------------------------------------------------------------------|:------:|-------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 016        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [016_api_gateway_lambda_integration.json](016_api_gateway_lambda_integration.json)  | Create a trigger                                                                                                                                         |
+| 017        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [017_api_gateway_lambda_integration.json](017_api_gateway_lambda_integration.json)  | List Relations                                                                                                                                           |
+| 018        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [018_api_gateway_lambda_integration.json](018_api_gateway_lambda_integration.json)  | Get Integration Policy                                                                                                                                   |
+| 019        | https://eu-central-1.console.aws.amazon.com/lambda/services/ajax | `POST` | [019_api_gateway_lambda_integration.json](019_api_gateway_lambda_integration.json)  | List API Gateway Routes (only one exists, so the association is easy to make)                                                                            |
 
 At this point I updated the Lambda function to add logging [as per AWS Documentation](https://docs.aws.amazon.com/lambda/latest/dg/python-logging.html#python-logging-lib) and test teh API Gateway integration with a simple JSON POST.
 
@@ -103,9 +103,9 @@ Note: Unnecessary use of -X or --request, POST is already inferred.
 {"message": "ok"}%     
 ```
 
-The data that the Lambda will receive (in the `event`): [example_api_gateway_proxy_v2_request.json](labs/lab1-create-solution-using-aws-console/lambda_functions/example_api_gateway_proxy_v2_request.json)
+The data that the Lambda will receive (in the `event`): [example_api_gateway_proxy_v2_request.json](lambda_functions/example_api_gateway_proxy_v2_request.json)
 
-Lambda Function Source Code: [data_recorder_kconvert_kinesis_producer.py](labs/lab1-create-solution-using-aws-console/lambda_functions/data_recorder_kconvert_kinesis_producer/data_recorder_kconvert_kinesis_producer.py)
+Lambda Function Source Code: [data_recorder_kconvert_kinesis_producer.py](lambda_functions/data_recorder_kconvert_kinesis_producer/data_recorder_kconvert_kinesis_producer.py)
 
 Lambda permissions (policy) in JSON:
 
