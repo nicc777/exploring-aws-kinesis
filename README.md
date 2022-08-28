@@ -7,7 +7,7 @@
   - [Final Notes](#final-notes)
 - [Resources](#resources)
 - [Labs](#labs)
-- [Current Status](#current-status)
+- [Current Progress and Critical Updates](#current-progress-and-critical-updates)
 
 # Exploring AWS Kinesis
 
@@ -131,7 +131,7 @@ The various practical exercises I did is located in the `labs` directory. Click 
 | Lab 10                                                                            | Add authentication and authorization                                                                                                   | Not Started |
 | Lab 11                                                                            | Observability                                                                                                                          | Not Started |
 
-# Current Status
+# Current Progress and Critical Updates
 
 This project started on 2022-08-18 ~~and I am still in the early stages of collecting theoretical knowledge~~. I got the Kinesis streams working, but there is still a number of things to explore. For example, I want to learn how to protect my data in flight, end-to-end.
 
