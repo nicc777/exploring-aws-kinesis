@@ -20,6 +20,32 @@ I also want to explore event-replay to see how such a pattern would work. An exa
 
 Further more I am also interested in the operational aspects and observability options. I want to explore what type of alerts may be required.
 
+# Example Application
+
+Lab 1 and 2 are early exploratory labs and as such, they will not contain any meaningful data or even processing functions - it's basically boilerplate stuff to see if it works.
+
+From Lab 3 I am starting to think about a practical application. I have settled on a _"Employee Access Card Usage Event Capturing System"_.
+
+First of all, there are two types of event sources to consider:
+
+* Events from external sources: these are events from devices that have scanned a RFID badge and now submits that data to a public API and-point. We could argue that the AWS IoT services may be better suited for this, but for now I am going to pretend that those services do not exist. At some point I would also introduce some kind to authorization (API Key) so that we ensure that our data is only collected from trusted devices. We will simulate a number of offices where many thousands of people can access turnstiles, vending machines and many other devices that access cards can be scanned for use. There are scenarios, like a person entering a building via a turnstile gate, where a card swipe needs to be synchronize and these scenarios are not ideal for Kinesis. There are other scenarios that may be high volume and where Kinesis can be used, for example to exit a building (always allow - but delay processing).
+* Other events are from trusted sources inside our infrastructure that do not require access via a public API Gateway. An example would be when HR from a secured workstation issue a new access card to an employee.
+
+In this scenario and broad use-cases, I would therefore build up the following applications with their relevant events:
+
+| Process                                                           | Description                                                                        | Requires API Gateway | Sync/Async   | High Volume | Authentication | Authorization |
+|-------------------------------------------------------------------|------------------------------------------------------------------------------------|:--------------------:|:------------:|:-----------:|:--------------:|:-------------:|
+| Register a New Employee Access Card                               | A new Access Card is Issued                                                        |  No                  |  Async (Web) |   No        | AWS Cognito    | JWT Token     |
+| Enter building through a turnstile gate                           | A person enters the building and must scan their access card at the turnstile gate |  Yes                 |  Sync        |   No        | n/a            | API Key       |
+| Exit building through a turnstile gate                            | A person exits the building. In emergencies, this could be a high volume scenario. |  Yes                 |  Async       |   Yes       | n/a            | API Key       |
+| Authenticated user views access card usage events for an employee | An external auditor review key scan logs of an individual                          |  Yes                 |  Async (Web) |   No        | AWS Cognito    | JWT Token     |
+
+_**Note**_: Async events can use Kinesis if it is a potential high volume scenario. Events are buffered and therefore there can be small delays before events are processed.
+
+Another business rule we will introduce is that access cannot be allowed if the current employee is considered to be already in the building. In other words, you must scan out before you can scan back in. This means that sometimes when an employee goes out, and immediately tries to go back in, they may have to wait a little.
+
+The actual card state will be maintained in a DynamoDB table.
+
 # Resources
 
 The following resources serves as sources of knowledge and technical information:

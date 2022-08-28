@@ -5,6 +5,7 @@
         "hexdigest",
         "kconvert",
         "Redrive",
+        "RFID",
         "Tierings",
         "traceback",
         "zcat"
