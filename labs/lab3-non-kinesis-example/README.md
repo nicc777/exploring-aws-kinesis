@@ -80,3 +80,9 @@ TODO
 ## Private API Gateway to access the Lambda API's.
 
 TODO
+
+# Random Thoughts
+
+Something that occurred to me while I was designing this solution was to think about why I would still expose certain applications via EC2 - why not have everything as serverless?
+
+The fact is that sometime we still have to deal with off-the-shelve products, and I am treating this web app as a typical example. In theory I could also just host it directly from S3, but I would like to use this opportunity to exercise some other concepts as well, even though they may not be too high on the cool-scale.
