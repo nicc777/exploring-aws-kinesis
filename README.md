@@ -135,7 +135,7 @@ The various practical exercises I did is located in the `labs` directory. Click 
 
 > Adapt lab 2 to create a hybrid Kinesis and direct S3 put solution
 
-This project started on 2022-08-18 and I am still in the early stages of collecting theoretical knowledge.
+This project started on 2022-08-18 ~~and I am still in the early stages of collecting theoretical knowledge~~. I got the Kinesis streams working, but there is still a number of things to explore. For example, I want to learn how to protect my data in flight, end-to-end.
 
 More information will be provided on an ongoing bases.
 
