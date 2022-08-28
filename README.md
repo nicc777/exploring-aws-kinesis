@@ -108,6 +108,7 @@ The following resources serves as sources of knowledge and technical information
 | Cross-Origin Resource Sharing (CORS)                                  | HTML          | [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)                                                                     | Regularly Updated | CORS configuration is required for the API Gateway and this is a great resource         |
 | Configuring CORS for an HTTP API                                      | HTML          | [AWS Documentation for API Gateway v2](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-cors.html)                    | Regularly Updated | Examples of some specific settings relevant to AWS API Gateway                          |
 | Athena compression support                                            | HTML          | [AWS Documentation for Athena](https://docs.aws.amazon.com/athena/latest/ug/compression-formats.html)                                      | Regularly Updated | Need to consider this when deciding on a file format to store Events in S3 in.          |
+| Best practices for designing and architecting with DynamoDB           | HTML          | [AWS Documentation for DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html)                     | Regularly Updated | Required for the real scenario to hold our employee and access card data                |
 
 _**Note**_: More resources will be added as I find them
 
