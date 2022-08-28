@@ -1,3 +1,14 @@
+- [Exploring AWS Kinesis](#exploring-aws-kinesis)
+- [Example Application](#example-application)
+  - [Process: Register a New Employee Access Card](#process-register-a-new-employee-access-card)
+  - [Process: Enter building through a turnstile gate](#process-enter-building-through-a-turnstile-gate)
+  - [Process: Exit building through a turnstile gate](#process-exit-building-through-a-turnstile-gate)
+  - [Process: Authenticated user views access card usage events for an employee](#process-authenticated-user-views-access-card-usage-events-for-an-employee)
+  - [Final Notes](#final-notes)
+- [Resources](#resources)
+- [Labs](#labs)
+- [Current Status](#current-status)
+
 # Exploring AWS Kinesis
 
 > _**Please Note**_ This is a personal learning experiment and none of the code or examples here are intended for production use. I share my designs, code and other artifacts for the purposes of sharing my experiences and learnings and also to encourage community participation as I believe in the principle of sharing knowledge and experience. 
@@ -33,12 +44,48 @@ First of all, there are two types of event sources to consider:
 
 In this scenario and broad use-cases, I would therefore build up the following applications with their relevant events:
 
-| Process                                                           | Description                                                                        | Requires API Gateway | Sync/Async   | High Volume | Authentication | Authorization |
-|-------------------------------------------------------------------|------------------------------------------------------------------------------------|:--------------------:|:------------:|:-----------:|:--------------:|:-------------:|
-| Register a New Employee Access Card                               | A new Access Card is Issued                                                        |  No                  |  Async (Web) |   No        | AWS Cognito    | JWT Token     |
-| Enter building through a turnstile gate                           | A person enters the building and must scan their access card at the turnstile gate |  Yes                 |  Sync        |   No        | n/a            | API Key       |
-| Exit building through a turnstile gate                            | A person exits the building. In emergencies, this could be a high volume scenario. |  Yes                 |  Async       |   Yes       | n/a            | API Key       |
-| Authenticated user views access card usage events for an employee | An external auditor review key scan logs of an individual                          |  Yes                 |  Async (Web) |   No        | AWS Cognito    | JWT Token     |
+## Process: Register a New Employee Access Card
+
+A new Access Card is Issued.
+
+![Scenario 01](images/scenario_01.png)
+
+| Requires API Gateway | Sync/Async   | High Volume | Authentication | Authorization |
+|:--------------------:|:------------:|:-----------:|:--------------:|:-------------:|
+|  No                  |  Async (Web) |   No        | AWS Cognito    | JWT Token     |
+
+## Process: Enter building through a turnstile gate
+
+A person enters the building and must scan their access card at the turnstile gate.
+
+![Scenario 01](images/scenario_02.png)
+
+| Requires API Gateway | Sync/Async   | High Volume | Authentication | Authorization |
+|:--------------------:|:------------:|:-----------:|:--------------:|:-------------:|
+|  Yes                 |  Sync        |   No        | n/a            | API Key       |
+
+## Process: Exit building through a turnstile gate
+
+A person exits the building. In emergencies, this could be a high volume scenario.
+
+![Scenario 01](images/scenario_03.png)
+
+| Requires API Gateway | Sync/Async   | High Volume | Authentication | Authorization |
+|:--------------------:|:------------:|:-----------:|:--------------:|:-------------:|
+|  Yes                 |  Async       |   Yes       | n/a            | API Key       |
+
+
+## Process: Authenticated user views access card usage events for an employee
+
+An external auditor review key scan logs of an individual.
+
+![Scenario 01](images/scenario_04.png)
+
+| Requires API Gateway | Sync/Async   | High Volume | Authentication | Authorization |
+|:--------------------:|:------------:|:-----------:|:--------------:|:-------------:|
+|  Yes                 |  Async (Web) |   No        | AWS Cognito    | JWT Token     |
+
+## Final Notes
 
 _**Note**_: Async events can use Kinesis if it is a potential high volume scenario. Events are buffered and therefore there can be small delays before events are processed.
 
