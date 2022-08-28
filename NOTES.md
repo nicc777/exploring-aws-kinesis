@@ -11,6 +11,8 @@
 - [Lab 2: Infrastructure as Code Lab Resource Provisioning (CloudFormation)](#lab-2-infrastructure-as-code-lab-resource-provisioning-cloudformation)
   - [S3 Events to Lambda (Testing S3 events by just uploading a normal TXT file from the AWS Console)](#s3-events-to-lambda-testing-s3-events-by-just-uploading-a-normal-txt-file-from-the-aws-console)
   - [Internet Facing API Gateway to Lambda API Gateway Integration Handler](#internet-facing-api-gateway-to-lambda-api-gateway-integration-handler)
+  - [Final Testing and Verification](#final-testing-and-verification)
+  - [Lab Cleanup](#lab-cleanup)
 
 # Field Notes
 
@@ -334,3 +336,71 @@ export API_URL=`aws cloudformation --region "$AWS_REGION" describe-stacks --stac
 
 curl -vvv -d '{"Message": "Test123"}' -H "Content-Type: application/json" -X POST $API_URL/sandbox/test01
 ```
+
+## Final Testing and Verification
+
+Once the entire stack is deployed, the results can be verified with the `curl` command from the previous section, and then use the following commands to validate the test.
+
+The final result (after some minutes - due to Kinesis buffering), can be observed by the event object being present in S3:
+
+```shell
+# first, get our bucket. - s3.amazonaws.com
+export S3_BUCKET_DOMAIN=`aws cloudformation --region "$AWS_REGION" describe-stacks --stack-name $STACK_NAME --output json | jq ".Stacks[0].Outputs[].OutputValue" | grep "s3.amazonaws.com" | awk -F\" '{print $2}'`
+export S3_BUCKET_NAME=`echo $S3_BUCKET_DOMAIN | awk -F\. '{print $1}'`
+
+# Get the object listing from our bucket
+aws s3 ls --recursive s3://$S3_BUCKET_NAME/
+export FILE_1_PATH=`aws s3 ls --recursive s3://$S3_BUCKET_NAME/ | head -1 | awk '{print $4}'`
+
+# Get the object:
+aws s3 cp s3://$S3_BUCKET_NAME/$FILE_1_PATH /tmp/event_1 
+
+file /tmp/event_1 
+# You want to see the following output: /tmp/event_1: gzip compressed data, from FAT filesystem (MS-DOS, OS/2, NT), original size....
+
+zcat /tmp/event_1
+# You want to see the following output: {"numberOfFields": 1, "fieldNames": "Message"}
+```
+
+Finally, we want to check that the lambda function reacting to events in S3 was also triggered. You can do this with the AWS console to search for the events in `CloudWatch >> Log groups >>/aws/lambda/EventMockProcessingLambdaFunction`. You can run the same Python script as in the section `S3 Events to Lambda (Testing S3 events by just uploading a normal TXT file from the AWS Console)` , and you should get output looking similar to the following:
+
+```python
+>>> import json
+>>> event={'Records': [......]}
+>>> record_nr = 0
+>>> for record in event['Records']:
+...     record_nr += 1
+...     event_body = json.loads(record['body']) 
+...     s3_message = json.loads(event_body['Message'])
+...     print('Record nr {}'.format(record_nr))
+...     print('\tType       : {}'.format(event_body['Type']))
+...     print('\tSubject    : {}'.format(event_body['Subject']))
+...     for s3_record in s3_message['Records']:
+...         print('\t\tS3 Bucket Name : {}'.format(s3_record['s3']['bucket']['name']))
+...         print('\t\tEvent Key      : {}'.format(s3_record['s3']['object']['key']))
+... 
+Record nr 1
+        Type       : Notification
+        Subject    : Amazon S3 Notification
+                S3 Bucket Name : oculusd-lab2-events
+                Event Key      : 2022/08/28/07/EventKinesisDeliveryStream-1-2022-08-28-07-27-46-6434e064-ef19-42d0-a232-25ba89cf375e.gz
+>>> 
+```
+
+If all of the above steps work, the experiment was successful. 
+
+## Lab Cleanup
+
+Run the following commands to cleanup all resources:
+
+```shell
+# Delete the stack
+aws cloudformation delete-stack --stack-name "$STACK_NAME"
+
+# Delete the S3 bucket
+aws s3 rm s3://$S3_BUCKET_NAME/ --recursive
+aws s3api delete-bucket --bucket $S3_BUCKET_NAME
+```
+
+The CloudFormation template should be completely deleted in 5 to 10 minutes.
+

@@ -6,6 +6,7 @@
         "kconvert",
         "Redrive",
         "Tierings",
-        "traceback"
+        "traceback",
+        "zcat"
     ]
 }
