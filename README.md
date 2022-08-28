@@ -49,6 +49,8 @@ The various practical exercises I did is located in the `labs` directory. All la
 | Lab 3       | A lower volume example without Kinesis - ideal for a mixed environment                                                                 | In Progress |
 | Lab 4       | Operations: replaying old events                                                                                                       | Not Started |
 | Lab 5       | Project Management and DevOps Topic                                                                                                    | Not Started |
+| Lab 6       | Tightening up security. Encryption of data in flight and at rest everywhere.                                                           | Not Started |
+| Lab 7       | A practical application and Load Test                                                                                                  | Not Started |
 
 # Current Status
 
@@ -67,5 +69,7 @@ I expect this project to have the following stages:
 * Lab 3: Adapt lab 2 to create a hybrid Kinesis and direct S3 put solution (splitting high volume and low volume data ingestion processes).
 * Lab 4: Evaluate Athena as a tool to query and replay old captured events
 * Lab 5: Reorganize the CloudFormation stacks to a manageable set of files. Invest some time to figure out [AWS::CloudFormation::Stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-stack.html). The aim of this is to see how we can add more events in future in a structured way, with some inheritance and resource project organization.
+* Lab 6: Use private KMS in all areas to encrypt data
+* Lab 7: A practical example with some real logic and a CloudFormation template to setup and run load tests via something like [Locust](https://locust.io/)
 * Finalize documentation, findings, conclusions and refactor final designs and artifacts
 * Maintenance Phase (long term)
