@@ -63,13 +63,13 @@ TODO
 
 TODO
 
-## Lambda Function for Linking an employee ID, Access Card and Building ID with an initial default building status of `INSIDE`
+## Lambda Function(s) for Linking an employee ID, Access Card and Building ID with an initial default building status of `INSIDE`
 
 TODO
 
 # Infrastructure Components 
 
-## Serving of a Docker based web site from EC2 (private only), accessed via a proxy server in a Public VPC
+## Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC
 
 TODO
 
