@@ -39,6 +39,18 @@ From an infrastructure and application perspective, we have the following contex
 
 ![scenario 1 architecture context diagram](../../images/scenario_01_design.png)
 
+From the design exercise, I now start to understand what Infrastructure is really core to the event store, which is basically the following components from the original template in Lab 2:
+
+![Core Infrastructure](../../images/scenario_01_core_infrastructure_for_evemts.png)
+
+I will therefore now see how I split up my infrastructure into more logic parts. For now, I have identified the following:
+
+* Events base Infrastructure (as per the image above)
+* The EC2 Internal Web Hosting Infrastructure
+* Access card linking Infrastructure - basically just an SNS topic and SQS queue that binds the event in S3 to the final Lambda function that updates the state in DynamoDB.
+
+> _**Observation**_: What I still need to see is how I develop these independently and then link then up somehow... Imaging there was different teams developing the various stacks and pipelines - how do they need to coordinate?
+
 ## DynamoDB Design
 
 TODO
