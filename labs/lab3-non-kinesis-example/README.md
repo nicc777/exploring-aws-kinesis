@@ -111,95 +111,18 @@ Examples:
 
 Example of Linked Employee and Access Cards:
 
-| Employee ID | Access Card ID | Linked Partition Key Value |
-|-------------|----------------|----------------------------|
-
+| Employee ID  | Access Card ID | Linked Partition Key Value                                           |
+| -------------|----------------|----------------------------------------------------------------------|
+| 100000001998 | 100000002000   | `8e959c586a66cde558dbd72c4c98e2b2e57d4a29f323b1dc5497a4029235cd6cLS` |
+| 100000001999 | 100000000002   | `63d8d9f21e6533b3796405ccefab997c18e4bbbbafd9aa68dc4283837bff34beLS` |
+| 100000000001 | 100000000000   | `b24bc4861d51dfcb7379340626fcd24544992ce91eea46b92ee5d5a7a4b97ed2LS` |
+| 100000000002 | 100000001999   | `5ae87607e7b003e321202f9811109c4a11a57b725906929ec8c2b343a920b229LS` |
+| 100000002000 | 100000001998   | `c118124c8e66e34ca9bb9e55c4191a0b4973c9737ca5d0668b8f6fcb35eb4556LS` |
+| 100000000000 | 100000000001   | `f52b036dfdc8ed952029d697a8114785dc780d8eaefed8ba928d6f2ecfdcb2bbLS` |
 
 The partition keys are random enough to guarantee a good spread through the various DynamoDB partitions.
 
-Below are python functions to calculate the various partition key values:
-
-```python
-import hashlib
-import random
-
-
-def calc_partition_key_value_from_subject_and_id(subject_type: str, subject_id: int)->str:
-    subject_id_to_str = '{}'.format(subject_id)
-    subject_id_to_str = '1{}{}'.format(subject_id_to_str.zfill(11), subject_type)
-    return '{}{}'.format(
-        hashlib.sha256(subject_id_to_str.encode('utf-8')).hexdigest(),
-        subject_type
-    )
-
-
-class SubjectType:
-    EMPLOYEE='-E'
-    ACCESS_CARD='AC'
-    BUILDING='-B'
-
-
-class Subject:
-    def __init__(self, subject_type: str, subject_id):
-        self.subject_type = subject_type
-        self.subject_id = subject_id
-        self.PARTITION_KEY = calc_partition_key_value_from_subject_and_id(subject_type=subject_type, subject_id=subject_id)
-
-
-class LinkedSubjects:
-    def __init__(self, subject1: Subject, subject2: Subject):
-        self.subject1 = subject1
-        self.subject2 = subject2
-        self.PARTITION_KEY = '{}LS'.format(hashlib.sha256('{}|{}'.format(subject1.PARTITION_KEY,subject2.PARTITION_KEY).encode('utf-8')).hexdigest())
-
-source_data = [
-    [SubjectType.EMPLOYEE, 0, 'Employee'],
-    [SubjectType.EMPLOYEE, 1, 'Employee'],
-    [SubjectType.EMPLOYEE, 2, 'Employee'],
-    [SubjectType.EMPLOYEE, 1998, 'Employee'],
-    [SubjectType.EMPLOYEE, 1999, 'Employee'],
-    [SubjectType.EMPLOYEE, 2000, 'Employee'],
-    [SubjectType.ACCESS_CARD, 0, 'Access Card'],
-    [SubjectType.ACCESS_CARD, 1, 'Access Card'],
-    [SubjectType.ACCESS_CARD, 2, 'Access Card'],
-    [SubjectType.ACCESS_CARD, 1998, 'Access Card'],
-    [SubjectType.ACCESS_CARD, 1999, 'Access Card'],
-    [SubjectType.ACCESS_CARD, 2000, 'Access Card'],
-    [SubjectType.BUILDING, 0, 'Building'],
-    [SubjectType.BUILDING, 1, 'Building'],
-    [SubjectType.BUILDING, 98, 'Building'],
-    [SubjectType.BUILDING, 99, 'Building'],
-]
-
-employees = list()
-access_cards = list()
-
-for sd in source_data:
-    s = Subject(subject_type=sd[0], subject_id=sd[1])
-    if sd[0] == SubjectType.EMPLOYEE:
-        employees.append(s)
-    if sd[0] == SubjectType.ACCESS_CARD:
-        access_cards.append(s)
-    t = '{}'.format(sd[1])
-    id_number = '1{}'.format(t.zfill(11))
-    print('| {} | {} | `{}` |'.format(sd[2], id_number, s.PARTITION_KEY))
-
-random.shuffle(employees)
-random.shuffle(access_cards)
-
-id = 0
-while id < 6:
-    ls = LinkedSubjects(subject1=employees[id], subject2=access_cards[id])
-    print(
-        '| {} | {} | `{}` |'.format(
-            employees[id].subject_id,
-            access_cards[id].subject_id,
-            ls.PARTITION_KEY
-        )
-    )
-    id += 1
-```
-
+Python functions to calculate the various partition key values are demonstrated in the file [`poc_calc_key_values.py`](poc_calc_key_values.py) and this script was used to create the table data for the tables above.
 
 
 ## Lambda Function for Listing Employee ID's
