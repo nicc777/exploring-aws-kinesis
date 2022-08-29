@@ -95,6 +95,7 @@ Examples:
 | Building     | 100000000098 | `0e3b534f6483c9ab9223ea668363834a1b2402fc356a470888dcd1792ca24a9d-B` |
 | Building     | 100000000099 | `a2f064a59b5bd27804cab668cb1629b5eb53f3d74f1f0d56cae4a6e6a6c8c450-B` |
 
+The partition keys are random enough to guarantee a good spread through the various DynamoDB partitions.
 
 Below are python functions to calculate the various partition key values:
 
