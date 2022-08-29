@@ -18,7 +18,7 @@ class SubjectType:
 
 
 class Subject:
-    def __init__(self, subject_type: str, subject_id):
+    def __init__(self, subject_type: str, subject_id: int):
         self.subject_type = subject_type
         self.subject_id = subject_id
         self.PARTITION_KEY = calc_partition_key_value_from_subject_and_id(subject_type=subject_type, subject_id=subject_id)

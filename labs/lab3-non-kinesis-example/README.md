@@ -3,6 +3,7 @@
 - [Application Components](#application-components)
   - [DynamoDB Design](#dynamodb-design)
     - [Partition Key](#partition-key)
+    - [Sort Key](#sort-key)
   - [Lambda Function for Listing Employee ID's](#lambda-function-for-listing-employee-ids)
   - [Lambda Function For getting the status of a specific employee and their access card](#lambda-function-for-getting-the-status-of-a-specific-employee-and-their-access-card)
   - [Lambda Function(s) for Linking an employee ID, Access Card and Building ID with an initial default building status of `INSIDE`](#lambda-functions-for-linking-an-employee-id-access-card-and-building-id-with-an-initial-default-building-status-of-inside)
@@ -124,6 +125,30 @@ The partition keys are random enough to guarantee a good spread through the vari
 
 Python functions to calculate the various partition key values are demonstrated in the file [`poc_calc_key_values.py`](poc_calc_key_values.py) and this script was used to create the table data for the tables above.
 
+### Sort Key
+
+The sort key will be used in our table to describe the type of record that we store as well as serving as a convenient way to search for related data items.
+
+The general structure of the sort key will be `subject-type#record-type`
+
+The subject types is already known and the subject ID will be either an Employee ID or Building ID, but in terms of the `record-type` the following is note worthy:
+
+| Subject Type       | Record Type   | Example Sort Key                 | Example Record Data Fields                                                                                                                                                                                                                                                                                                                                             |
+|--------------------|---------------|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Employee           | `profile`     | `employee#profile`               | <ul><li>Employee ID</li><li>First Name</li><li>Last Name</li><li>Department</li><li>Status (onboarding or active or disabled)</li></ul>                                                                                                                                                                                                                                |
+| Access Card        | `profile`     | `access-card#profile`            | <ul><li>Access Card ID</li><li>Status (unissued or issued)</li><li>Issued To (Partition Key Value of Employee)</li></ul>                                                                                                                                                                                                                                               |
+| Building           | `profile`     | `building#profile`               | <ul><li>Building ID</li><li>Status (active or not-in-use)</li><li>Country ISO Code (3 letter)</li><li>Location Postal or Zip Code</li><li>Building Name</li></ul>                                                                                                                                                                                                      |
+| Linked Access Card | `association` | `linked-access-card#association` | <ul><li>Timestamp linked</li><li>Employee ID of Linker (partition key of who linked the employee with this access card</li><li>Status (active or card-defunct)</li><li>Building State (either `INSIDE` or `NULL`)</li><li>Current Building ID (set if state is `INSIDE` to the building ID)</li><li>Employee Partition Key</li><li>Access Card Partition Key</li></ul> |
+| Building Occupiers | `employees`   | `building-occupiers#employees`   | <ul><li>Access Card Scanned Timestamp</li><li>Linked Access Card Partition Key</li><li>Building Partition Key</li></ul>                                                                                                                                                                                                                                                |
+
+> _**Note**_: While an employee is new and without an access card, the status is `onboarding`. As soon as the access card is issued, the status must be updated to `active`
+
+Access cards scanned will only be allowed in the building when the following conditions are met:
+
+* Access card ID must exist with status `issued`
+* Employee must exist with status `active`
+* The Linked Access Card status must be `active`
+* The current building state value for the linked access card must be `NULL`
 
 ## Lambda Function for Listing Employee ID's
 
