@@ -1,3 +1,17 @@
+
+- [Lab 3 Goals](#lab-3-goals)
+- [Application Components](#application-components)
+  - [DynamoDB Design](#dynamodb-design)
+    - [Partition Key](#partition-key)
+  - [Lambda Function for Listing Employee ID's](#lambda-function-for-listing-employee-ids)
+  - [Lambda Function For getting the status of a specific employee and their access card](#lambda-function-for-getting-the-status-of-a-specific-employee-and-their-access-card)
+  - [Lambda Function(s) for Linking an employee ID, Access Card and Building ID with an initial default building status of `INSIDE`](#lambda-functions-for-linking-an-employee-id-access-card-and-building-id-with-an-initial-default-building-status-of-inside)
+- [Infrastructure Components](#infrastructure-components)
+  - [Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC](#serving-of-a-web-site-from-ec2-private-only-accessed-via-a-proxy-server-in-a-public-vpc)
+  - [Event Infrastructure](#event-infrastructure)
+  - [Private API Gateway to access the Lambda API's.](#private-api-gateway-to-access-the-lambda-apis)
+- [Random Thoughts](#random-thoughts)
+
 # Lab 3 Goals
 
 The main goal of this lab is to adapt lab 2 to create a hybrid Kinesis and direct S3 put solution (splitting high volume and low volume data ingestion processes).
