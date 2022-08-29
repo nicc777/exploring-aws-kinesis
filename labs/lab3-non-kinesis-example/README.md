@@ -109,12 +109,19 @@ Examples:
 | Building     | 100000000098 | `0e3b534f6483c9ab9223ea668363834a1b2402fc356a470888dcd1792ca24a9d-B` |
 | Building     | 100000000099 | `a2f064a59b5bd27804cab668cb1629b5eb53f3d74f1f0d56cae4a6e6a6c8c450-B` |
 
+Example of Linked Employee and Access Cards:
+
+| Employee ID | Access Card ID | Linked Partition Key Value |
+|-------------|----------------|----------------------------|
+
+
 The partition keys are random enough to guarantee a good spread through the various DynamoDB partitions.
 
 Below are python functions to calculate the various partition key values:
 
 ```python
 import hashlib
+import random
 
 
 def calc_partition_key_value_from_subject_and_id(subject_type: str, subject_id: int)->str:
@@ -143,7 +150,7 @@ class LinkedSubjects:
     def __init__(self, subject1: Subject, subject2: Subject):
         self.subject1 = subject1
         self.subject2 = subject2
-        self.PARTITION_KEY = hashlib.sha256('{}|{}'.format(subject1.PARTITION_KEY,subject2.PARTITION_KEY).encode('utf-8')).hexdigest()
+        self.PARTITION_KEY = '{}LS'.format(hashlib.sha256('{}|{}'.format(subject1.PARTITION_KEY,subject2.PARTITION_KEY).encode('utf-8')).hexdigest())
 
 source_data = [
     [SubjectType.EMPLOYEE, 0, 'Employee'],
@@ -164,12 +171,33 @@ source_data = [
     [SubjectType.BUILDING, 99, 'Building'],
 ]
 
+employees = list()
+access_cards = list()
 
 for sd in source_data:
     s = Subject(subject_type=sd[0], subject_id=sd[1])
+    if sd[0] == SubjectType.EMPLOYEE:
+        employees.append(s)
+    if sd[0] == SubjectType.ACCESS_CARD:
+        access_cards.append(s)
     t = '{}'.format(sd[1])
     id_number = '1{}'.format(t.zfill(11))
     print('| {} | {} | `{}` |'.format(sd[2], id_number, s.PARTITION_KEY))
+
+random.shuffle(employees)
+random.shuffle(access_cards)
+
+id = 0
+while id < 6:
+    ls = LinkedSubjects(subject1=employees[id], subject2=access_cards[id])
+    print(
+        '| {} | {} | `{}` |'.format(
+            employees[id].subject_id,
+            access_cards[id].subject_id,
+            ls.PARTITION_KEY
+        )
+    )
+    id += 1
 ```
 
 
