@@ -75,7 +75,9 @@ def create_employees_to_be_onboarded(qty: int=1000):
     dept_keys = list(DEPARTMENTS.keys())
     client = boto3.client('dynamodb', region_name='eu-central-1')
     employee_sequence = 100
-    while employee_sequence < qty:
+    qty_created = 0
+    while qty_created < qty:
+        qty_created += 1
         employee_sequence += 1
         subject_id_to_str = '{}'.format(employee_sequence)
         subject_id_to_str = '1{}'.format(subject_id_to_str.zfill(11))
