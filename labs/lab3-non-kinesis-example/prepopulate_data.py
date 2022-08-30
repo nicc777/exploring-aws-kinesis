@@ -1,6 +1,18 @@
 import boto3
 import traceback
 import hashlib
+import time
+
+
+DEPARTMENTS = dict()
+
+
+def create_departments():
+    global DEPARTMENTS
+    dept_id = 0
+    while len(DEPARTMENTS) < 100:
+        dept_id += 1
+        DEPARTMENTS[dept_id] = 'Department-{}'.format(dept_id)
 
 
 def calc_partition_key_value_from_subject_and_id(subject_type: str, subject_id: int)->str:
@@ -32,3 +44,32 @@ class LinkedSubjects:
         self.PARTITION_KEY = '{}LS'.format(hashlib.sha256('{}|{}'.format(subject1.PARTITION_KEY,subject2.PARTITION_KEY).encode('utf-8')).hexdigest())
 
 
+def create_first_100_employees():
+    client = boto3.client('dynamodb', region_name='eu-central-1')
+    employee_sequence = 0
+    while employee_sequence < 101:
+        employee_sequence += 1
+        subject_id_to_str = '{}'.format(employee_sequence)
+        subject_id_to_str = '1{}'.format(subject_id_to_str.zfill(11))
+        response = client.put_item(
+            TableName='access-card-app',
+            Item={
+                'subject-id': { 'S': calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.EMPLOYEE, subject_id=employee_sequence)},
+                'subject-topic': { 'S': 'employee#profile'},
+                'employee-id': { 'S': subject_id_to_str},
+                'first-name': { 'S': 'Firstname-{}'.format(employee_sequence)},
+                'last-name': { 'S': 'Lastname-{}'.format(employee_sequence)},
+                'department': { 'S': DEPARTMENTS[1]},
+                'employee-status': { 'S': 'active'},
+            },
+            ReturnValues='NONE',
+            ReturnConsumedCapacity='TOTAL',
+            ReturnItemCollectionMetrics='SIZE'
+        )
+        print(response)
+        time.sleep(50/1000) # Sleep 50 milliseconds
+
+
+if __name__ == '__main__':
+    create_departments()
+    create_first_100_employees()
