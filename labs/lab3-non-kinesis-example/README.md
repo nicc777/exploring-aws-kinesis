@@ -1,5 +1,6 @@
 
 - [Lab 3 Goals](#lab-3-goals)
+- [CLI Environment](#cli-environment)
 - [Application Components](#application-components)
   - [DynamoDB Design](#dynamodb-design)
     - [Partition Key](#partition-key)
@@ -35,6 +36,20 @@ The event will be created by the containerized application by publishing to an S
 | `/hr/employee-ids`                                             | GET    | Query string: `max-items` (max. 100, default=100) and then the `start` index position (optional, default=0)                                  | Retrieve employee ID's, limit by `max-items` staring at position `start`                              | Return JSON object employee ID's          |
 
 Each of the API endpoints is services by a Lambda function.
+
+# CLI Environment
+
+When running commands, the following environment variables are assumed to be set:
+
+| Environment Variable Example       | Description                                                    |
+|------------------------------------|----------------------------------------------------------------|
+| `export AWS_PROFILE="..."`         | The AWS Credentials Profile to use                             |
+| `export AWS_REGION="..."`          | The AWS Region to deploy resources to                          |
+| `export BASE_STACK_NAME="..."`     | The name of the CloudFormation base stack                      |
+| `export PARAMETERS_FILE="..."`     | The file containing the stack parameters                       |
+| `export DYNAMODB_STACK_NAME="..."` | The CloudFormation stack name for deploying the DynamoDB Table |
+
+Some of these variables, like 
 
 # Application Components
 
@@ -170,6 +185,14 @@ The following files are included:
 * [AccessCardDemo_cf_template.yaml](AccessCardDemo_cf_template.yaml) - Reworked and well formatted CloudFormation file in YAML
 
 Included in the model is the proposed field names as well as the facet views from the tables above
+
+Deploying the table can be done with the following command:
+
+```shell
+aws cloudformation deploy \
+    --stack-name $DYNAMODB_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/AccessCardDemo_cf_template.yaml
+```
 
 ## Lambda Function for Listing Employee ID's
 
