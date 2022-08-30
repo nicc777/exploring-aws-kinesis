@@ -201,9 +201,25 @@ A python script is provided to pre-populate the table with some initial data. Th
 
 Assuming the environment variables are set (as per the exports table), the supplied credentials must be sufficient to write to DynamoDB.
 
-Each time the script run, it will also first clear all data from the table.
+Each time the script run, it will assume it starts with an empty table.
+
+> _**IMPORTANT**_: Delete the stack, recreate the stack and then run the script
 
 > _**WARNING**: This may take a while and is an expensive operation!
+
+Typical run:
+
+```shell
+aws cloudformation delete-stack --stack-name $DYNAMODB_STACK_NAME
+
+# WAIT UNTIL STACK IS DELETED ....
+
+aws cloudformation deploy \
+    --stack-name $DYNAMODB_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/AccessCardDemo_cf_template.yaml
+
+python3 labs/lab3-non-kinesis-example/prepopulate_data.py
+```
 
 ## Lambda Function for Listing Employee ID's
 
