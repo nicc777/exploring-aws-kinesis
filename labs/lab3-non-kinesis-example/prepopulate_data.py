@@ -1,5 +1,6 @@
 import boto3
 import traceback
+import hashlib
 
 
 def calc_partition_key_value_from_subject_and_id(subject_type: str, subject_id: int)->str:
