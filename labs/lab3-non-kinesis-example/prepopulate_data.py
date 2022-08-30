@@ -130,8 +130,10 @@ def randomly_issue_first_100_cards_to_first_100_employees():
 
 
 if __name__ == '__main__':
+    qty_employees_to_be_onboarded = 100
+    qty_access_cards_to_provision = 100 + qty_employees_to_be_onboarded + 100
     create_departments()
     create_first_100_employees()
-    create_employees_to_be_onboarded(qty=100)
-    create_access_cards(qty=200)
+    create_employees_to_be_onboarded(qty=qty_employees_to_be_onboarded)
+    create_access_cards(qty=qty_access_cards_to_provision)    # Ensure we create a little more than what is required...
     randomly_issue_first_100_cards_to_first_100_employees()
