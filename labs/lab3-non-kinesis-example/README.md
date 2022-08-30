@@ -74,6 +74,8 @@ As such, I started with a composite key design with the following structure:
 
 ### Partition Key
 
+Key name: `subject-id`
+
 Made up of a subject ID, in two parts: `subject-type` and `subject-id-hash`
 
 Subject types can be:
@@ -126,6 +128,8 @@ The partition keys are random enough to guarantee a good spread through the vari
 Python functions to calculate the various partition key values are demonstrated in the file [`poc_calc_key_values.py`](poc_calc_key_values.py) and this script was used to create the table data for the tables above.
 
 ### Sort Key
+
+Key name: `subject-topic`
 
 The sort key will be used in our table to describe the type of record that we store as well as serving as a convenient way to search for related data items.
 
