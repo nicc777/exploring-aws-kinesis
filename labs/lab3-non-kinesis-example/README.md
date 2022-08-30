@@ -169,6 +169,8 @@ The following files are included:
 * [AccessCardDemo_cf_template.json](AccessCardDemo_cf_template.json) - Original exported CloudFormation file
 * [AccessCardDemo_cf_template.yaml](AccessCardDemo_cf_template.yaml) - Reworked and well formatted CloudFormation file in YAML
 
+Included in the model is the proposed field names as well as the facet views from the tables above
+
 ## Lambda Function for Listing Employee ID's
 
 TODO
