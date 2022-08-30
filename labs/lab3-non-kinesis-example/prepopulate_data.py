@@ -100,7 +100,38 @@ def create_employees_to_be_onboarded(qty: int=1000):
         time.sleep(50/1000) # Sleep 50 milliseconds
 
 
+def create_access_cards(qty: int=1100):
+    client = boto3.client('dynamodb', region_name='eu-central-1')
+    access_card_sequence = 0
+    while access_card_sequence < qty:
+        access_card_sequence += 1
+        subject_id_to_str = '{}'.format(access_card_sequence)
+        subject_id_to_str = '1{}'.format(subject_id_to_str.zfill(11))
+        response = client.put_item(
+            TableName='access-card-app',
+            Item={
+                'subject-id'            : { 'S': calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.ACCESS_CARD, subject_id=access_card_sequence)},
+                'subject-topic'         : { 'S': 'access-card#profile'},
+                'access-card-id'        : { 'S': subject_id_to_str},
+                'access-card-issued-to' : { 'S': 'NOT-ISSUED'},
+                'access-card-status'    : { 'S': 'unissued'}
+            },
+            ReturnValues='NONE',
+            ReturnConsumedCapacity='TOTAL',
+            ReturnItemCollectionMetrics='SIZE'
+        )
+        print(response)
+        time.sleep(50/1000) # Sleep 50 milliseconds
+
+
+def randomly_issue_first_100_cards_to_first_100_employees():
+    pass
+
+
+
 if __name__ == '__main__':
     create_departments()
     create_first_100_employees()
     create_employees_to_be_onboarded(qty=100)
+    create_access_cards(qty=200)
+    randomly_issue_first_100_cards_to_first_100_employees()
