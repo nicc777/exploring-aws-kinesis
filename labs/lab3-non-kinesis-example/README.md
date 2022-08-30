@@ -218,6 +218,8 @@ aws cloudformation deploy \
     --stack-name $DYNAMODB_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/AccessCardDemo_cf_template.yaml
 
+# WAIT UNTIL STACK IS DONE
+
 python3 labs/lab3-non-kinesis-example/prepopulate_data.py
 ```
 

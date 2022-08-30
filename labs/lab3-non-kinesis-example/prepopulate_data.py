@@ -2,6 +2,7 @@ import boto3
 import traceback
 import hashlib
 import time
+import random
 
 
 DEPARTMENTS = dict()
@@ -70,6 +71,34 @@ def create_first_100_employees():
         time.sleep(50/1000) # Sleep 50 milliseconds
 
 
+def create_employees_to_be_onboarded(qty: int=1000):
+    dept_keys = list(DEPARTMENTS.keys())
+    client = boto3.client('dynamodb', region_name='eu-central-1')
+    employee_sequence = 100
+    while employee_sequence < qty:
+        employee_sequence += 1
+        subject_id_to_str = '{}'.format(employee_sequence)
+        subject_id_to_str = '1{}'.format(subject_id_to_str.zfill(11))
+        response = client.put_item(
+            TableName='access-card-app',
+            Item={
+                'subject-id'        : { 'S': calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.EMPLOYEE, subject_id=employee_sequence)},
+                'subject-topic'     : { 'S': 'employee#profile'},
+                'employee-id'       : { 'S': subject_id_to_str},
+                'first-name'        : { 'S': 'Firstname-{}'.format(employee_sequence)},
+                'last-name'         : { 'S': 'Lastname-{}'.format(employee_sequence)},
+                'department'        : { 'S': DEPARTMENTS[random.choice(dept_keys)]},
+                'employee-status'   : { 'S': 'onboarding'},
+            },
+            ReturnValues='NONE',
+            ReturnConsumedCapacity='TOTAL',
+            ReturnItemCollectionMetrics='SIZE'
+        )
+        print(response)
+        time.sleep(50/1000) # Sleep 50 milliseconds
+
+
 if __name__ == '__main__':
     create_departments()
     create_first_100_employees()
+    create_employees_to_be_onboarded(qty=100)

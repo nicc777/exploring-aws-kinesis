@@ -6,6 +6,7 @@
         "hashlib",
         "hexdigest",
         "kconvert",
+        "onboarded",
         "prepopulate",
         "Redrive",
         "RFID",
