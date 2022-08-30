@@ -4,6 +4,7 @@
   - [DynamoDB Design](#dynamodb-design)
     - [Partition Key](#partition-key)
     - [Sort Key](#sort-key)
+    - [NoSQL Workbench Model](#nosql-workbench-model)
   - [Lambda Function for Listing Employee ID's](#lambda-function-for-listing-employee-ids)
   - [Lambda Function For getting the status of a specific employee and their access card](#lambda-function-for-getting-the-status-of-a-specific-employee-and-their-access-card)
   - [Lambda Function(s) for Linking an employee ID, Access Card and Building ID with an initial default building status of `INSIDE`](#lambda-functions-for-linking-an-employee-id-access-card-and-building-id-with-an-initial-default-building-status-of-inside)
@@ -159,6 +160,14 @@ Access card can only be issued to employees when the following conditions are me
 * Access card ID must exist with status `unissued`
 * Employee must exist with status `onboarding`
 * For the purpose of this test, the employee linking the two must be in status `active` with an employee id less than 100 (any of the first 100 employees can issue cards to other employees - this will be our starting state and we assume that these first 100 employees are authorized to issue these cards)
+
+### NoSQL Workbench Model
+
+The following files are included:
+
+* [AccessCardDemo.json](AccessCardDemo.json) - The AWS DynamoDB NoSQL Workbench Export file (You can download the Workbench [from here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/workbench.settingup.html))
+* [AccessCardDemo_cf_template.json](AccessCardDemo_cf_template.json) - Original exported CloudFormation file
+* [AccessCardDemo_cf_template.yaml](AccessCardDemo_cf_template.yaml) - Reworked and well formatted CloudFormation file in YAML
 
 ## Lambda Function for Listing Employee ID's
 
