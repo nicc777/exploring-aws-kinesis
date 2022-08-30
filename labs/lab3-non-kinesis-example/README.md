@@ -6,6 +6,7 @@
     - [Partition Key](#partition-key)
     - [Sort Key](#sort-key)
     - [NoSQL Workbench Model](#nosql-workbench-model)
+  - [Pre-populating Data](#pre-populating-data)
   - [Lambda Function for Listing Employee ID's](#lambda-function-for-listing-employee-ids)
   - [Lambda Function For getting the status of a specific employee and their access card](#lambda-function-for-getting-the-status-of-a-specific-employee-and-their-access-card)
   - [Lambda Function(s) for Linking an employee ID, Access Card and Building ID with an initial default building status of `INSIDE`](#lambda-functions-for-linking-an-employee-id-access-card-and-building-id-with-an-initial-default-building-status-of-inside)
@@ -193,6 +194,16 @@ aws cloudformation deploy \
     --stack-name $DYNAMODB_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/AccessCardDemo_cf_template.yaml
 ```
+
+## Pre-populating Data
+
+A python script is provided to pre-populate the table with some initial data. The script can be located in the file [`prepopulate_data.py`](prepopulate_data.py)
+
+Assuming the environment variables are set (as per the exports table), the supplied credentials must be sufficient to write to DynamoDB.
+
+Each time the script run, it will also first clear all data from the table.
+
+> _**WARNING**: This may take a while and is an expensive operation!
 
 ## Lambda Function for Listing Employee ID's
 
