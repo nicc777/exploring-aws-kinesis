@@ -1,0 +1,225 @@
+{
+  "ModelName": "AccessCardDemo",
+  "ModelMetadata": {
+    "Author": "Nico Coetzee",
+    "DateCreated": "Aug 30, 2022, 06:50 AM",
+    "DateLastModified": "Aug 30, 2022, 07:07 AM",
+    "Description": "Demonstration application",
+    "AWSService": "Amazon DynamoDB",
+    "Version": "3.0"
+  },
+  "DataModel": [
+    {
+      "TableName": "access-card-app",
+      "KeyAttributes": {
+        "PartitionKey": {
+          "AttributeName": "subject-id",
+          "AttributeType": "S"
+        },
+        "SortKey": {
+          "AttributeName": "subject-topic",
+          "AttributeType": "S"
+        }
+      },
+      "NonKeyAttributes": [
+        {
+          "AttributeName": "employee-id",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "first-name",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "last-name",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "department",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "employee-status",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "access-card-id",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "access-card-issued-to",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "building-id",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "country-iso-code",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "location-postal-or-zip-code",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "building-name",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "linking-timestamp",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "linker-employee-partition-key",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "access-card-building-state",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "access-card-current-building-partition-key",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "linked-access-card-employee-partition-key",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "linked-access-card-partition-key",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "occupier-access-card-scanned-timestamp",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "occupier-access-card-partition-key",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "occupier-building-partition-key",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "access-card-status",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "building-status",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "linked-access-card-status",
+          "AttributeType": "S"
+        }
+      ],
+      "TableFacets": [
+        {
+          "FacetName": "employee-facet",
+          "KeyAttributeAlias": {
+            "PartitionKeyAlias": "Employee ID",
+            "SortKeyAlias": "Employee Profile"
+          },
+          "TableData": [],
+          "NonKeyAttributes": [
+            "employee-id",
+            "first-name",
+            "last-name",
+            "department",
+            "employee-status"
+          ]
+        },
+        {
+          "FacetName": "access-card-facet",
+          "KeyAttributeAlias": {
+            "PartitionKeyAlias": "Access Card Key",
+            "SortKeyAlias": "Access Card Profile"
+          },
+          "TableData": [],
+          "NonKeyAttributes": [
+            "access-card-id",
+            "access-card-issued-to",
+            "access-card-status"
+          ]
+        },
+        {
+          "FacetName": "building-facet",
+          "KeyAttributeAlias": {
+            "PartitionKeyAlias": "Building Key",
+            "SortKeyAlias": "Building Profile"
+          },
+          "TableData": [],
+          "NonKeyAttributes": [
+            "building-id",
+            "country-iso-code",
+            "location-postal-or-zip-code",
+            "building-name",
+            "building-status"
+          ]
+        },
+        {
+          "FacetName": "linked-access-cards-facet",
+          "KeyAttributeAlias": {
+            "PartitionKeyAlias": "Linked ID",
+            "SortKeyAlias": "Access Card Association"
+          },
+          "TableData": [],
+          "NonKeyAttributes": [
+            "linking-timestamp",
+            "linker-employee-partition-key",
+            "linked-access-card-status",
+            "access-card-building-state",
+            "access-card-current-building-partition-key",
+            "linked-access-card-employee-partition-key",
+            "linked-access-card-partition-key"
+          ]
+        },
+        {
+          "FacetName": "building-occupation-facet",
+          "KeyAttributeAlias": {
+            "PartitionKeyAlias": "Building Occupation ID",
+            "SortKeyAlias": "Employee Occupiers"
+          },
+          "TableData": [],
+          "NonKeyAttributes": [
+            "occupier-access-card-scanned-timestamp",
+            "occupier-access-card-partition-key",
+            "occupier-building-partition-key"
+          ]
+        }
+      ],
+      "DataAccess": {
+        "MySql": {}
+      },
+      "BillingMode": "PROVISIONED",
+      "ProvisionedCapacitySettings": {
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        },
+        "AutoScalingRead": {
+          "ScalableTargetRequest": {
+            "MinCapacity": 1,
+            "MaxCapacity": 10,
+            "ServiceRole": "AWSServiceRoleForApplicationAutoScaling_DynamoDBTable"
+          },
+          "ScalingPolicyConfiguration": {
+            "TargetValue": 70
+          }
+        },
+        "AutoScalingWrite": {
+          "ScalableTargetRequest": {
+            "MinCapacity": 1,
+            "MaxCapacity": 10,
+            "ServiceRole": "AWSServiceRoleForApplicationAutoScaling_DynamoDBTable"
+          },
+          "ScalingPolicyConfiguration": {
+            "TargetValue": 70
+          }
+        }
+      }
+    }
+  ]
+}
