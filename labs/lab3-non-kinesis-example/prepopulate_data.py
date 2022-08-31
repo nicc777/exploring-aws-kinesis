@@ -1,11 +1,24 @@
+from datetime import datetime
 import boto3
-import traceback
 import hashlib
 import time
 import random
+import copy
 
 
 DEPARTMENTS = dict()
+
+employee_ids = list()
+access_cards_ids = list()
+
+
+def get_utc_timestamp(with_decimal: bool = False):
+    epoch = datetime(1970, 1, 1, 0, 0, 0)
+    now = datetime.utcnow()
+    timestamp = (now - epoch).total_seconds()
+    if with_decimal:
+        return timestamp
+    return int(timestamp)
 
 
 def create_departments():
@@ -29,6 +42,7 @@ class SubjectType:
     EMPLOYEE='-E'
     ACCESS_CARD='AC'
     BUILDING='-B'
+    LINKED_CARD='LC'
 
 
 class Subject:
@@ -46,17 +60,20 @@ class LinkedSubjects:
 
 
 def create_first_100_employees():
+    global employee_ids
     client = boto3.client('dynamodb', region_name='eu-central-1')
     employee_sequence = 0
     while employee_sequence < 101:
         employee_sequence += 1
         subject_id_to_str = '{}'.format(employee_sequence)
         subject_id_to_str = '1{}'.format(subject_id_to_str.zfill(11))
+        subject_id = calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.EMPLOYEE, subject_id=employee_sequence)
+        employee_ids.append(subject_id)
         response = client.put_item(
             TableName='access-card-app',
             Item={
-                'subject-id'        : { 'S': calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.EMPLOYEE, subject_id=employee_sequence)},
-                'subject-topic'     : { 'S': 'employee#profile'},
+                'subject-id'        : { 'S': subject_id},
+                'subject-topic'     : { 'S': 'employee#profile#{}'.format(subject_id_to_str)},
                 'employee-id'       : { 'S': subject_id_to_str},
                 'first-name'        : { 'S': 'Firstname-{}'.format(employee_sequence)},
                 'last-name'         : { 'S': 'Lastname-{}'.format(employee_sequence)},
@@ -67,7 +84,7 @@ def create_first_100_employees():
             ReturnConsumedCapacity='TOTAL',
             ReturnItemCollectionMetrics='SIZE'
         )
-        print(response)
+        print('Created employee {}'.format(subject_id_to_str))
         time.sleep(50/1000) # Sleep 50 milliseconds
 
 
@@ -85,7 +102,7 @@ def create_employees_to_be_onboarded(qty: int=1000):
             TableName='access-card-app',
             Item={
                 'subject-id'        : { 'S': calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.EMPLOYEE, subject_id=employee_sequence)},
-                'subject-topic'     : { 'S': 'employee#profile'},
+                'subject-topic'     : { 'S': 'employee#profile#{}'.format(subject_id_to_str)},
                 'employee-id'       : { 'S': subject_id_to_str},
                 'first-name'        : { 'S': 'Firstname-{}'.format(employee_sequence)},
                 'last-name'         : { 'S': 'Lastname-{}'.format(employee_sequence)},
@@ -96,22 +113,25 @@ def create_employees_to_be_onboarded(qty: int=1000):
             ReturnConsumedCapacity='TOTAL',
             ReturnItemCollectionMetrics='SIZE'
         )
-        print(response)
-        time.sleep(50/1000) # Sleep 50 milliseconds
+        print('Created employee {}'.format(subject_id_to_str))
+        time.sleep(150/1000) 
 
 
 def create_access_cards(qty: int=1100):
+    global access_cards_ids
     client = boto3.client('dynamodb', region_name='eu-central-1')
     access_card_sequence = 0
     while access_card_sequence < qty:
         access_card_sequence += 1
         subject_id_to_str = '{}'.format(access_card_sequence)
         subject_id_to_str = '1{}'.format(subject_id_to_str.zfill(11))
+        subject_id = calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.ACCESS_CARD, subject_id=access_card_sequence)
+        access_cards_ids.append(subject_id)
         response = client.put_item(
             TableName='access-card-app',
             Item={
-                'subject-id'            : { 'S': calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.ACCESS_CARD, subject_id=access_card_sequence)},
-                'subject-topic'         : { 'S': 'access-card#profile'},
+                'subject-id'            : { 'S': subject_id},
+                'subject-topic'         : { 'S': 'access-card#profile#{}'.format(subject_id_to_str)},
                 'access-card-id'        : { 'S': subject_id_to_str},
                 'access-card-issued-to' : { 'S': 'NOT-ISSUED'},
                 'access-card-status'    : { 'S': 'unissued'}
@@ -120,12 +140,49 @@ def create_access_cards(qty: int=1100):
             ReturnConsumedCapacity='TOTAL',
             ReturnItemCollectionMetrics='SIZE'
         )
-        print(response)
-        time.sleep(50/1000) # Sleep 50 milliseconds
+        print('Created access card {}'.format(subject_id_to_str))
+        time.sleep(150/1000)
+
+
+def select_unique_random_items_from_list(input_list: list, qty_items: int)->list:
+    to_delete = set(random.sample(range(len(input_list)), qty_items))
+    return [x for i,x in enumerate(input_list) if not i in to_delete]
 
 
 def randomly_issue_first_100_cards_to_first_100_employees():
-    pass
+    client = boto3.client('dynamodb', region_name='eu-central-1')
+    now = get_utc_timestamp(with_decimal=False)
+    first_employees_randomized = select_unique_random_items_from_list(input_list=copy.deepcopy(employee_ids), qty_items=len(employee_ids))
+    access_cards_to_link = select_unique_random_items_from_list(input_list=copy.deepcopy(access_cards_ids), qty_items=len(employee_ids))
+    linked_access_card_sequence = 0
+    idx = 0
+    while idx < len(first_employees_randomized):
+        employee_id = first_employees_randomized[idx]
+        access_card_id = access_cards_to_link[idx]
+        linked_access_card_sequence += 1
+        subject_id_to_str = '{}'.format(linked_access_card_sequence)
+        subject_id_to_str = '1{}'.format(subject_id_to_str.zfill(11))
+        subject_id = calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.LINKED_CARD, subject_id=linked_access_card_sequence)
+        response = client.put_item(
+            TableName='access-card-app',
+            Item={
+                'subject-id'                                    : { 'S': subject_id},
+                'subject-topic'                                 : { 'S': 'linked-access-card#association#{}'.format(subject_id_to_str)},
+                'linking-timestamp'                             : { 'S': now},
+                'linker-employee-partition-key'                 : { 'S': 'SYSTEM'},
+                'access-card-building-state'                    : { 'S': 'NULL'},
+                'access-card-current-building-partition-key'    : { 'S': 'NULL'},
+                'linked-access-card-employee-partition-key'     : { 'S': employee_id},
+                'linked-access-card-partition-key'              : { 'S': access_card_id},
+                'linked-access-card-status'                     : { 'S': 'active'},
+            },
+            ReturnValues='NONE',
+            ReturnConsumedCapacity='TOTAL',
+            ReturnItemCollectionMetrics='SIZE'
+        )
+        print('Linked employee {} to access card {}'.format(employee_id, access_card_id))
+        time.sleep(150/1000) 
+        idx += 1
 
 
 
