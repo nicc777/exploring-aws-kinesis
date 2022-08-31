@@ -199,8 +199,8 @@ def randomly_issue_first_100_cards_to_first_100_employees():
             },
             UpdateExpression="set access-card-issued-to = :a , access-card-status = :b",
             ExpressionAttributeValues={
-                ':a': employee_id,
-                ':b': 'issued'
+                ':a': { 'S': employee_id},
+                ':b': { 'S': 'issued'}
             },
             ReturnValues="UPDATED_NEW"
         )
