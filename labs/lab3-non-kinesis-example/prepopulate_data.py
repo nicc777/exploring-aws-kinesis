@@ -128,7 +128,7 @@ def create_access_cards(qty: int=1100):
         subject_id_to_str = '1{}'.format(subject_id_to_str.zfill(11))
         subject_id = calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.ACCESS_CARD, subject_id=access_card_sequence)
         # access_cards_ids.append(subject_id)
-        access_cards_ids[subject_id] = subject_id_to_str
+        access_cards_ids[subject_id] = subject_id_to_str    # access_cards_ids[fgfgf...fsfs00AC] = 100000000001
         response = client.put_item(
             TableName='access-card-app',
             Item={
@@ -160,8 +160,8 @@ def randomly_issue_first_100_cards_to_first_100_employees():
     linked_access_card_sequence = 0
     idx = 0
     while idx < len(first_employees_randomized):
-        employee_id = first_employees_randomized[idx]
-        access_card_id = access_cards_to_link[idx]
+        employee_id = first_employees_randomized[idx]   # fgfgf...fsfs00-E
+        access_card_id = access_cards_to_link[idx]      # fgfgf...fsfs00AC
         linked_access_card_sequence += 1
         subject_id_to_str = '{}'.format(linked_access_card_sequence)
         subject_id_to_str = '1{}'.format(subject_id_to_str.zfill(11))
@@ -172,7 +172,7 @@ def randomly_issue_first_100_cards_to_first_100_employees():
             TableName='access-card-app',
             Item={
                 'subject-id'                                    : { 'S': subject_id},
-                'subject-topic'                                 : { 'S': 'linked-access-card#association#{}'.format(access_cards_ids[access_card_id])},
+                'subject-topic'                                 : { 'S': 'linked-access-card#association#{}'.format(subject_id_to_str)},
                 'linking-timestamp'                             : { 'N': '{}'.format(now)},
                 'linker-employee-partition-key'                 : { 'S': 'SYSTEM'},
                 'access-card-building-state'                    : { 'S': 'NULL'},
@@ -187,11 +187,15 @@ def randomly_issue_first_100_cards_to_first_100_employees():
         )
 
         # Update Existing Access Card
+        """
+            access_cards_ids[ subject_id       ] = subject_id_to_str    
+            access_cards_ids[ fgfgf...fsfs00AC ] = 100000000001
+        """
         response2 = client.update_item(
             TableName='access-card-app',
             Key={
                 'subject-id'    : { 'S': access_card_id},
-                'subject-topic' : { 'S': 'access-card#profile#{}'.format(XXX)}
+                'subject-topic' : { 'S': 'access-card#profile#{}'.format(access_cards_ids[access_card_id])}
             },
             UpdateExpression="set access-card-issued-to = :a , access-card-status = :b",
             ExpressionAttributeValues={
