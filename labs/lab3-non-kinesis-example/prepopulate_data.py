@@ -145,14 +145,15 @@ def create_access_cards(qty: int=1100):
 
 
 def select_unique_random_items_from_list(input_list: list, qty_items: int)->list:
-    to_delete = set(random.sample(range(len(input_list)), qty_items))
-    return [x for i,x in enumerate(input_list) if not i in to_delete]
+    random.shuffle(input_list)
+    return input_list[0:qty_items-1]
 
 
 def randomly_issue_first_100_cards_to_first_100_employees():
     client = boto3.client('dynamodb', region_name='eu-central-1')
     now = get_utc_timestamp(with_decimal=False)
     first_employees_randomized = select_unique_random_items_from_list(input_list=copy.deepcopy(employee_ids), qty_items=len(employee_ids))
+    print('Qty first_employees_randomized = {}'.format(len(first_employees_randomized)))
     access_cards_to_link = select_unique_random_items_from_list(input_list=copy.deepcopy(access_cards_ids), qty_items=len(employee_ids))
     linked_access_card_sequence = 0
     idx = 0
@@ -168,7 +169,7 @@ def randomly_issue_first_100_cards_to_first_100_employees():
             Item={
                 'subject-id'                                    : { 'S': subject_id},
                 'subject-topic'                                 : { 'S': 'linked-access-card#association#{}'.format(subject_id_to_str)},
-                'linking-timestamp'                             : { 'S': now},
+                'linking-timestamp'                             : { 'N': '{}'.format(now)},
                 'linker-employee-partition-key'                 : { 'S': 'SYSTEM'},
                 'access-card-building-state'                    : { 'S': 'NULL'},
                 'access-card-current-building-partition-key'    : { 'S': 'NULL'},
