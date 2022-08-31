@@ -4,12 +4,13 @@ import hashlib
 import time
 import random
 import copy
+import json
 
 
 DEPARTMENTS = dict()
 
 employee_ids = list()
-access_cards_ids = list()
+access_cards_ids = dict()
 
 
 def get_utc_timestamp(with_decimal: bool = False):
@@ -126,7 +127,8 @@ def create_access_cards(qty: int=1100):
         subject_id_to_str = '{}'.format(access_card_sequence)
         subject_id_to_str = '1{}'.format(subject_id_to_str.zfill(11))
         subject_id = calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.ACCESS_CARD, subject_id=access_card_sequence)
-        access_cards_ids.append(subject_id)
+        # access_cards_ids.append(subject_id)
+        access_cards_ids[subject_id] = subject_id_to_str
         response = client.put_item(
             TableName='access-card-app',
             Item={
@@ -154,7 +156,7 @@ def randomly_issue_first_100_cards_to_first_100_employees():
     now = get_utc_timestamp(with_decimal=False)
     first_employees_randomized = select_unique_random_items_from_list(input_list=copy.deepcopy(employee_ids), qty_items=len(employee_ids))
     print('Qty first_employees_randomized = {}'.format(len(first_employees_randomized)))
-    access_cards_to_link = select_unique_random_items_from_list(input_list=copy.deepcopy(access_cards_ids), qty_items=len(employee_ids))
+    access_cards_to_link = select_unique_random_items_from_list(input_list=copy.deepcopy(list(access_cards_ids.keys())), qty_items=len(employee_ids))
     linked_access_card_sequence = 0
     idx = 0
     while idx < len(first_employees_randomized):
@@ -164,11 +166,13 @@ def randomly_issue_first_100_cards_to_first_100_employees():
         subject_id_to_str = '{}'.format(linked_access_card_sequence)
         subject_id_to_str = '1{}'.format(subject_id_to_str.zfill(11))
         subject_id = calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.LINKED_CARD, subject_id=linked_access_card_sequence)
-        response = client.put_item(
+
+        # Insert NEW linked Card
+        response1 = client.put_item(
             TableName='access-card-app',
             Item={
                 'subject-id'                                    : { 'S': subject_id},
-                'subject-topic'                                 : { 'S': 'linked-access-card#association#{}'.format(subject_id_to_str)},
+                'subject-topic'                                 : { 'S': 'linked-access-card#association#{}'.format(access_cards_ids[access_card_id])},
                 'linking-timestamp'                             : { 'N': '{}'.format(now)},
                 'linker-employee-partition-key'                 : { 'S': 'SYSTEM'},
                 'access-card-building-state'                    : { 'S': 'NULL'},
@@ -181,7 +185,26 @@ def randomly_issue_first_100_cards_to_first_100_employees():
             ReturnConsumedCapacity='TOTAL',
             ReturnItemCollectionMetrics='SIZE'
         )
+
+        # Update Existing Access Card
+        response2 = client.update_item(
+            TableName='access-card-app',
+            Key={
+                'subject-id'    : { 'S': access_card_id},
+                'subject-topic' : { 'S': 'access-card#profile#{}'.format(XXX)}
+            },
+            UpdateExpression="set access-card-issued-to = :a , access-card-status = :b",
+            ExpressionAttributeValues={
+                ':a': employee_id,
+                ':b': 'issued'
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+
         print('Linked employee {} to access card {}'.format(employee_id, access_card_id))
+        if 'Attributes' in response2:
+            data = response2['Attributes']
+            print('\tAttributes: {}'.format(json.dumps(data)))
         time.sleep(150/1000) 
         idx += 1
 
