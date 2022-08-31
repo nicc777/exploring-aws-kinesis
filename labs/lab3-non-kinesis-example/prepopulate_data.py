@@ -197,10 +197,14 @@ def randomly_issue_first_100_cards_to_first_100_employees():
                 'subject-id'    : { 'S': access_card_id},
                 'subject-topic' : { 'S': 'access-card#profile#{}'.format(access_cards_ids[access_card_id])}
             },
-            UpdateExpression="set access-card-issued-to = :a , access-card-status = :b",
+            UpdateExpression="set #an = :a , #bn = :b",
             ExpressionAttributeValues={
                 ':a': { 'S': employee_id},
                 ':b': { 'S': 'issued'}
+            },
+            ExpressionAttributeNames={
+                '#an': 'access-card-issued-to',
+                '#bn': 'access-card-status'
             },
             ReturnValues="UPDATED_NEW"
         )
