@@ -68,16 +68,35 @@ def refresh_environment_cache(logger=get_logger()):
     logger.debug('cache: {}'.format((json.dumps(cache))))
 
 
-def debug_log(message: str, variables: dict):
+def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_tuple: tuple=list(), logger=get_logger(level=logging.INFO)):
     """
         See:
             https://docs.python.org/3/library/stdtypes.html#str.format
             https://docs.python.org/3/library/string.html#formatstrings
 
         For this function, the `message` is expected to contain key word variable place holders and the `variables` dict must hold a dictionary with the values matched to the keywords
+
+        Example:
+
+            >>> d = {'one': 1, 'number-two': 'two', 'SomeBool': True}
+            >>> message = 'one = {one} and the number {number-two}. Yes, it is {SomeBool}'
+            >>> message.format(**d)
+            'one = 1 and the number two. Yes, it is True'
+
+            >>> l = ('one', 2, True)
+            >>> message = '{} and {}'
+            >>> message.format(*l)
+            'one and 2'
+
     """
     if cache['Environment']['Data']['DEBUG'] is True:
-        pass
+        try:
+            if len(variables_as_dict) > 0:
+                logger.debug(message.format(**variables_as_dict))
+            else:
+                logger.debug(message.format(*variable_as_tuple))
+        except:
+            pass
 
 
 ###############################################################################
