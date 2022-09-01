@@ -69,6 +69,13 @@ def refresh_environment_cache(logger=get_logger()):
 
 
 def debug_log(message: str, variables: dict):
+    """
+        See:
+            https://docs.python.org/3/library/stdtypes.html#str.format
+            https://docs.python.org/3/library/string.html#formatstrings
+
+        For this function, the `message` is expected to contain key word variable place holders and the `variables` dict must hold a dictionary with the values matched to the keywords
+    """
     if cache['Environment']['Data']['DEBUG'] is True:
         pass
 
