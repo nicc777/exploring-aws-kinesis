@@ -68,7 +68,7 @@ def refresh_environment_cache(logger=get_logger()):
     logger.debug('cache: {}'.format((json.dumps(cache))))
 
 
-def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_tuple: tuple=list(), logger=get_logger(level=logging.INFO)):
+def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: list=list(), logger=get_logger(level=logging.INFO)):
     """
         See:
             https://docs.python.org/3/library/stdtypes.html#str.format
@@ -94,7 +94,7 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_tuple: t
             if len(variables_as_dict) > 0:
                 logger.debug(message.format(**variables_as_dict))
             else:
-                logger.debug(message.format(*variable_as_tuple))
+                logger.debug(message.format(*variable_as_list))
         except:
             pass
 
@@ -143,6 +143,8 @@ def handler(
     refresh_environment_cache(logger=logger)
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
         logger  = get_logger(level=logging.DEBUG)
+    
+    debug_log('event={}', variable_as_list=[event], logger=logger)
         
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
 
@@ -170,6 +172,6 @@ if __name__ == '__main__':
         logger.setLevel(logging.DEBUG)
     else:    
         logger.setLevel(logging.INFO)
-    handler(event={}, context=None, logger=logger, run_from_main=True)
+    handler(event={'Message': None}, context=None, logger=logger, run_from_main=True)
 
 
