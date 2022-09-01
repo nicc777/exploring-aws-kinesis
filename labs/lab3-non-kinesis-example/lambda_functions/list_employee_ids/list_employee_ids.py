@@ -68,6 +68,37 @@ def refresh_environment_cache(logger=get_logger()):
     logger.debug('cache: {}'.format((json.dumps(cache))))
 
 
+def debug_log(message: str, variables: dict):
+    if cache['Environment']['Data']['DEBUG'] is True:
+        pass
+
+
+###############################################################################
+###                                                                         ###
+###                 A W S    A P I    I N T E G R A T I O N                 ###
+###                                                                         ###
+###############################################################################
+
+
+def query_employees(
+    max_items: int=100,
+    start_key: str=None,
+    boto3_clazz=boto3
+)->dict:
+    result = dict()
+    result['EmployeeData'] = list()
+    result['RecordCount'] = 0
+    result['LastEvaluatedKey'] = None
+    result['QueryStatus'] = 'ERROR'
+    result['Message'] = 'Functionality Not Yet Implemented'
+
+    try:
+        pass
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+    return result
+
 
 ###############################################################################
 ###                                                                         ###
