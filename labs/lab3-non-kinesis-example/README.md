@@ -34,7 +34,7 @@ The event will be created by the containerized application by publishing to an S
 |----------------------------------------------------------------|:------:|----------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|-------------------------------------------|
 | `/building-access/link-employee-and-card`                      | POST   | JSON Post with the following data: <br /><ul><li>HR Employee ID</li><li>Building ID</li><li>New Employee ID</li><li>Access Card ID</li></ul> | Basic input validation. Construct SNS message and publish to SNS topic.                               | Return `OK` when SNS Accepted the message |
 | `/building-access/employee-access-card-status/<<employee-id>>` | GET    | Path variable `employee-id` with the employee ID for which the card must be retrieved.                                                       | Directly query the DynamoDB to search for the employee ID and retrieve the linking fields and status. | Return JSON object with data              |
-| `/hr/employee-ids`                                             | GET    | Query string: `max-items` (max. 100, default=100) and then the `start` index position (optional, default=0)                                  | Retrieve employee ID's, limit by `max-items` staring at position `start`                              | Return JSON object employee ID's          |
+| `/hr/employee-ids`                                             | GET    | Query string: `max-items` (max. 100, default=100) and then the `start` index position (optional, default=NULL)                                  | Retrieve employee ID's, limit by `max-items` staring at position `start`                           | Return JSON object employee ID's          |
 
 Each of the API endpoints is services by a Lambda function.
 
@@ -243,7 +243,13 @@ Below are some example records:
 
 ## Lambda Function for Listing Employee ID's
 
-TODO
+The Lambda function will have the following characteristics:
+
+* Supports only the GET method
+* Query string variables: 
+    * `max-items` - INTEGER - min. 10 and max. 100, default=100
+    * `start` STRING - index key to start again (as returned by a previous query)
+
 
 ## Lambda Function For getting the status of a specific employee and their access card
 
