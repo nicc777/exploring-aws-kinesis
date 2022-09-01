@@ -51,24 +51,13 @@ def get_cache_ttl(logger=get_logger())->int:
     return CACHE_TTL_DEFAULT
 
 
-def refresh_environment_cache(logger=get_logger()):
-    global cache
-    now = get_utc_timestamp(with_decimal=False)
-    if 'Environment' in cache:
-        if cache['Environment']['Expiry'] > now:
-            return
-    cache['Environment'] = {
-        'Expiry': get_utc_timestamp() + get_cache_ttl(logger=logger),
-        'Data': {
-            'CACHE_TTL': get_cache_ttl(logger=logger),
-            'DEBUG': get_debug(),
-            # Other ENVIRONMENT variables can be added here... The environment will be re-read after the CACHE_TTL 
-        }
-    }
-    logger.debug('cache: {}'.format((json.dumps(cache))))
-
-
-def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: list=list(), logger=get_logger(level=logging.INFO)):
+def debug_log(
+    message: str,
+    variables_as_dict: dict=dict(),
+    variable_as_list: list=list(),
+    logger=get_logger(level=logging.INFO),
+    debug_override: bool=False
+):
     """
         See:
             https://docs.python.org/3/library/stdtypes.html#str.format
@@ -89,7 +78,7 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
             'one and 2'
 
     """
-    if cache['Environment']['Data']['DEBUG'] is True:
+    if cache['Environment']['Data']['DEBUG'] is True or debug_override is True:
         try:
             if len(variables_as_dict) > 0:
                 logger.debug(message.format(**variables_as_dict))
@@ -97,6 +86,22 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
                 logger.debug(message.format(*variable_as_list))
         except:
             pass
+
+
+def refresh_environment_cache(logger=get_logger()):
+    global cache
+    now = get_utc_timestamp(with_decimal=False)
+    if 'Environment' in cache:
+        if cache['Environment']['Expiry'] > now:
+            return
+    cache['Environment'] = {
+        'Expiry': get_utc_timestamp() + get_cache_ttl(logger=logger),
+        'Data': {
+            'CACHE_TTL': get_cache_ttl(logger=logger),
+            'DEBUG': get_debug(),
+            # Other ENVIRONMENT variables can be added here... The environment will be re-read after the CACHE_TTL 
+        }
+    }
 
 
 ###############################################################################
@@ -172,6 +177,9 @@ if __name__ == '__main__':
         logger.setLevel(logging.DEBUG)
     else:    
         logger.setLevel(logging.INFO)
+
+    logger.debug('DEBUG ENABLED')
+
     handler(event={'Message': None}, context=None, logger=logger, run_from_main=True)
 
 
