@@ -5,6 +5,7 @@ import json
 import logging
 from datetime import datetime
 import sys
+from inspect import getframeinfo, stack
 
 
 def get_logger(level=logging.INFO):
@@ -79,7 +80,10 @@ def debug_log(
 
     """
     if cache['Environment']['Data']['DEBUG'] is True or debug_override is True:
+        caller = getframeinfo(stack()[1][0])
+        caller_str = '{}():{}'.format(caller.function, caller.lineno)
         try:
+            message = '[{}]  {}'.format(caller_str, message)
             if len(variables_as_dict) > 0:
                 logger.debug(message.format(**variables_as_dict))
             else:
@@ -177,8 +181,6 @@ if __name__ == '__main__':
         logger.setLevel(logging.DEBUG)
     else:    
         logger.setLevel(logging.INFO)
-
-    logger.debug('DEBUG ENABLED')
 
     handler(event={'Message': None}, context=None, logger=logger, run_from_main=True)
 
