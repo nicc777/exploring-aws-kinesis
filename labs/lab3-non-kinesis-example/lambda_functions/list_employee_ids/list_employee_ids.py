@@ -121,7 +121,7 @@ def query_employees(
     boto3_clazz=boto3
 )->dict:
     result = dict()
-    result['EmployeeData'] = list()
+    result['Records'] = list()
     result['RecordCount'] = 0
     result['LastEvaluatedKey'] = None
     result['QueryStatus'] = 'ERROR'
