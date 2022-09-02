@@ -250,6 +250,7 @@ The Lambda function will have the following characteristics:
     * `max-items` - INTEGER - min. 10 and max. 100, default=100
     * `start` STRING - index key to start again (as returned by a previous query)
 
+The Lambda function is located in the file [`list_employee_ids.py`](lambda_functions/list_employee_ids/list_employee_ids.py)
 
 ## Lambda Function For getting the status of a specific employee and their access card
 
