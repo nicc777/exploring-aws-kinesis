@@ -66,12 +66,7 @@ Resources:
             - "dynamodb:Query"
             Resource:
             - "arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/*/index/*"
-            - Fn::Sub 
-              - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
-              - TableName: Fn::ImportValue:
-                  Fn::Sub: 
-                  - "${DynamoDbStackName}-AccessCardAppTableName"
-                  - DynamoDbStackName: !ImportValue "Lab3DynamoDbStackName"
+            - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/access-card-app"
       RoleName: ListEmployeeIdsLambdaFunctionRole
 
   ListEmployeeIdsLambdaFunctionLogGroup:
