@@ -130,15 +130,14 @@ def decode_data(event, body: str):
 
 def query_employees(
     max_items: int=100,
-    start_key_name: str=None,
-    start_key_value: str=None,
+    start_key: dict=dict(),
     boto3_clazz=boto3,
     logger=get_logger()
 )->dict:
     result = dict()
     result['Records'] = list()
     result['RecordCount'] = 0
-    result['LastEvaluatedKey'] = None
+    result['LastEvaluatedKey'] = dict()
     result['QueryStatus'] = 'ERROR'
     result['Message'] = 'Functionality Not Yet Implemented'
 
@@ -149,9 +148,7 @@ def query_employees(
     try:
         client = get_client('dynamodb', boto3_clazz=boto3_clazz)
         response = dict()
-        response['Records'] = list()
-        response['NextStartKeyValue'] = dict()
-        if start_key_name is None and start_key_value is None:
+        if len(start_key) == 0:
             response = client.scan(
                 TableName='access-card-app',
                 AttributesToGet=[
@@ -175,6 +172,10 @@ def query_employees(
                 ConsistentRead=False
             )
         else:
+            start_key_data = dict()
+            for start_key_name, start_key_value in start_key.items():
+                start_key_data[start_key_name] = dict()
+                start_key_data[start_key_name]['S'] = start_key_value
             response = client.scan(
                 TableName='access-card-app',
                 AttributesToGet=[
@@ -187,30 +188,7 @@ def query_employees(
                     'last-name',
                 ],
                 Limit=max_items,
-                ExclusiveStartKey={
-                    'string': {
-                        'S': 'string',
-                        'N': 'string',
-                        'B': b'bytes',
-                        'SS': [
-                            'string',
-                        ],
-                        'NS': [
-                            'string',
-                        ],
-                        'BS': [
-                            b'bytes',
-                        ],
-                        'M': {
-                            'string': {'... recursive ...'}
-                        },
-                        'L': [
-                            {'... recursive ...'},
-                        ],
-                        'NULL': True|False,
-                        'BOOL': True|False
-                    }
-                },
+                ExclusiveStartKey=start_key_data,
                 Select='SPECIFIC_ATTRIBUTES',
                 ScanFilter={
                     'subject-topic': {
@@ -228,12 +206,16 @@ def query_employees(
                 for field_name, field_data in item.items():
                     for field_data_type, field_data_value in field_data.items():
                         record[field_name] = '{}'.format(field_data_value)
-                response['Records'].append(record)
+                result['Records'].append(record)
         if 'LastEvaluatedKey' in response:
             for next_key, next_data in response['LastEvaluatedKey'].items():
-                response['NextStartKeyValue'][next_key] = '{}'.format(next_data['S'])
+                result['LastEvaluatedKey'][next_key] = '{}'.format(next_data['S'])
+        result['QueryStatus'] = 'OK'
+        result['Message'] = 'Query Executed.'
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        result['QueryStatus'] = 'ERROR'
+        result['Message'] = 'Processing Error'
 
     return result
 
@@ -303,7 +285,12 @@ if __name__ == '__main__':
     else:    
         logger.setLevel(logging.INFO)
 
-    result = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True)
-    print('{}'.format(json.dumps(result)))
+    result1 = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True)
+    print('------------------------------------------------------------------------------------------------------------------------')
+    print('{}'.format(json.dumps(result1)))
+
+    result2 = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True)
+    print('------------------------------------------------------------------------------------------------------------------------')
+    print('{}'.format(json.dumps(result2)))
 
 
