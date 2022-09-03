@@ -55,7 +55,7 @@ Resources:
             - "logs:CreateLogGroup"
             - "logs:CreateLogStream"
             - "logs:PutLogEvents"
-            Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*""
+            Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*"
       - PolicyName: ListEmployeeIdsLambdaFunctionPolicy02
         PolicyDocument:
           Version: '2012-10-17'
@@ -65,14 +65,13 @@ Resources:
             - "dynamodb:Scan"
             - "dynamodb:Query"
             Resource:
+            - "arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/*/index/*"
             - Fn::Sub 
               - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
-              - TableName:
-                  Fn::ImportValue: 
-                    Fn::Sub: 
-                    - "${DynamoDbStackName}-AccessCardAppTableName"
-                    - DynamoDbStackName: !ImportValue "Lab3DynamoDbStackName"
-            - "arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/*/index/*"
+              - TableName: Fn::ImportValue:
+                  Fn::Sub: 
+                  - "${DynamoDbStackName}-AccessCardAppTableName"
+                  - DynamoDbStackName: !ImportValue "Lab3DynamoDbStackName"
       RoleName: ListEmployeeIdsLambdaFunctionRole
 
   ListEmployeeIdsLambdaFunctionLogGroup:

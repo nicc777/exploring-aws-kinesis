@@ -10,6 +10,7 @@
   - [Lambda Function for Listing Employee ID's](#lambda-function-for-listing-employee-ids)
   - [Lambda Function For getting the status of a specific employee and their access card](#lambda-function-for-getting-the-status-of-a-specific-employee-and-their-access-card)
   - [Lambda Function(s) for Linking an employee ID, Access Card and Building ID with an initial default building status of `INSIDE`](#lambda-functions-for-linking-an-employee-id-access-card-and-building-id-with-an-initial-default-building-status-of-inside)
+  - [Lambda Function Deployment](#lambda-function-deployment)
 - [Infrastructure Components](#infrastructure-components)
   - [Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC](#serving-of-a-web-site-from-ec2-private-only-accessed-via-a-proxy-server-in-a-public-vpc)
   - [Event Infrastructure](#event-infrastructure)
@@ -260,6 +261,20 @@ TODO
 ## Lambda Function(s) for Linking an employee ID, Access Card and Building ID with an initial default building status of `INSIDE`
 
 TODO
+
+## Lambda Function Deployment
+
+All Lambda functions are defined in a single CloudFormation template that can be deployed with:
+
+Deploying the table can be done with the following command:
+
+```shell
+aws cloudformation deploy \
+    --stack-name $LAMBDA_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/2000_lambda_functions.yaml \
+    --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
+    --capabilities CAPABILITY_NAMED_IAM
+```
 
 # Infrastructure Components 
 
