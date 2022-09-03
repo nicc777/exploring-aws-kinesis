@@ -13,6 +13,7 @@
         "getenv",
         "hashlib",
         "hexdigest",
+        "Hostnames",
         "kconvert",
         "nosql",
         "OLDPWD",

@@ -1,0 +1,269 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This template creates the base VPC resources. Please note that there are a limit of 5 VPC's per region per AWS 
+  account. Please refer to https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html for more 
+  information regarding AWS VPC Limits. This template will also create a HTTP proxy in the public VPC for Internet 
+  access. This is slightly cheaper than creating a NAT gateway stack.
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  # AwsEc2AmiParam:
+  #   Description: "Refer to https://aws.amazon.com/blogs/compute/query-for-the-latest-amazon-linux-ami-ids-using-aws-systems-manager-parameter-store/"
+  #   Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+  #   Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  PublicVpcCidrParam:
+    Type: String
+    Default: "172.31.100.0/22"
+  PublicVpcSubnet1CidrParam:
+    Type: String
+    Default: "172.31.100.0/24"
+  PublicVpcSubnet2CidrParam:
+    Type: String
+    Default: "172.31.101.0/24"
+  PublicVpcSubnet3CidrParam:
+    Type: String
+    Default: "172.31.102.0/24"
+
+
+  PrivateVpcCidrParam:
+    Type: String
+    Default: "10.20.0.0/16"
+  PrivateVpcSubnet1CidrParam:
+    Type: String
+    Default: "10.20.0.0/20"
+  PrivateVpcSubnet2CidrParam:
+    Type: String
+    Default: "10.20.16.0/20"
+  PrivateVpcSubnet3CidrParam:
+    Type: String
+    Default: "10.20.32.0/20"
+  FirstTrustedInternetCiderParam:
+    Type: String
+    Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Public VPC"
+    Default: "0.0.0.0/0"
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                   PRIVATE VPC                                                   ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  PrivateVpc:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: !Ref PrivateVpcCidrParam
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: "default"
+      Tags: 
+        - Key: "Public"
+          Value: "FALSE"
+
+  PrivateVpcSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      CidrBlock: !Ref PrivateVpcSubnet1CidrParam
+      VpcId: !Ref PrivateVpc
+
+  PrivateVpcSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !Sub "${AWS::Region}b"
+      CidrBlock: !Ref PrivateVpcSubnet2CidrParam
+      VpcId: !Ref PrivateVpc
+
+  PrivateVpcSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !Sub "${AWS::Region}c"
+      CidrBlock: !Ref PrivateVpcSubnet3CidrParam
+      VpcId: !Ref PrivateVpc
+
+  PrivateVpcRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref PrivateVpc
+
+  PrivateVpcSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PrivateVpcRouteTable
+      SubnetId: !Ref PrivateVpcSubnet1
+
+  PrivateVpcSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PrivateVpcRouteTable
+      SubnetId: !Ref PrivateVpcSubnet2
+
+  PrivateVpcSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PrivateVpcRouteTable
+      SubnetId: !Ref PrivateVpcSubnet3
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                    PUBLIC VPC                                                   ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  PublicVpc:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: !Ref PublicVpcCidrParam
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: "default"
+      Tags: 
+        - Key: "Public"
+          Value: "TRUE"
+
+  PublicVpcSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      CidrBlock: !Ref PublicVpcSubnet1CidrParam
+      VpcId: !Ref PublicVpc
+
+  PublicVpcSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !Sub "${AWS::Region}b"
+      CidrBlock: !Ref PublicVpcSubnet2CidrParam
+      VpcId: !Ref PublicVpc
+
+  PublicVpcSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !Sub "${AWS::Region}c"
+      CidrBlock: !Ref PublicVpcSubnet3CidrParam
+      VpcId: !Ref PublicVpc
+
+  TrustedInternetHostsPrefixList:
+    Type: AWS::EC2::PrefixList
+    Properties: 
+      AddressFamily: "IPv4"
+      Entries: 
+        - Cidr: !Ref FirstTrustedInternetCiderParam
+          Description: "A IP address or network from the Internet we trust"
+      MaxEntries: 10
+      PrefixListName: "TrustedInternetHostsPrefixList"
+
+  PublicVpcRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref PublicVpc
+
+  PublicVpcSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicVpcRouteTable
+      SubnetId: !Ref PublicVpcSubnet1
+
+  PublicVpcSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicVpcRouteTable
+      SubnetId: !Ref PublicVpcSubnet2
+
+  PublicVpcSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicVpcRouteTable
+      SubnetId: !Ref PublicVpcSubnet3
+
+  PublicVpcInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: "Public"
+        Value: "TRUE"
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                     ROUTING                                                     ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  InterVpcPeeringConnection:
+    Type: AWS::EC2::VPCPeeringConnection
+    Properties:
+      VpcId: !Ref PublicVpc
+      PeerVpcId: !Ref PrivateVpc
+
+  PublicVpcToPrivateVpcRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+    - PublicVpc
+    - PrivateVpc
+    - PrivateVpcRouteTable
+    Properties:
+      DestinationCidrBlock: !Ref PrivateVpcCidrParam
+      RouteTableId: !Ref PublicVpcRouteTable
+      VpcPeeringConnectionId: !Ref InterVpcPeeringConnection
+
+  PublicVpcToInternetRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+    - PublicVpc
+    Properties:
+      DestinationCidrBlock: "0.0.0.0/0"
+      RouteTableId: !Ref PublicVpcRouteTable
+      GatewayId: !Ref PublicVpcInternetGateway
+
+  PrivateVpcToPublicVpcRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+    - PublicVpc
+    - PrivateVpc
+    - PublicVpcRouteTable
+    Properties:
+      DestinationCidrBlock: !Ref PublicVpcCidrParam
+      RouteTableId: !Ref PrivateVpcRouteTable
+      VpcPeeringConnectionId: !Ref InterVpcPeeringConnection
+
+Outputs:
+
+  PrivateVpcId:
+    Description: "PrivateVpc ID"
+    Value: !Ref PrivateVpc
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateVpcId"
+
+  PrivateVpcCidrBlock:
+    Description: "CIDR for PrivateVpc"
+    Value: !GetAtt PrivateVpc.CidrBlock
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateVpcCidrBlock"
+
+  PublicVpcId:
+    Description: "PublicVpc ID"
+    Value: !Ref PublicVpc
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicVpcId"
+
+  PublicVpcCidrBlock:
+    Description: "CIDR for PublicVpc"
+    Value: !GetAtt PublicVpc.CidrBlock
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicVpcCidrBlock"

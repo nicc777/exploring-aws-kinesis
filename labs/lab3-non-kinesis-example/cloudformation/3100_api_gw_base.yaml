@@ -12,10 +12,10 @@ Description: >
 #   S3EventBucketParam:
 #     Type: String
 #     Description: "The name of the S3 bucket where the incoming event data will be stored. This is the Event store."
-#   Test01RouteKey:
+#   FirstTrustedInternetCider:
 #     Type: String
-#     Description: "The API Route Path"
-#     Default: "test01"
+#     Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Public VPC"
+#     Default: "0.0.0.0/0"
 
 # Rules:
 #   set of rules
@@ -63,7 +63,7 @@ Resources:
         MaxAge: 86400
       Description: "The Internet facing HTTP API for publishing events from external sources, like web sites"
       DisableExecuteApiEndpoint: false  # For production, this will typically be disabled/true to force clients to use the custom domain
-      Name: "public-events"
+      Name: "lab3-api"
       ProtocolType: "HTTP"
       Version: "v1"
 
