@@ -6,6 +6,8 @@ import logging
 from datetime import datetime
 import sys
 from inspect import getframeinfo, stack
+import base64
+from urllib.parse import parse_qs
 
 
 def get_logger(level=logging.INFO):
@@ -108,6 +110,37 @@ def refresh_environment_cache(logger=get_logger()):
     }
 
 
+def extract_post_data(event)->str:
+    if 'requestContext' in event:
+        if 'http' in event['requestContext']:
+            if 'method' in event['requestContext']['http']:
+                if event['requestContext']['http']['method'].upper() in ('POST', 'PUT', 'DELETE'):  # see https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+                    if 'isBase64Encoded' in event and 'body' in event:
+                        if event['isBase64Encoded'] is True:
+                            body = base64.b64decode(event['body'])
+                            if isinstance(body, bytes):
+                                body = body.decode('utf-8')
+                            return body
+                    if 'body' in event:
+                        body = event['body']
+                        if isinstance(body, bytes):
+                            body = body.decode('utf-8')
+                        else:
+                            body = '{}'.format(body)
+                        return body
+    return ""
+
+
+def decode_data(event, body: str):
+    if 'headers' in event:
+        if 'content-type' in event['headers']:
+            if 'json' in event['headers']['content-type'].lower():
+                return json.loads(body)
+            if 'x-www-form-urlencoded' in event['headers']['content-type'].lower():
+                return parse_qs(body)
+    return body
+
+
 ###############################################################################
 ###                                                                         ###
 ###                 A W S    A P I    I N T E G R A T I O N                 ###
@@ -149,13 +182,23 @@ def handler(
     boto3_clazz=boto3,
     run_from_main: bool=False
 ):
+    result = dict()
+    return_object = {
+        'statusCode': 200,
+        'headers': {
+            'x-custom-header' : 'my custom header value',
+            'content-type': 'application/json',
+        },
+        'body': result,
+        'isBase64Encoded': False,
+    }
     refresh_environment_cache(logger=logger)
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
         logger  = get_logger(level=logging.DEBUG)
     
     debug_log('event={}', variable_as_list=[event], logger=logger)
         
-    return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
+    return return_object
 
 
 ###############################################################################
