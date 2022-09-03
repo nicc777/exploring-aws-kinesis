@@ -130,8 +130,10 @@ def decode_data(event, body: str):
 
 def query_employees(
     max_items: int=100,
-    start_key: str=None,
-    boto3_clazz=boto3
+    start_key_name: str=None,
+    start_key_value: str=None,
+    boto3_clazz=boto3,
+    logger=get_logger()
 )->dict:
     result = dict()
     result['Records'] = list()
@@ -140,8 +142,96 @@ def query_employees(
     result['QueryStatus'] = 'ERROR'
     result['Message'] = 'Functionality Not Yet Implemented'
 
+    if max_items > 100:
+        logger.warning('max_items was {} which is more than the absolute max. of 100.'.format(max_items))
+        max_items = 100
+
     try:
-        pass
+        client = get_client('dynamodb', boto3_clazz=boto3_clazz)
+        response = dict()
+        response['Records'] = list()
+        response['NextStartKeyValue'] = dict()
+        if start_key_name is None and start_key_value is None:
+            response = client.scan(
+                TableName='access-card-app',
+                AttributesToGet=[
+                    'subject-id',
+                    'subject-topic',
+                    'department',
+                    'employee-id',
+                    'employee-status',
+                    'first-name',
+                    'last-name',
+                ],
+                Limit=max_items,
+                Select='SPECIFIC_ATTRIBUTES',
+                ScanFilter={
+                    'subject-topic': {
+                        'AttributeValueList': [{'S': 'employee#profile#'},],
+                        'ComparisonOperator': 'BEGINS_WITH'
+                    }
+                },
+                ReturnConsumedCapacity='TOTAL',
+                ConsistentRead=False
+            )
+        else:
+            response = client.scan(
+                TableName='access-card-app',
+                AttributesToGet=[
+                    'subject-id',
+                    'subject-topic',
+                    'department',
+                    'employee-id',
+                    'employee-status',
+                    'first-name',
+                    'last-name',
+                ],
+                Limit=max_items,
+                ExclusiveStartKey={
+                    'string': {
+                        'S': 'string',
+                        'N': 'string',
+                        'B': b'bytes',
+                        'SS': [
+                            'string',
+                        ],
+                        'NS': [
+                            'string',
+                        ],
+                        'BS': [
+                            b'bytes',
+                        ],
+                        'M': {
+                            'string': {'... recursive ...'}
+                        },
+                        'L': [
+                            {'... recursive ...'},
+                        ],
+                        'NULL': True|False,
+                        'BOOL': True|False
+                    }
+                },
+                Select='SPECIFIC_ATTRIBUTES',
+                ScanFilter={
+                    'subject-topic': {
+                        'AttributeValueList': [{'S': 'employee#profile#'},],
+                        'ComparisonOperator': 'BEGINS_WITH'
+                    }
+                },
+                ReturnConsumedCapacity='TOTAL',
+                ConsistentRead=False
+            )
+        debug_log(message='response={}', variable_as_list=[response,])
+        if 'Items' in response:
+            for item in response['Items']:
+                record = dict()
+                for field_name, field_data in item.items():
+                    for field_data_type, field_data_value in field_data.items():
+                        record[field_name] = '{}'.format(field_data_value)
+                response['Records'].append(record)
+        if 'LastEvaluatedKey' in response:
+            for next_key, next_data in response['LastEvaluatedKey'].items():
+                response['NextStartKeyValue'][next_key] = '{}'.format(next_data['S'])
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
@@ -175,8 +265,15 @@ def handler(
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
         logger  = get_logger(level=logging.DEBUG)
     
-    debug_log('event={}', variable_as_list=[event,], logger=logger)
+    debug_log(message='event={}', variable_as_list=[event,], logger=logger)
     
+    query_data = query_employees(
+        max_items=10,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+    debug_log(message='query_data={}', variable_as_list=[query_data,], logger=logger)
+    return_object['body'] = query_data
 
     debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
     return return_object
