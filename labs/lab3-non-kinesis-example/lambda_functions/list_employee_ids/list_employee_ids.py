@@ -61,26 +61,6 @@ def debug_log(
     logger=get_logger(level=logging.INFO),
     debug_override: bool=False
 ):
-    """
-        See:
-            https://docs.python.org/3/library/stdtypes.html#str.format
-            https://docs.python.org/3/library/string.html#formatstrings
-
-        For this function, the `message` is expected to contain key word variable place holders and the `variables` dict must hold a dictionary with the values matched to the keywords
-
-        Example:
-
-            >>> d = {'one': 1, 'number-two': 'two', 'SomeBool': True}
-            >>> message = 'one = {one} and the number {number-two}. Yes, it is {SomeBool}'
-            >>> message.format(**d)
-            'one = 1 and the number two. Yes, it is True'
-
-            >>> l = ('one', 2, True)
-            >>> message = '{} and {}'
-            >>> message.format(*l)
-            'one and 2'
-
-    """
     if cache['Environment']['Data']['DEBUG'] is True or debug_override is True:
         caller = getframeinfo(stack()[1][0])
         caller_str = '{}():{}'.format(caller.function, caller.lineno)
@@ -186,7 +166,6 @@ def handler(
     return_object = {
         'statusCode': 200,
         'headers': {
-            'x-custom-header' : 'my custom header value',
             'content-type': 'application/json',
         },
         'body': result,
@@ -196,8 +175,10 @@ def handler(
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
         logger  = get_logger(level=logging.DEBUG)
     
-    debug_log('event={}', variable_as_list=[event], logger=logger)
-        
+    debug_log('event={}', variable_as_list=[event,], logger=logger)
+    
+
+    debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
     return return_object
 
 
@@ -225,6 +206,7 @@ if __name__ == '__main__':
     else:    
         logger.setLevel(logging.INFO)
 
-    handler(event={'Message': None}, context=None, logger=logger, run_from_main=True)
+    result = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True)
+    print('{}'.format(json.dumps(result)))
 
 
