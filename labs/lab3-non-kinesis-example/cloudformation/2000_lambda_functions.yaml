@@ -112,14 +112,14 @@ Resources:
 
 Outputs:
 
-  S3EventStoreBucketDomainName:
-    Description: "Bucket DomainName"
-    Value: !GetAtt S3EventStoreBucket.DomainName
+  ListEmployeeIdsLambdaFunctionArn:
+    Description: "ARN for ListEmployeeIdsLambdaFunction"
+    Value: !GetAtt ListEmployeeIdsLambdaFunction.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-S3EventStoreBucketDomainName"
+      Name: !Sub "${AWS::StackName}-ListEmployeeIdsLambdaFunctionArn"
 
-  PublicEventApiGatewayApiEndpoint:
-    Description: "The default endpoint for API PublicEventApiGateway"
-    Value: !GetAtt PublicEventApiGateway.ApiEndpoint
+  StackName:
+    Description: "Lambda Functions Stack Name"
+    Value: !Sub ${AWS::StackName}
     Export:
-      Name: !Sub "${AWS::StackName}-PublicEventApiGatewayApiEndpoint"
+      Name: !Sub "Lab3LambdaFunctionsStackName"
