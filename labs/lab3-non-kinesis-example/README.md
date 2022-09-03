@@ -264,6 +264,16 @@ TODO
 
 ## Lambda Function Deployment
 
+Each Lambda function must be zipped and uploaded to S3:
+
+```shell
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids_lambda_function.zip
+
+cd labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/ && zip list_employee_ids_lambda_function.zip list_employee_ids.py && cd $OLDPWD 
+
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids_lambda_function.zip s3://$ARTIFACT_S3_BUCKET_NAME/list_employee_ids_lambda_function.zip
+```
+
 All Lambda functions are defined in a single CloudFormation template that can be deployed with:
 
 Deploying the table can be done with the following command:
