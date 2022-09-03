@@ -42,13 +42,14 @@ Each of the API endpoints is services by a Lambda function.
 
 When running commands, the following environment variables are assumed to be set:
 
-| Environment Variable Example       | Description                                                    |
-|------------------------------------|----------------------------------------------------------------|
-| `export AWS_PROFILE="..."`         | The AWS Credentials Profile to use                             |
-| `export AWS_REGION="..."`          | The AWS Region to deploy resources to                          |
-| `export BASE_STACK_NAME="..."`     | The name of the CloudFormation base stack                      |
-| `export PARAMETERS_FILE="..."`     | The file containing the stack parameters                       |
-| `export DYNAMODB_STACK_NAME="..."` | The CloudFormation stack name for deploying the DynamoDB Table |
+| Environment Variable Example           | Description                                                    |
+|----------------------------------------|----------------------------------------------------------------|
+| `export AWS_PROFILE="..."`             | The AWS Credentials Profile to use                             |
+| `export AWS_REGION="..."`              | The AWS Region to deploy resources to                          |
+| `export PARAMETERS_FILE="..."`         | The file containing the stack parameters                       |
+| `export DYNAMODB_STACK_NAME="..."`     | The CloudFormation stack name for deploying the DynamoDB Table |
+| `export LAMBDA_STACK_NAME="..."`       | The CloudFormation stack name for deploying Lambda Functions   |
+| `export ARTIFACT_S3_BUCKET_NAME="..."` | The S3 Bucket name containing any additional artifacts         |
 
 Some of these variables, like 
 
