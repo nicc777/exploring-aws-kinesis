@@ -11,13 +11,6 @@ Parameters:
   S3SourceBucketParam:
     Type: String
     Description: "The S3 bucket name containing the Lambda function ZIP file"
-  S3EventBucketParam:
-    Type: String
-    Description: "The name of the S3 bucket where the incoming event data will be stored. This is the Event store."
-  Test01RouteKey:
-    Type: String
-    Description: "The API Route Path"
-    Default: "test01"
 
 # Rules:
 #   set of rules
