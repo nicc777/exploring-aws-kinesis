@@ -73,7 +73,7 @@ From an infrastructure and application perspective, we have the following contex
 
 From the design exercise, I now start to understand what Infrastructure is really core to the event store, which is basically the following components from the original template in Lab 2:
 
-![Core Infrastructure](../../images/scenario_01_core_infrastructure_for_evemts.png)
+![Core Infrastructure](../../images/scenario_01_core_infrastructure_for_events.png)
 
 I will therefore now see how I split up my infrastructure into more logic parts. For now, I have identified the following:
 
@@ -192,7 +192,7 @@ Deploying the table can be done with the following command:
 ```shell
 aws cloudformation deploy \
     --stack-name $DYNAMODB_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/AccessCardDemo_cf_template.yaml
+    --template-file labs/lab3-non-kinesis-example/cloudformation/1000_dynamodb.yaml
 ```
 
 ## Pre-populating Data
@@ -216,7 +216,7 @@ aws cloudformation delete-stack --stack-name $DYNAMODB_STACK_NAME
 
 aws cloudformation deploy \
     --stack-name $DYNAMODB_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/AccessCardDemo_cf_template.yaml
+    --template-file labs/lab3-non-kinesis-example/cloudformation/1000_dynamodb.yaml
 
 # WAIT UNTIL STACK IS DONE
 
