@@ -78,3 +78,17 @@ Resources:
         ScaleOutCooldown: 60
         ScaleInCooldown: 60
         TargetValue: 70
+
+Outputs:
+
+  StackName:
+    Description: "DynamoDB Stack Name"
+    Value: !Sub ${AWS::StackName}
+    Export:
+      Name: !Sub "Lab3DynamoDbStackName"
+
+  AccessCardAppTableName:
+    Description: "DynamoDB AccessCardApp Name"
+    Value: !Ref AccessCardApp
+    Export:
+      Name: !Sub "${AWS::StackName}-AccessCardAppTableName"

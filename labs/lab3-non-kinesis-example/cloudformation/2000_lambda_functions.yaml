@@ -1,0 +1,125 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  A basic Lambda function that expects the Lambda function source to be a ZIPPED file in S3
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  S3SourceBucketParam:
+    Type: String
+    Description: "The S3 bucket name containing the Lambda function ZIP file"
+  S3EventBucketParam:
+    Type: String
+    Description: "The name of the S3 bucket where the incoming event data will be stored. This is the Event store."
+  Test01RouteKey:
+    Type: String
+    Description: "The API Route Path"
+    Default: "test01"
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                           API GATEWAY LAMBDA FUNCTIONS                                          ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  ListEmployeeIdsLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "ListEmployeeIdsLambdaFunctionRoleAssumeRolePolicyDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role ListEmployeeIdsLambdaFunction"
+      Policies:
+      - PolicyName: ListEmployeeIdsLambdaFunctionPolicy01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*""
+      - PolicyName: ListEmployeeIdsLambdaFunctionPolicy02
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "dynamodb:Scan"
+            - "dynamodb:Query"
+            Resource:
+            - Fn::Sub 
+              - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
+              - TableName:
+                  Fn::ImportValue: 
+                    Fn::Sub: 
+                    - "${DynamoDbStackName}-AccessCardAppTableName"
+                    - DynamoDbStackName: !ImportValue "Lab3DynamoDbStackName"
+            - "arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/*/index/*"
+      RoleName: ListEmployeeIdsLambdaFunctionRole
+
+  ListEmployeeIdsLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref ListEmployeeIdsLambdaFunction
+      RetentionInDays: 7
+
+  ListEmployeeIdsLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Code: 
+        S3Bucket: !Ref S3SourceBucketParam
+        S3Key: "list_employee_ids_lambda_function.zip"
+      Description: "Handle the test event and emit event data to AWS Kinesis"
+      FunctionName: "ListEmployeeIdsLambdaFunction"
+      Handler: "list_employee_ids.handler"
+      MemorySize: 128
+      Role: !GetAtt ListEmployeeIdsLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 30
+
+
+Outputs:
+
+  S3EventStoreBucketDomainName:
+    Description: "Bucket DomainName"
+    Value: !GetAtt S3EventStoreBucket.DomainName
+    Export:
+      Name: !Sub "${AWS::StackName}-S3EventStoreBucketDomainName"
+
+  PublicEventApiGatewayApiEndpoint:
+    Description: "The default endpoint for API PublicEventApiGateway"
+    Value: !GetAtt PublicEventApiGateway.ApiEndpoint
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicEventApiGatewayApiEndpoint"
