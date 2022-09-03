@@ -65,7 +65,7 @@ Resources:
             - "dynamodb:Scan"
             - "dynamodb:Query"
             Resource:
-            - "arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/*/index/*"
+            - !Sub "arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/*/index/*"
             - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/access-card-app"
       RoleName: ListEmployeeIdsLambdaFunctionRole
 
