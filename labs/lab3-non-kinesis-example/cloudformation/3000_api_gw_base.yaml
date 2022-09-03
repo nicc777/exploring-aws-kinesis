@@ -1,0 +1,82 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This template is the base template for the API Gateway basic resources. It does not include routes or integrations - 
+  each route and integration will have their own stack.
+
+# Metadata:
+#   template metadata
+
+# Parameters:
+#   S3EventBucketParam:
+#     Type: String
+#     Description: "The name of the S3 bucket where the incoming event data will be stored. This is the Event store."
+#   Test01RouteKey:
+#     Type: String
+#     Description: "The API Route Path"
+#     Default: "test01"
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                 API HTTP GATEWAY                                                ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  PublicEventApiGateway:
+    Type: AWS::ApiGatewayV2::Api
+    Properties: 
+      CorsConfiguration:
+        AllowCredentials: true
+        AllowHeaders: 
+        - "Content-Type"
+        - "X-Amz-Date"
+        - "Authorization"
+        - "X-Api-Key"
+        - "X-Amz-Security-Token"
+        AllowMethods: 
+        - OPTIONS
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        AllowOrigins: 
+        - "http://localhost"
+        - "http://localhost:9000"
+        ExposeHeaders: 
+        - "Date"
+        - "x-api-id"
+        MaxAge: 86400
+      Description: "The Internet facing HTTP API for publishing events from external sources, like web sites"
+      DisableExecuteApiEndpoint: false  # For production, this will typically be disabled/true to force clients to use the custom domain
+      Name: "public-events"
+      ProtocolType: "HTTP"
+      Version: "v1"
+
+Outputs:
+
+  PublicEventApiGatewayId:
+    Description: "PublicEventApiGateway ID"
+    Value: !Ref PublicEventApiGateway
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicEventApiGatewayId"
+
+  PublicEventApiGatewayEndPoint:
+    Description: "PublicEventApiGateway EndPoint"
+    Value: !GetAtt PublicEventApiGateway.ApiEndpoint
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicEventApiGatewayEndPoint"
