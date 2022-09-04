@@ -184,10 +184,20 @@ Resources:
     Properties: 
       VpcId: !Ref PublicVpc
   
+  PublicVpcInternetGatewayRouteTableAssociation:
+    Type: AWS::EC2::GatewayRouteTableAssociation
+    DependsOn: 
+    - PublicVpcInternetGatewayAttachment
+    # - PublicVpcRouteTable
+    Properties: 
+      GatewayId: !Ref PublicVpcInternetGateway
+      RouteTableId: !Ref PublicVpcRouteTable
+
   PublicVpcSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     DependsOn:
     - PublicVpcInternetGatewayAttachment
+    - PublicVpcInternetGatewayRouteTableAssociation
     Properties: 
       RouteTableId: !Ref PublicVpcRouteTable
       SubnetId: !Ref PublicVpcSubnet1
@@ -196,6 +206,7 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     DependsOn:
     - PublicVpcInternetGatewayAttachment
+    - PublicVpcInternetGatewayRouteTableAssociation
     Properties: 
       RouteTableId: !Ref PublicVpcRouteTable
       SubnetId: !Ref PublicVpcSubnet2
@@ -204,18 +215,12 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     DependsOn:
     - PublicVpcInternetGatewayAttachment
+    - PublicVpcInternetGatewayRouteTableAssociation
     Properties: 
       RouteTableId: !Ref PublicVpcRouteTable
       SubnetId: !Ref PublicVpcSubnet3
 
-  PublicVpcInternetGatewayRouteTableAssociation:
-    Type: AWS::EC2::GatewayRouteTableAssociation
-    DependsOn: 
-    - PublicVpcInternetGatewayAttachment
-    # - PublicVpcToInternetRoute
-    Properties: 
-      GatewayId: !Ref PublicVpcInternetGateway
-      RouteTableId: !Ref PublicVpcRouteTable
+  
 
 
 #######################################################################################################################
