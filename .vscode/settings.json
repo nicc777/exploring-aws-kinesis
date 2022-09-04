@@ -19,12 +19,14 @@
         "nosql",
         "OLDPWD",
         "onboarded",
+        "OPENZFS",
         "prepopulate",
         "Redrive",
         "RFID",
         "Tierings",
         "traceback",
         "zcat",
-        "zfill"
+        "zfill",
+        "ZSTD"
     ]
 }

@@ -1,0 +1,150 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This stack defines a Network Filesystem (NFS Service) exposed by AWS FSX. The filesystem will host, among other
+  things, static web artifacts for use by EC2 web server cluster. Each EC2 instance in the cluster will mount the
+  static content volume as READ ONLY.
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  VpcStackName:
+    Type: String
+    Description: "The name of the VPC Stack"
+  
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###              S3 BUCKET WITH SNS TOPIC AND LAMBDA FOR PROCESSING NEW EVENTS IN THE EVENT STORE (S3)              ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  StaticWebRootFsxFilesystemSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: "Proxy Server Security Group"
+      GroupName: 
+        Fn::Join:
+        - "-"
+        - - !Ref AWS::StackName
+          - "StaticWebRootFsxFilesystemSecurityGroup"
+      VpcId: 
+        Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcId"
+
+  StaticWebRootFsxFilesystemNfs2049TcpIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      CidrIp:
+        Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
+      Description: "Allow port 2049/tcp (NFS)"
+      FromPort: 2049
+      ToPort: 2049
+      GroupId: !Ref StaticWebRootFsxFilesystemSecurityGroup
+      IpProtocol: tcp
+
+  StaticWebRootFsxFilesystemNfs111TcpIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      CidrIp:
+        Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
+      Description: "Allow port 111/tcp (NFS RPC)"
+      FromPort: 111
+      ToPort: 111
+      GroupId: !Ref StaticWebRootFsxFilesystemSecurityGroup
+      IpProtocol: tcp
+
+  StaticWebRootFsxFilesystemNfs2049UdpIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      CidrIp:
+        Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
+      Description: "Allow port 2049/udp (NFS)"
+      FromPort: 2049
+      ToPort: 2049
+      GroupId: !Ref StaticWebRootFsxFilesystemSecurityGroup
+      IpProtocol: udp
+
+  StaticWebRootFsxFilesystemNfs111UdpIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      CidrIp:
+        Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
+      Description: "Allow port 111/udp (NFS RPC)"
+      FromPort: 111
+      ToPort: 111
+      GroupId: !Ref StaticWebRootFsxFilesystemSecurityGroup
+      IpProtocol: udp
+
+  AllEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties: 
+      Description: "Allow all outgoing traffic"
+      GroupId: !Ref StaticWebRootFsxFilesystemSecurityGroup
+      IpProtocol: -1
+      CidrIp: 0.0.0.0/0
+
+  StaticWebRootFsxFilesystem:
+    Type: AWS::FSx::FileSystem
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      FileSystemType: "OPENZFS"
+      OpenZFSConfiguration: 
+        AutomaticBackupRetentionDays: 3
+        CopyTagsToBackups: true
+        CopyTagsToVolumes: true
+        DailyAutomaticBackupStartTime: "02:00"
+        DeploymentType: "SINGLE_AZ_1"
+        Options: 
+          - "DELETE_CHILD_VOLUMES_AND_SNAPSHOTS"
+        RootVolumeConfiguration: 
+          CopyTagsToSnapshots: true
+          DataCompressionType: "ZSTD"
+          NfsExports: 
+            - ClientConfigurations: 
+              - Clients: 
+                  Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
+          ReadOnly: false
+          RecordSizeKiB: 16
+        WeeklyMaintenanceStartTime: "7:03:00"
+      SecurityGroupIds: 
+        - !Ref StaticWebRootFsxFilesystemSecurityGroup
+      StorageCapacity: 64
+      SubnetIds: 
+        - XXX
+      Tags: 
+        - Key: "ContainsPersonalInformation"
+          Value: "FALSE"
+        - Key: "Classification"
+          Value: "FOR_INTERNAL_USE_ONLY"
+
+
+# Outputs:
+
+#   S3EventStoreBucketDomainName:
+#     Description: "Bucket DomainName"
+#     Value: !GetAtt S3EventStoreBucket.DomainName
+#     Export:
+#       Name: !Sub "${AWS::StackName}-S3EventStoreBucketDomainName"
+
+#   PublicEventApiGatewayApiEndpoint:
+#     Description: "The default endpoint for API PublicEventApiGateway"
+#     Value: !GetAtt PublicEventApiGateway.ApiEndpoint
+#     Export:
+#       Name: !Sub "${AWS::StackName}-PublicEventApiGatewayApiEndpoint"

@@ -436,3 +436,39 @@ Outputs:
     Value: !GetAtt PublicVpc.CidrBlock
     Export:
       Name: !Sub "${AWS::StackName}-PublicVpcCidrBlock"
+
+  PublicVpcSubnet1Id:
+    Description: "ID for PublicVpcSubnet1"
+    Value: !Ref PublicVpcSubnet1
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicVpcSubnet1Id"
+
+  PublicVpcSubnet2Id:
+    Description: "ID for PublicVpcSubnet2"
+    Value: !Ref PublicVpcSubnet2
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicVpcSubnet2Id"
+
+  PublicVpcSubnet3Id:
+    Description: "ID for PublicVpcSubnet3"
+    Value: !Ref PublicVpcSubnet3
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicVpcSubnet3Id"
+
+  PrivateVpcSubnet1Id:
+    Description: "ID for PrivateVpcSubnet1"
+    Value: !Ref PrivateVpcSubnet1
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateVpcSubnet1"
+
+  PrivateVpcSubnet2Id:
+    Description: "ID for PrivateVpcSubnet2"
+    Value: !Ref PrivateVpcSubnet2
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateVpcSubnet2"
+
+  PrivateVpcSubnet3Id:
+    Description: "ID for PrivateVpcSubnet3"
+    Value: !Ref PrivateVpcSubnet3
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateVpcSubnet3"
