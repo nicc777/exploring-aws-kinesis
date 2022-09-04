@@ -52,6 +52,7 @@ When running commands, the following environment variables are assumed to be set
 | `export DYNAMODB_STACK_NAME="..."`     | The CloudFormation stack name for deploying the DynamoDB Table |
 | `export LAMBDA_STACK_NAME="..."`       | The CloudFormation stack name for deploying Lambda Functions   |
 | `export VPC_STACK_NAME="..."`          | The CloudFormation stack name for deploying the VPC resources  |
+| `export NFS_STACK_NAME="..."`          | The CloudFormation stack name for deploying a FSX Filesystem   |
 | `export ARTIFACT_S3_BUCKET_NAME="..."` | The S3 Bucket name containing any additional artifacts         |
 | `export EC2_KEYPAIR_KEY_NAME="..."`    | A pre-existing EC2 Key Pair Key Name                           |
 
@@ -317,11 +318,20 @@ TODO for this stack:
 
 TODO
 
-* Create OpenZFS NFS Share for hosting web source files
+* ~~Create OpenZFS NFS Share for hosting web source files~~
 * Create application launch template to server these files using nginx (mount NFS read only)
 * Create autoscaling group for application cluster and host in private VPC
 * Create inbound load balancer in public VPC to connect to application cluster in private VPC
 * Add Route 53 entries for application (CNAME to Load Balancer) (intranet.DOMAIN) - NOTE: Even though this is an "internal" application, I don't have a VPN peering connection so I will come in via the Internet to test the application. Another option to consider is to use SSH tunneling through a jump host....
+
+To create the OpenZFS NFS Filesystem that will host the website static content, run the following command:
+
+```shell
+aws cloudformation deploy \
+    --stack-name $NFS_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/3100_fsx_filesystem.yaml \
+    --parameter-overrides VpcStackName="$VPC_STACK_NAME"
+```
 
 ## Event Infrastructure
 
