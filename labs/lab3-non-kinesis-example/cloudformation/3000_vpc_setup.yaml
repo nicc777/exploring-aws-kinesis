@@ -234,6 +234,7 @@ Resources:
     Type: AWS::EC2::Route
     DependsOn:
     - PublicVpc
+    - PublicVpcInternetGatewayRouteTableAssociation
     Properties:
       DestinationCidrBlock: "0.0.0.0/0"
       RouteTableId: !Ref PublicVpcRouteTable
