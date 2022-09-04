@@ -195,13 +195,23 @@ Resources:
 
   PublicVpcInternetGateway:
     Type: AWS::EC2::InternetGateway
+    DependsOn: PublicVpc
     Properties:
       Tags:
       - Key: "Public"
         Value: "TRUE"
 
+  PublicVpcInternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref PublicVpcInternetGateway
+      VpcId: !Ref PublicVpc
+
+
   PublicVpcInternetGatewayRouteTableAssociation:
     Type: AWS::EC2::GatewayRouteTableAssociation
+    DependsOn: 
+    - PublicVpcInternetGatewayAttachment
     Properties: 
       GatewayId: !Ref PublicVpcInternetGateway
       RouteTableId: !Ref PublicVpcRouteTable
