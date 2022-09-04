@@ -303,6 +303,10 @@ aws cloudformation deploy \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 
+Basic VPC design:
+
+![VPC Design](../../images/vpc_design.png)
+
 ## Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC
 
 TODO
