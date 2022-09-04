@@ -242,6 +242,63 @@ Resources:
       RouteTableId: !Ref PrivateVpcRouteTable
       VpcPeeringConnectionId: !Ref InterVpcPeeringConnection
 
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                 PROXY SERVER                                                    ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  InterVpcHostsPrefixList:
+    Type: AWS::EC2::PrefixList
+    Properties: 
+      AddressFamily: "IPv4"
+      Entries: 
+        - Cidr: !Ref PublicVpcCidrParam
+          Description: "Public VPC CIDR"
+        - Cidr: !Ref PrivateVpcCidrParam
+          Description: "Private VPC CIDR"
+      MaxEntries: 3
+      PrefixListName: "TrustedInternetHostsPrefixList"
+
+  ProxyServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: "Proxy Server Security Group"
+      GroupName: 
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - 'InstanceSecurityGroup'
+      VpcId: !Ref PublicVpc
+
+  ProxyServerSshIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      Description: Allow port 22/tcp (SSH)
+      FromPort: 22
+      ToPort: 22
+      GroupId: !Ref ProxyServerSecurityGroup
+      IpProtocol: tcp
+      CidrIp: !Ref FirstTrustedInternetCiderParam
+
+  ProxyServerIngressPublicVpc:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      Description: Allow port 22/tcp (SSH)
+      FromPort: 3128
+      ToPort: 3128
+      GroupId: !Ref PublicVpc
+      IpProtocol: tcp
+      SourcePrefixListId: !Ref InterVpcHostsPrefixList
+
+  AllEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties: 
+      Description: Allow all outgoing traffic
+      GroupId: !Ref PublicVpc
+      IpProtocol: -1
+      CidrIp: 0.0.0.0/0
+
 Outputs:
 
   PrivateVpcId:
