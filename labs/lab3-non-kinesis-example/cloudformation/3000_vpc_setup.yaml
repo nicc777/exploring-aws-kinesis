@@ -145,6 +145,7 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}a"
       CidrBlock: !Ref PublicVpcSubnet1CidrParam
       VpcId: !Ref PublicVpc
+      MapPublicIpOnLaunch: true
 
   PublicVpcSubnet2:
     Type: AWS::EC2::Subnet
@@ -152,6 +153,7 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}b"
       CidrBlock: !Ref PublicVpcSubnet2CidrParam
       VpcId: !Ref PublicVpc
+      MapPublicIpOnLaunch: true
 
   PublicVpcSubnet3:
     Type: AWS::EC2::Subnet
@@ -159,6 +161,15 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}c"
       CidrBlock: !Ref PublicVpcSubnet3CidrParam
       VpcId: !Ref PublicVpc
+      MapPublicIpOnLaunch: true
+
+  PublicVpcInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: PublicVpc
+    Properties:
+      Tags:
+      - Key: "Public"
+        Value: "TRUE"
 
   TrustedInternetHostsPrefixList:
     Type: AWS::EC2::PrefixList
@@ -175,44 +186,41 @@ Resources:
     Properties: 
       VpcId: !Ref PublicVpc
 
-  PublicVpcSubnet1RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties: 
-      RouteTableId: !Ref PublicVpcRouteTable
-      SubnetId: !Ref PublicVpcSubnet1
-
-  PublicVpcSubnet2RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties: 
-      RouteTableId: !Ref PublicVpcRouteTable
-      SubnetId: !Ref PublicVpcSubnet2
-
-  PublicVpcSubnet3RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties: 
-      RouteTableId: !Ref PublicVpcRouteTable
-      SubnetId: !Ref PublicVpcSubnet3
-
-  PublicVpcInternetGateway:
-    Type: AWS::EC2::InternetGateway
-    DependsOn: PublicVpc
-    Properties:
-      Tags:
-      - Key: "Public"
-        Value: "TRUE"
-
   PublicVpcInternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties: 
       InternetGatewayId: !Ref PublicVpcInternetGateway
       VpcId: !Ref PublicVpc
 
+  PublicVpcSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+    - PublicVpcInternetGatewayAttachment
+    Properties: 
+      RouteTableId: !Ref PublicVpcRouteTable
+      SubnetId: !Ref PublicVpcSubnet1
+
+  PublicVpcSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+    - PublicVpcInternetGatewayAttachment
+    Properties: 
+      RouteTableId: !Ref PublicVpcRouteTable
+      SubnetId: !Ref PublicVpcSubnet2
+
+  PublicVpcSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+    - PublicVpcInternetGatewayAttachment
+    Properties: 
+      RouteTableId: !Ref PublicVpcRouteTable
+      SubnetId: !Ref PublicVpcSubnet3
 
   PublicVpcInternetGatewayRouteTableAssociation:
     Type: AWS::EC2::GatewayRouteTableAssociation
     DependsOn: 
     - PublicVpcInternetGatewayAttachment
-    - PublicVpcToInternetRoute
+    # - PublicVpcToInternetRoute
     Properties: 
       GatewayId: !Ref PublicVpcInternetGateway
       RouteTableId: !Ref PublicVpcRouteTable
@@ -245,6 +253,7 @@ Resources:
     Type: AWS::EC2::Route
     DependsOn:
     - PublicVpc
+    - PublicVpcInternetGatewayAttachment
     # - PublicVpcInternetGatewayRouteTableAssociation
     Properties:
       DestinationCidrBlock: "0.0.0.0/0"
