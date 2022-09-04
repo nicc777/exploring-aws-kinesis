@@ -200,6 +200,13 @@ Resources:
       - Key: "Public"
         Value: "TRUE"
 
+  PublicVpcInternetGatewayRouteTableAssociation:
+    Type: AWS::EC2::GatewayRouteTableAssociation
+    Properties: 
+      GatewayId: !Ref PublicVpcInternetGateway
+      RouteTableId: !Ref PublicVpcRouteTable
+
+
 #######################################################################################################################
 ###                                                                                                                 ###
 ###                                                     ROUTING                                                     ###
