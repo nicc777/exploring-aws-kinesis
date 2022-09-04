@@ -11,10 +11,13 @@ Description: >
 #   template metadata
 
 Parameters:
-  # AwsEc2AmiParam:
-  #   Description: "Refer to https://aws.amazon.com/blogs/compute/query-for-the-latest-amazon-linux-ami-ids-using-aws-systems-manager-parameter-store/"
-  #   Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-  #   Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  ProxyServerEc2AmiParam:
+    Description: "Refer to https://aws.amazon.com/blogs/compute/query-for-the-latest-amazon-linux-ami-ids-using-aws-systems-manager-parameter-store/"
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  Ec2KeyPairKeyNameParam:
+    Type: "AWS::EC2::KeyPair::KeyName"
+    Description: "The EC2 Key Pair to allow SSH access to the instances"
   PublicVpcCidrParam:
     Type: String
     Default: "172.31.100.0/22"
@@ -298,6 +301,98 @@ Resources:
       GroupId: !Ref PublicVpc
       IpProtocol: -1
       CidrIp: 0.0.0.0/0
+
+  ProxyServerInstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/AdministratorAccess"
+      Path: /
+      RoleName:
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - "ProxyServerInstanceRole"
+
+  ProxyServerInstanceIamProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      InstanceProfileName:
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - 'ThisInstanceProfile'
+      Path: "/"
+      Roles: 
+        - !Ref ProxyServerInstanceRole
+
+  ProxyServerInstanceHostLaunchTemplate:
+    Type: "AWS::EC2::LaunchTemplate"
+    Properties:
+      LaunchTemplateName:
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - 'LaunchTemplate'
+      LaunchTemplateData:
+        BlockDeviceMappings:
+          - Ebs:
+              VolumeSize: 8
+              VolumeType: gp2
+              DeleteOnTermination: true
+              Encrypted: true
+            DeviceName: /dev/sda1
+        IamInstanceProfile:
+          Arn: !GetAtt ProxyServerInstanceIamProfile.Arn
+ 
+        ImageId: !Ref ProxyServerEc2AmiParam
+        InstanceType: t3.large
+        KeyName: !Ref Ec2KeyPairKeyNameParam
+        SecurityGroupIds:
+        - !Ref ProxyServerSecurityGroup
+        MetadataOptions:
+          HttpTokens: required
+        UserData: 
+          Fn::Base64:
+            Fn::Sub: |
+              MIME-Version: 1.0
+              Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+
+              --==BOUNDARY==
+              Content-Type: text/x-shellscript; charset="us-ascii"
+
+              #!/bin/bash
+              yum install -y squid telnet bind-utils nmap-ncat nmap mc python3 python3-pip python3-setuptools git curl vim
+
+              systemctl enable squid.service
+              systemctl start squid
+
+              --==BOUNDARY==--
+
+  ProxyServerAutoscalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties: 
+      AutoScalingGroupName: !Sub "${AWS::StackName}-ProxyServerASG"
+      DesiredCapacity: "1"
+      LaunchTemplate: 
+        LaunchTemplateId: !Ref ProxyServerInstanceHostLaunchTemplate
+        Version: "$Latest"
+      MaxSize: "1"
+      MinSize: "1"
+      NewInstancesProtectedFromScaleIn: false
+      VPCZoneIdentifier: 
+        - !Ref PublicVpcSubnet1
+        - !Ref PublicVpcSubnet2
+        - !Ref PublicVpcSubnet3
+
 
 Outputs:
 
