@@ -307,9 +307,21 @@ Basic VPC design:
 
 ![VPC Design](../../images/vpc_design.png)
 
+TODO for this stack:
+
+* Add a Load Balancer for the Proxy Server
+* Replace the SSH access with SSM Connect via the console (remove external SSH dependency)
+* Add Route 53 entries for the Load Balancer (internet-proxy.DOMAIN)
+
 ## Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC
 
 TODO
+
+* Create OpenZFS NFS Share for hosting web source files
+* Create application launch template to server these files using nginx (mount NFS read only)
+* Create autoscaling group for application cluster and host in private VPC
+* Create inbound load balancer in public VPC to connect to application cluster in private VPC
+* Add Route 53 entries for application (CNAME to Load Balancer) (intranet.DOMAIN) - NOTE: Even though this is an "internal" application, I don't have a VPN peering connection so I will come in via the Internet to test the application. Another option to consider is to use SSH tunneling through a jump host....
 
 ## Event Infrastructure
 
