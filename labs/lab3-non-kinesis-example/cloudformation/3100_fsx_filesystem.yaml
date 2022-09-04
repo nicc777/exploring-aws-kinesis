@@ -114,16 +114,19 @@ Resources:
           - ClientConfigurations: 
             - Clients: 
                 Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
+              Options: 
+                - rw
+                - crossmnt
+                - sync
           ReadOnly: false
           RecordSizeKiB: 16
+        ThroughputCapacity: 64
         WeeklyMaintenanceStartTime: "7:03:00"
       SecurityGroupIds: 
       - !Ref StaticWebRootFsxFilesystemSecurityGroup
       StorageCapacity: 64
       SubnetIds: 
       - Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcSubnet1"
-      - Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcSubnet2"
-      - Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcSubnet3"
       Tags: 
       - Key: "ContainsPersonalInformation"
         Value: "FALSE"
