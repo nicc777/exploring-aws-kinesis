@@ -12,6 +12,7 @@
   - [Lambda Function(s) for Linking an employee ID, Access Card and Building ID with an initial default building status of `INSIDE`](#lambda-functions-for-linking-an-employee-id-access-card-and-building-id-with-an-initial-default-building-status-of-inside)
   - [Lambda Function Deployment](#lambda-function-deployment)
 - [Infrastructure Components](#infrastructure-components)
+  - [VPC and Proxy Server](#vpc-and-proxy-server)
   - [Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC](#serving-of-a-web-site-from-ec2-private-only-accessed-via-a-proxy-server-in-a-public-vpc)
   - [Event Infrastructure](#event-infrastructure)
   - [Private API Gateway to access the Lambda API's.](#private-api-gateway-to-access-the-lambda-apis)
@@ -50,7 +51,9 @@ When running commands, the following environment variables are assumed to be set
 | `export PARAMETERS_FILE="..."`         | The file containing the stack parameters                       |
 | `export DYNAMODB_STACK_NAME="..."`     | The CloudFormation stack name for deploying the DynamoDB Table |
 | `export LAMBDA_STACK_NAME="..."`       | The CloudFormation stack name for deploying Lambda Functions   |
+| `export VPC_STACK_NAME="..."`          | The CloudFormation stack name for deploying the VPC resources  |
 | `export ARTIFACT_S3_BUCKET_NAME="..."` | The S3 Bucket name containing any additional artifacts         |
+| `export EC2_KEYPAIR_KEY_NAME="..."`    | A pre-existing EC2 Key Pair Key Name                           |
 
 Some of these variables, like 
 
@@ -287,6 +290,18 @@ aws cloudformation deploy \
 ```
 
 # Infrastructure Components 
+
+## VPC and Proxy Server
+
+The lab relies on a private and public VPC and use a Proxy Server for Internet access from the Private VPC. Run the following command to provision the resources:
+
+```shell
+aws cloudformation deploy \
+    --stack-name $VPC_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/3000_vpc_setup.yaml \
+    --parameter-overrides Ec2KeyPairKeyNameParam="$EC2_KEYPAIR_KEY_NAME" \
+    --capabilities CAPABILITY_NAMED_IAM
+```
 
 ## Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC
 
