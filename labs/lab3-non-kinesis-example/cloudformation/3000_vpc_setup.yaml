@@ -183,21 +183,20 @@ Resources:
     - PublicVpcInternetGatewayAttachment
     Properties: 
       VpcId: !Ref PublicVpc
-  
-  PublicVpcInternetGatewayRouteTableAssociation:
-    Type: AWS::EC2::GatewayRouteTableAssociation
-    DependsOn: 
-    - PublicVpcInternetGatewayAttachment
-    # - PublicVpcRouteTable
-    Properties: 
-      GatewayId: !Ref PublicVpcInternetGateway
-      RouteTableId: !Ref PublicVpcRouteTable
 
+  PublicVpcToInternetRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+    - PublicVpcInternetGatewayAttachment
+    Properties:
+      DestinationCidrBlock: "0.0.0.0/0"
+      RouteTableId: !Ref PublicVpcRouteTable
+      GatewayId: !Ref PublicVpcInternetGateway
+  
   PublicVpcSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     DependsOn:
     - PublicVpcInternetGatewayAttachment
-    - PublicVpcInternetGatewayRouteTableAssociation
     Properties: 
       RouteTableId: !Ref PublicVpcRouteTable
       SubnetId: !Ref PublicVpcSubnet1
@@ -206,7 +205,6 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     DependsOn:
     - PublicVpcInternetGatewayAttachment
-    - PublicVpcInternetGatewayRouteTableAssociation
     Properties: 
       RouteTableId: !Ref PublicVpcRouteTable
       SubnetId: !Ref PublicVpcSubnet2
@@ -215,14 +213,11 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     DependsOn:
     - PublicVpcInternetGatewayAttachment
-    - PublicVpcInternetGatewayRouteTableAssociation
     Properties: 
       RouteTableId: !Ref PublicVpcRouteTable
       SubnetId: !Ref PublicVpcSubnet3
 
   
-
-
 #######################################################################################################################
 ###                                                                                                                 ###
 ###                                                     ROUTING                                                     ###
@@ -245,17 +240,6 @@ Resources:
       DestinationCidrBlock: !Ref PrivateVpcCidrParam
       RouteTableId: !Ref PublicVpcRouteTable
       VpcPeeringConnectionId: !Ref InterVpcPeeringConnection
-
-  PublicVpcToInternetRoute:
-    Type: AWS::EC2::Route
-    DependsOn:
-    - PublicVpc
-    - PublicVpcInternetGatewayAttachment
-    # - PublicVpcInternetGatewayRouteTableAssociation
-    Properties:
-      DestinationCidrBlock: "0.0.0.0/0"
-      RouteTableId: !Ref PublicVpcRouteTable
-      GatewayId: !Ref PublicVpcInternetGateway
 
   PrivateVpcToPublicVpcRoute:
     Type: AWS::EC2::Route
