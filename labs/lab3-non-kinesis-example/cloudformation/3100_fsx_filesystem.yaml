@@ -29,12 +29,6 @@ Parameters:
 
 Resources:
 
-#######################################################################################################################
-###                                                                                                                 ###
-###              S3 BUCKET WITH SNS TOPIC AND LAMBDA FOR PROCESSING NEW EVENTS IN THE EVENT STORE (S3)              ###
-###                                                                                                                 ###
-#######################################################################################################################
-
   StaticWebRootFsxFilesystemSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties: 
