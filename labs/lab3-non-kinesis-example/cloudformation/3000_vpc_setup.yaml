@@ -401,7 +401,7 @@ Resources:
       DesiredCapacity: "1"
       LaunchTemplate: 
         LaunchTemplateId: !Ref ProxyServerInstanceHostLaunchTemplate
-        Version: "$Latest"
+        Version: !GetAtt ProxyServerInstanceHostLaunchTemplate.LatestVersionNumber
       MaxSize: "1"
       MinSize: "1"
       NewInstancesProtectedFromScaleIn: false
