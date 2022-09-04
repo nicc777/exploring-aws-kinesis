@@ -30,8 +30,6 @@ Parameters:
   PublicVpcSubnet3CidrParam:
     Type: String
     Default: "172.31.102.0/24"
-
-
   PrivateVpcCidrParam:
     Type: String
     Default: "10.20.0.0/16"
