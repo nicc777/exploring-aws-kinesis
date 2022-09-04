@@ -282,21 +282,21 @@ Resources:
       IpProtocol: tcp
       CidrIp: !Ref FirstTrustedInternetCiderParam
 
-  ProxyServerIngressPublicVpc:
+  ProxyServerProxyIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties: 
       Description: Allow port 22/tcp (SSH)
       FromPort: 3128
       ToPort: 3128
-      GroupId: !Ref PublicVpc
+      GroupId: !Ref ProxyServerSecurityGroup
       IpProtocol: tcp
       SourcePrefixListId: !Ref InterVpcHostsPrefixList
 
   AllEgress:
     Type: AWS::EC2::SecurityGroupEgress
     Properties: 
-      Description: Allow all outgoing traffic
-      GroupId: !Ref PublicVpc
+      Description: "Allow all outgoing traffic"
+      GroupId: !Ref ProxyServerSecurityGroup
       IpProtocol: -1
       CidrIp: 0.0.0.0/0
 
