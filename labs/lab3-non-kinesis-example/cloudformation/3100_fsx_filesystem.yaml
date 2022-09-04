@@ -4,7 +4,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: >
   This stack defines a Network Filesystem (NFS Service) exposed by AWS FSX. The filesystem will host, among other
   things, static web artifacts for use by EC2 web server cluster. Each EC2 instance in the cluster will mount the
-  static content volume as READ ONLY.
+  static content volume as READ ONLY. The NFS mount can only be done from hosts in the Private VPC.
 
 # Metadata:
 #   template metadata
@@ -112,39 +112,41 @@ Resources:
         DailyAutomaticBackupStartTime: "02:00"
         DeploymentType: "SINGLE_AZ_1"
         Options: 
-          - "DELETE_CHILD_VOLUMES_AND_SNAPSHOTS"
+        - "DELETE_CHILD_VOLUMES_AND_SNAPSHOTS"
         RootVolumeConfiguration: 
           CopyTagsToSnapshots: true
           DataCompressionType: "ZSTD"
           NfsExports: 
-            - ClientConfigurations: 
-              - Clients: 
-                  Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
+          - ClientConfigurations: 
+            - Clients: 
+                Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
           ReadOnly: false
           RecordSizeKiB: 16
         WeeklyMaintenanceStartTime: "7:03:00"
       SecurityGroupIds: 
-        - !Ref StaticWebRootFsxFilesystemSecurityGroup
+      - !Ref StaticWebRootFsxFilesystemSecurityGroup
       StorageCapacity: 64
       SubnetIds: 
-        - XXX
+      - Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcSubnet1"
+      - Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcSubnet2"
+      - Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcSubnet3"
       Tags: 
-        - Key: "ContainsPersonalInformation"
-          Value: "FALSE"
-        - Key: "Classification"
-          Value: "FOR_INTERNAL_USE_ONLY"
+      - Key: "ContainsPersonalInformation"
+        Value: "FALSE"
+      - Key: "Classification"
+        Value: "FOR_INTERNAL_USE_ONLY"
 
 
-# Outputs:
+Outputs:
 
-#   S3EventStoreBucketDomainName:
-#     Description: "Bucket DomainName"
-#     Value: !GetAtt S3EventStoreBucket.DomainName
-#     Export:
-#       Name: !Sub "${AWS::StackName}-S3EventStoreBucketDomainName"
+  StaticWebRootFsxFilesystemId:
+    Description: "ID for StaticWebRootFsxFilesystem"
+    Value: !Ref StaticWebRootFsxFilesystem
+    Export:
+      Name: !Sub "${AWS::StackName}-StaticWebRootFsxFilesystemId"
 
-#   PublicEventApiGatewayApiEndpoint:
-#     Description: "The default endpoint for API PublicEventApiGateway"
-#     Value: !GetAtt PublicEventApiGateway.ApiEndpoint
-#     Export:
-#       Name: !Sub "${AWS::StackName}-PublicEventApiGatewayApiEndpoint"
+  StaticWebRootFsxFilesystemDNSName:
+    Description: "DNSName for StaticWebRootFsxFilesystem"
+    Value: !GetAtt StaticWebRootFsxFilesystem.DNSName
+    Export:
+      Name: !Sub "${AWS::StackName}-StaticWebRootFsxFilesystemDNSName"
