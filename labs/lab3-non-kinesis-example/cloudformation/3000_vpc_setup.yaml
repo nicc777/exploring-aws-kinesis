@@ -212,6 +212,7 @@ Resources:
     Type: AWS::EC2::GatewayRouteTableAssociation
     DependsOn: 
     - PublicVpcInternetGatewayAttachment
+    - PublicVpcToInternetRoute
     Properties: 
       GatewayId: !Ref PublicVpcInternetGateway
       RouteTableId: !Ref PublicVpcRouteTable
@@ -244,7 +245,7 @@ Resources:
     Type: AWS::EC2::Route
     DependsOn:
     - PublicVpc
-    - PublicVpcInternetGatewayRouteTableAssociation
+    # - PublicVpcInternetGatewayRouteTableAssociation
     Properties:
       DestinationCidrBlock: "0.0.0.0/0"
       RouteTableId: !Ref PublicVpcRouteTable
