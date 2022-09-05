@@ -46,6 +46,10 @@ Parameters:
     Type: String
     Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Public VPC"
     Default: "0.0.0.0/0"
+  PrivateDnsNameParam:
+    Type: String
+    Description: "Domain name of the Private DNS Hosted Zone"
+    Default: "example.eu-central-1.tld"
 
 # Rules:
 #   set of rules
@@ -121,6 +125,26 @@ Resources:
     Properties: 
       RouteTableId: !Ref PrivateVpcRouteTable
       SubnetId: !Ref PrivateVpcSubnet3
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                   PRIVATE DNS                                                   ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  PrivateDns:
+    Type: AWS::Route53::HostedZone
+    Properties: 
+      HostedZoneConfig: 
+        Comment: "Hosted Zone for the Private VPC"
+      HostedZoneTags: 
+        - Key: "Public"
+          Value: "FALSE"
+      Name: !Ref PrivateDnsNameParam
+      VPCs: 
+      - VPCId: !Ref PrivateVpc
+        VPCRegion: !Ref AWS::Region
+
 
 #######################################################################################################################
 ###                                                                                                                 ###
