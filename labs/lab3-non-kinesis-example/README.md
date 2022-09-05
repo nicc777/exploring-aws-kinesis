@@ -311,7 +311,7 @@ Basic VPC design:
 TODO for this stack:
 
 * Add a Load Balancer for the Proxy Server
-* Replace the SSH access with SSM Connect via the console (remove external SSH dependency)
+* ~~Replace the SSH access with SSM Connect via the console (remove external SSH dependency)~~
 * Add Route 53 entries for the Load Balancer (internet-proxy.DOMAIN)
 
 ## Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC
