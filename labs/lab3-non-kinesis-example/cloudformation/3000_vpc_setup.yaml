@@ -254,6 +254,139 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
+###                                               COMMON EC2 RESOURCES                                              ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  Ec2InstanceSsmKmsKey:
+    Type: AWS::KMS::Key
+    Properties: 
+      Description: "KMS Key that can be used for traffic encryption when using SSM to connect to EC2 Instances"
+      Enabled: true
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: "KmsCustomPolicyForEc2Ssm"
+        Statement:
+          Sid: "Enable IAM policies"
+          Effect: "Allow"
+          Principal:
+            AWS: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+          Action: "kms:*"
+          Resource: "*"
+      MultiRegion: false
+      PendingWindowInDays: 7
+
+  RootRole: 
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "ec2.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+
+  ProxyServerInstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/AdministratorAccess"
+      Path: /
+      RoleName:
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - "ProxyServerInstanceRole"
+
+  Ec2InstanceSsmPolicy:
+    Type: AWS::IAM::Policy
+    Properties: 
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - ssm:UpdateInstanceInformation
+          - ssmmessages:CreateControlChannel
+          - ssmmessages:CreateDataChannel
+          - ssmmessages:OpenControlChannel
+          - ssmmessages:OpenDataChannel
+          Resource: "*"
+        - Effect: Allow
+          Action:
+          - s3:GetEncryptionConfiguration
+          Resource: "*"
+        - Effect: Allow
+          Action:
+          - kms:Decrypt
+          Resource: !GetAtt Ec2InstanceSsmKmsKey.Arn
+      PolicyName: "Ec2InstanceSsmPolicy"
+      Roles:
+      - !Ref RootRole
+      - !Ref ProxyServerInstanceRole
+
+  # SSM Required VPC End Points - this will be required for EC2 instances launched in the Private VPC
+
+  SsmEndPointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: "Proxy Server Security Group"
+      GroupName: 
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - 'SsmEndPointSecurityGroup'
+      VpcId: !Ref PublicVpc
+
+  SsmEndPointIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      Description: "Allow port 443/tcp (HTTPS)"
+      FromPort: 443
+      ToPort: 443
+      GroupId: !Ref SsmEndPointSecurityGroup
+      IpProtocol: tcp
+      SourcePrefixListId: !Ref InterVpcHostsPrefixList
+
+  SsmEndPointAllEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties: 
+      Description: "Allow all outgoing traffic"
+      GroupId: !Ref SsmEndPointSecurityGroup
+      IpProtocol: -1
+      CidrIp: 0.0.0.0/0
+
+  SsmEndPoint1:
+    Type: AWS::EC2::VPCEndpoint
+    Properties: 
+      PrivateDnsEnabled: true
+      SecurityGroupIds: 
+        - !Ref SsmEndPointSecurityGroup
+      ServiceName: "com.amazonaws.eu-central-1.ssm"
+      SubnetIds: 
+        - !Ref PrivateVpcSubnet1
+        - !Ref PrivateVpcSubnet2
+        - !Ref PrivateVpcSubnet3
+      VpcEndpointType: "Interface"
+      VpcId: !Ref PrivateVpc
+
+
+#######################################################################################################################
+###                                                                                                                 ###
 ###                                                 PROXY SERVER                                                    ###
 ###                                                                                                                 ###
 #######################################################################################################################
@@ -318,26 +451,6 @@ Resources:
       GroupId: !Ref ProxyServerSecurityGroup
       IpProtocol: -1
       CidrIp: 0.0.0.0/0
-
-  ProxyServerInstanceRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - ec2.amazonaws.com
-          Action:
-          - "sts:AssumeRole"
-      ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/AdministratorAccess"
-      Path: /
-      RoleName:
-        Fn::Join:
-        - '-'
-        - - Ref: AWS::StackName
-          - "ProxyServerInstanceRole"
 
   ProxyServerInstanceIamProfile:
     Type: AWS::IAM::InstanceProfile
