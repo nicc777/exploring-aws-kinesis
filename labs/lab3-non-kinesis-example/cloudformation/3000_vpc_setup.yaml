@@ -424,16 +424,6 @@ Resources:
           - 'InstanceSecurityGroup'
       VpcId: !Ref PublicVpc
 
-  ProxyServerSshIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties: 
-      Description: "Allow port 22/tcp (SSH)"
-      FromPort: 22
-      ToPort: 22
-      GroupId: !Ref ProxyServerSecurityGroup
-      IpProtocol: tcp
-      SourcePrefixListId: !Ref TrustedInternetHostsPrefixList
-
   ProxyServerProxyIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties: 
