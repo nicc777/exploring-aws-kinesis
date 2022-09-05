@@ -145,6 +145,14 @@ Resources:
       - VPCId: !Ref PrivateVpc
         VPCRegion: !Ref AWS::Region
 
+  PrivateDnsAcmCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties: 
+      DomainName: !Sub "*.${PrivateDnsNameParam}"
+      ValidationMethod: "DNS"
+      DomainValidationOptions:
+      - DomainName: !Sub "*.${PrivateDnsNameParam}"
+        HostedZoneId: !Ref PrivateDns
 
 #######################################################################################################################
 ###                                                                                                                 ###
@@ -521,6 +529,27 @@ Resources:
 
               --==BOUNDARY==--
 
+  ProxyServerElbv2TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties: 
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckPort: 3128
+      HealthCheckProtocol: "HTTP"
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 3
+      IpAddressType: "ipv4"
+      Matcher: 
+        HttpCode: "200-399"
+      Name: "ProxyServerElbv2TargetGroup"
+      Port: 3128
+      Protocol: "HTTP"
+      ProtocolVersion: "HTTP2"
+      TargetType: "instance"
+      UnhealthyThresholdCount: 3
+      VpcId: !Ref PrivateVpc
+
   ProxyServerAutoscalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties: 
@@ -536,7 +565,60 @@ Resources:
         - !Ref PublicVpcSubnet1
         - !Ref PublicVpcSubnet2
         - !Ref PublicVpcSubnet3
+      TargetGroupARNs: 
+      - !Ref ProxyServerElbv2TargetGroup
 
+  ProxyServerElbv2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "ProxyServerElbv2SecurityGroup"
+      GroupDescription: "Enable Proxy Server access on the inbound port for ELB"
+      VpcId: !Ref PrivateVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3128
+          ToPort: 3128
+          SourcePrefixListId: !Ref InterVpcHostsPrefixList
+      Tags:
+        - Key: Name
+          Value: ProxyServerElbv2SecurityGroup
+
+  ProxyServerElbv2:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      IpAddressType: "ipv4"
+      LoadBalancerAttributes: 
+      - Key: "load_balancing.cross_zone.enabled"
+        Value: "true"
+      Name: "ProxyServerElbv2"
+      Scheme: "internal"
+      SecurityGroups: 
+      - !Ref ProxyServerElbv2SecurityGroup
+      SubnetMappings: 
+      - SubnetId: !Ref PrivateVpcSubnet1
+      - SubnetId: !Ref PrivateVpcSubnet2
+      - SubnetId: !Ref PrivateVpcSubnet3
+      Type: "application"
+  
+  ProxyServerElbv2Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties: 
+      AlpnPolicy: 
+      - "ELBSecurityPolicy-TLS-1-2-Ext-2018-06"
+      - "ELBSecurityPolicy-TLS-1-2-2017-01"
+      - "ELBSecurityPolicy-TLS13-1-2-2021-06"
+      - "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
+      - "ELBSecurityPolicy-TLS13-1-2-Ext1-2021-06"
+      - "ELBSecurityPolicy-TLS13-1-2-Ext2-2021-06"
+      Certificates: 
+      - CertificateArn: !Ref PrivateDnsAcmCertificate
+      DefaultActions: 
+      - Type: "forward"
+        TargetGroupArn: !Ref ProxyServerElbv2TargetGroup
+      LoadBalancerArn: !Ref ProxyServerElbv2
+      Port: 443
+      Protocol: "HTTPS"
+      SslPolicy: "ELBSecurityPolicy-2016-08"
 
 Outputs:
 
