@@ -258,6 +258,28 @@ Resources:
 ###                                                                                                                 ###
 #######################################################################################################################
 
+  TrustedInternetHostsPrefixList:
+    Type: AWS::EC2::PrefixList
+    Properties: 
+      AddressFamily: "IPv4"
+      Entries: 
+        - Cidr: !Ref FirstTrustedInternetCiderParam
+          Description: "A IP address or network from the Internet we trust"
+      MaxEntries: 10
+      PrefixListName: "TrustedInternetHostsPrefixList"
+
+  InterVpcHostsPrefixList:
+    Type: AWS::EC2::PrefixList
+    Properties: 
+      AddressFamily: "IPv4"
+      Entries: 
+        - Cidr: !Ref PublicVpcCidrParam
+          Description: "Public VPC CIDR"
+        - Cidr: !Ref PrivateVpcCidrParam
+          Description: "Private VPC CIDR"
+      MaxEntries: 3
+      PrefixListName: "InterVpcHostsPrefixList"
+
   Ec2InstanceSsmKmsKey:
     Type: AWS::KMS::Key
     Properties: 
@@ -350,7 +372,7 @@ Resources:
         - '-'
         - - Ref: AWS::StackName
           - 'SsmEndPointSecurityGroup'
-      VpcId: !Ref PublicVpc
+      VpcId: !Ref PrivateVpc
 
   SsmEndPointIngress:
     Type: AWS::EC2::SecurityGroupIngress
@@ -360,7 +382,7 @@ Resources:
       ToPort: 443
       GroupId: !Ref SsmEndPointSecurityGroup
       IpProtocol: tcp
-      SourcePrefixListId: !Ref InterVpcHostsPrefixList
+      CidrIp: 0.0.0.0/0
 
   SsmEndPointAllEgress:
     Type: AWS::EC2::SecurityGroupEgress
@@ -390,28 +412,6 @@ Resources:
 ###                                                 PROXY SERVER                                                    ###
 ###                                                                                                                 ###
 #######################################################################################################################
-
-  TrustedInternetHostsPrefixList:
-    Type: AWS::EC2::PrefixList
-    Properties: 
-      AddressFamily: "IPv4"
-      Entries: 
-        - Cidr: !Ref FirstTrustedInternetCiderParam
-          Description: "A IP address or network from the Internet we trust"
-      MaxEntries: 10
-      PrefixListName: "TrustedInternetHostsPrefixList"
-
-  InterVpcHostsPrefixList:
-    Type: AWS::EC2::PrefixList
-    Properties: 
-      AddressFamily: "IPv4"
-      Entries: 
-        - Cidr: !Ref PublicVpcCidrParam
-          Description: "Public VPC CIDR"
-        - Cidr: !Ref PrivateVpcCidrParam
-          Description: "Private VPC CIDR"
-      MaxEntries: 3
-      PrefixListName: "InterVpcHostsPrefixList"
 
   ProxyServerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
