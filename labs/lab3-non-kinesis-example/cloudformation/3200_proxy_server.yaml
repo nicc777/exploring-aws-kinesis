@@ -21,6 +21,9 @@ Parameters:
   VpcStackNameParam:
     Type: String
     Description: "The name of the VPC stack, in order to import values"
+  DnsStackNameParam:
+    Type: String
+    Description: "The name of the DNS stack, in order to import values"
   FirstTrustedInternetCiderParam:
     Type: String
     Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Public VPC"
@@ -371,6 +374,21 @@ Resources:
       LoadBalancerArn: !Ref ProxyServerElbv2
       Port: 8080
       Protocol: "HTTP"
+
+  ProxyServerDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId : 
+        Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsZoneId"
+      Name:
+        Fn::Sub:
+        - "proxy.${DomainName}"
+        - DomainName:
+            Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
+      ResourceRecords:
+      - !GetAtt ProxyServerElbv2.DNSName
+      TTL: 300
+      Type: "CNAME"
 
 # Outputs:
 

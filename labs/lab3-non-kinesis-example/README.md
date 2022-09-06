@@ -311,7 +311,7 @@ aws cloudformation deploy \
 aws cloudformation deploy \
     --stack-name $PROXY_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_proxy_server.yaml \
-    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" Ec2KeyPairKeyNameParam="$EC2_KEYPAIR_KEY_NAME" \
+    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" DnsStackNameParam="$DNS_STACK_NAME"  Ec2KeyPairKeyNameParam="$EC2_KEYPAIR_KEY_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 
@@ -320,12 +320,6 @@ Basic VPC design:
 ![VPC Design](../../images/vpc_design.png)
 
 > _**Interesting Observation**_: The proxy server responds with a HTTP code 400 during health checks. THis is actually OK, and therefore the 400 code is used in the Target Group health checks to assume a healthy state.
-
-TODO for this stack:
-
-* ~~Add a Load Balancer for the Proxy Server~~
-* ~~Replace the SSH access with SSM Connect via the console (remove external SSH dependency)~~
-* Add Route 53 entries for the Load Balancer (internet-proxy.DOMAIN)
 
 ## Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC
 

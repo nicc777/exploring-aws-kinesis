@@ -54,10 +54,16 @@ Resources:
         VPCRegion: !Ref AWS::Region
 
   
-# Outputs:
+Outputs:
 
-#   PrivateDnsAcmCertificateId:
-#     Description: "ID for PrivateDnsAcmCertificate"
-#     Value: !Ref PrivateDnsAcmCertificate
-#     Export:
-#       Name: !Sub "${AWS::StackName}-PrivateDnsAcmCertificateId"
+  PrivateDnsZoneId:
+    Description: "Id for PrivateDns"
+    Value: !Ref PrivateDns
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateDnsZoneId"
+
+  PrivateDnsDomain:
+    Description: "Private Domain for PrivateDns"
+    Value: !Ref PrivateDnsNameParam
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateDnsDomain"
