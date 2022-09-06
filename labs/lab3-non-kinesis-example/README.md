@@ -301,8 +301,7 @@ The lab relies on a private and public VPC and use a Proxy Server for Internet a
 ```shell
 aws cloudformation deploy \
     --stack-name $VPC_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/3000_vpc_setup.yaml \
-    --parameter-overrides Ec2KeyPairKeyNameParam="$EC2_KEYPAIR_KEY_NAME"
+    --template-file labs/lab3-non-kinesis-example/cloudformation/3000_vpc_setup.yaml
 
 aws cloudformation deploy \
     --stack-name $DNS_STACK_NAME \
@@ -312,7 +311,7 @@ aws cloudformation deploy \
 aws cloudformation deploy \
     --stack-name $PROXY_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_proxy_server.yaml \
-    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
+    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" Ec2KeyPairKeyNameParam="$EC2_KEYPAIR_KEY_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 
