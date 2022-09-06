@@ -295,18 +295,17 @@ Resources:
     Properties: 
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: 30
-      HealthCheckPath: /
+      HealthCheckPath: "/"
       HealthCheckPort: 3128
       HealthCheckProtocol: "HTTP"
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 3
       IpAddressType: "ipv4"
       Matcher: 
-        HttpCode: "200-399"
+        HttpCode: "200-400"
       Name: "ProxyServerElbv2TargetGroup"
       Port: 3128
       Protocol: "HTTP"
-      # ProtocolVersion: "HTTP2"
       TargetType: "instance"
       UnhealthyThresholdCount: 3
       VpcId:
