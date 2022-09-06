@@ -1,0 +1,71 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This template creates the base VPC resources. Please note that there are a limit of 5 VPC's per region per AWS 
+  account. Please refer to https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html for more 
+  information regarding AWS VPC Limits. This template will also create a HTTP proxy in the public VPC for Internet 
+  access. This is slightly cheaper than creating a NAT gateway stack.
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  PrivateDnsNameParam:
+    Type: String
+    Description: "Domain name of the Private DNS Hosted Zone"
+    Default: "example.eu-central-1.tld"
+  VpcStackNameParam:
+    Type: String
+    Description: "The name of the VPC stack, in order to import values"
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                   PRIVATE DNS                                                   ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  PrivateDns:
+    Type: AWS::Route53::HostedZone
+    Properties: 
+      HostedZoneConfig: 
+        Comment: "Hosted Zone for the Private VPC"
+      HostedZoneTags: 
+        - Key: "Public"
+          Value: "FALSE"
+      Name: !Ref PrivateDnsNameParam
+      VPCs: 
+      - VPCId: 
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+        VPCRegion: !Ref AWS::Region
+
+  PrivateDnsAcmCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties: 
+      DomainName: !Sub "*.${PrivateDnsNameParam}"
+      ValidationMethod: "DNS"
+      DomainValidationOptions:
+      - DomainName: !Sub "*.${PrivateDnsNameParam}"
+        HostedZoneId: !Ref PrivateDns
+
+Outputs:
+
+  PrivateDnsAcmCertificateId:
+    Description: "ID for PrivateDnsAcmCertificate"
+    Value: !Ref PrivateDnsAcmCertificate
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateDnsAcmCertificateId"
