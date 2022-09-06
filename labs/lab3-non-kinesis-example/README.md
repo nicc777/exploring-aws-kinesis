@@ -319,7 +319,7 @@ Basic VPC design:
 
 ![VPC Design](../../images/vpc_design.png)
 
-> _**Interesting Observation**_: The proxy server responds with a HTTP code 400 during health checks. THis is actually OK, and therefore the 400 code is used in the Target Group health checks to assume a healthy state.
+> _**Interesting Observation**_: The proxy server responds with a HTTP code 400 during health checks. This is actually OK, and therefore the 400 code is used in the Target Group health checks to assume a healthy state.
 
 ## Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC
 
