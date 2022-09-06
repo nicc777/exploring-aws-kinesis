@@ -53,6 +53,8 @@ When running commands, the following environment variables are assumed to be set
 | `export LAMBDA_STACK_NAME="..."`       | The CloudFormation stack name for deploying Lambda Functions   |
 | `export VPC_STACK_NAME="..."`          | The CloudFormation stack name for deploying the VPC resources  |
 | `export NFS_STACK_NAME="..."`          | The CloudFormation stack name for deploying a FSX Filesystem   |
+| `export DNS_STACK_NAME="..."`          | The CloudFormation stack name for deploying DNS and ACM        |
+| `export PROXY_STACK_NAME="..."`        | The CloudFormation stack name for deploying the Proxy server   |
 | `export ARTIFACT_S3_BUCKET_NAME="..."` | The S3 Bucket name containing any additional artifacts         |
 | `export EC2_KEYPAIR_KEY_NAME="..."`    | A pre-existing EC2 Key Pair Key Name                           |
 
