@@ -14,7 +14,7 @@ Parameters:
   PrivateDnsNameParam:
     Type: String
     Description: "Domain name of the Private DNS Hosted Zone"
-    Default: "example.eu-central-1.tld"
+    Default: "lab.eu-central-1.tld"
   VpcStackNameParam:
     Type: String
     Description: "The name of the VPC stack, in order to import values"
