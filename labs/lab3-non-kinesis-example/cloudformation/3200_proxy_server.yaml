@@ -310,7 +310,7 @@ Resources:
       TargetType: "instance"
       UnhealthyThresholdCount: 3
       VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
   ProxyServerAutoscalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -356,11 +356,11 @@ Resources:
       - !Ref ProxyServerElbv2SecurityGroup
       SubnetMappings: 
       - SubnetId:
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
       - SubnetId:
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
       - SubnetId:
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
       Type: "application"
   
   ProxyServerElbv2Listener:
