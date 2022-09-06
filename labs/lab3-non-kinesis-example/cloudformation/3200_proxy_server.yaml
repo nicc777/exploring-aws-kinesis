@@ -336,7 +336,7 @@ Resources:
       GroupName: "ProxyServerElbv2SecurityGroup"
       GroupDescription: "Enable Proxy Server access on the inbound port for ELB"
       VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3128
