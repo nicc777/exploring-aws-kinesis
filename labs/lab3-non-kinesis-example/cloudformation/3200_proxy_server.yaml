@@ -191,9 +191,9 @@ Resources:
         - !Ref SsmEndPointSecurityGroup
       ServiceName: "com.amazonaws.eu-central-1.ssm"
       SubnetIds: 
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1"
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2"
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3"
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
       VpcEndpointType: "Interface"
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"

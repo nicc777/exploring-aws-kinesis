@@ -293,16 +293,16 @@ Outputs:
     Description: "ID for PrivateVpcSubnet1"
     Value: !Ref PrivateVpcSubnet1
     Export:
-      Name: !Sub "${AWS::StackName}-PrivateVpcSubnet1"
+      Name: !Sub "${AWS::StackName}-PrivateVpcSubnet1Id"
 
   PrivateVpcSubnet2Id:
     Description: "ID for PrivateVpcSubnet2"
     Value: !Ref PrivateVpcSubnet2
     Export:
-      Name: !Sub "${AWS::StackName}-PrivateVpcSubnet2"
+      Name: !Sub "${AWS::StackName}-PrivateVpcSubnet2Id"
 
   PrivateVpcSubnet3Id:
     Description: "ID for PrivateVpcSubnet3"
     Value: !Ref PrivateVpcSubnet3
     Export:
-      Name: !Sub "${AWS::StackName}-PrivateVpcSubnet3"
+      Name: !Sub "${AWS::StackName}-PrivateVpcSubnet3Id"
