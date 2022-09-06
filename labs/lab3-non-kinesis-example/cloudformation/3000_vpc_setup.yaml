@@ -66,6 +66,8 @@ Resources:
       Tags: 
         - Key: "Public"
           Value: "FALSE"
+        - Key: "Name"
+          Value: "PrivateVpc"
 
   PrivateVpcSubnet1:
     Type: AWS::EC2::Subnet
@@ -127,6 +129,8 @@ Resources:
       Tags: 
         - Key: "Public"
           Value: "TRUE"
+        - Key: "Name"
+          Value: "PublicVpc"
 
   PublicVpcInternetGateway:
     Type: AWS::EC2::InternetGateway
