@@ -215,7 +215,7 @@ Resources:
         - - Ref: AWS::StackName
           - 'InstanceSecurityGroup'
       VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
   ProxyServerProxyIngress:
     Type: AWS::EC2::SecurityGroupIngress
@@ -306,7 +306,7 @@ Resources:
       Name: "ProxyServerElbv2TargetGroup"
       Port: 3128
       Protocol: "HTTP"
-      ProtocolVersion: "HTTP2"
+      # ProtocolVersion: "HTTP2"
       TargetType: "instance"
       UnhealthyThresholdCount: 3
       VpcId:
