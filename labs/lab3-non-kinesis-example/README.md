@@ -336,7 +336,7 @@ To create the OpenZFS NFS Filesystem that will host the website static content, 
 ```shell
 aws cloudformation deploy \
     --stack-name $NFS_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/3100_fsx_filesystem.yaml \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/4000_fsx_filesystem.yaml \
     --parameter-overrides VpcStackName="$VPC_STACK_NAME"
 ```
 
