@@ -306,8 +306,8 @@ aws cloudformation deploy \
 
 aws cloudformation deploy \
     --stack-name $DNS_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/3100_dns_and_certificate.yaml \
-    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" 
+    --template-file labs/lab3-non-kinesis-example/cloudformation/3100_dns.yaml \
+    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME"
 
 aws cloudformation deploy \
     --stack-name $PROXY_STACK_NAME \

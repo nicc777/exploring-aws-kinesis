@@ -53,19 +53,11 @@ Resources:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
         VPCRegion: !Ref AWS::Region
 
-  PrivateDnsAcmCertificate:
-    Type: AWS::CertificateManager::Certificate
-    Properties: 
-      DomainName: !Sub "*.${PrivateDnsNameParam}"
-      ValidationMethod: "DNS"
-      DomainValidationOptions:
-      - DomainName: !Sub "*.${PrivateDnsNameParam}"
-        HostedZoneId: !Ref PrivateDns
+  
+# Outputs:
 
-Outputs:
-
-  PrivateDnsAcmCertificateId:
-    Description: "ID for PrivateDnsAcmCertificate"
-    Value: !Ref PrivateDnsAcmCertificate
-    Export:
-      Name: !Sub "${AWS::StackName}-PrivateDnsAcmCertificateId"
+#   PrivateDnsAcmCertificateId:
+#     Description: "ID for PrivateDnsAcmCertificate"
+#     Value: !Ref PrivateDnsAcmCertificate
+#     Export:
+#       Name: !Sub "${AWS::StackName}-PrivateDnsAcmCertificateId"
