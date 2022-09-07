@@ -350,8 +350,11 @@ export GITHUB_KEY=`cat ~/.ssh/github_key.pem`
 
 aws cloudformation deploy \
     --stack-name $GITHUB_SECRET_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/4100_github_secret.yaml \
-    --parameter-overrides SshKeyDataParam="$GITHUB_KEY"
+    --template-file labs/lab3-non-kinesis-example/cloudformation/4100_github_secret.yaml
+
+export GITHUB_SECRET_ID=`aws secretsmanager list-secrets --filters Key=name,Values=GitHubSecret --output json | jq ".SecretList[0].ARN" | awk -F\" '{print $2}'` 
+
+aws secretsmanager put-secret-value --secret-id $GITHUB_SECRET_ID --secret-string "$GITHUB_KEY"
 
 unset GITHUB_KEY
 ```
