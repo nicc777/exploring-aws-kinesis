@@ -327,7 +327,7 @@ Basic VPC design:
 TODO
 
 * ~~Create OpenZFS NFS Share for hosting web source files~~
-* Synchronize a SSH key (for GitHub) with Secrets Manager
+* ~~Synchronize a SSH key (for GitHub) with Secrets Manager~~
 * Create application launch template to server these files using nginx (mount NFS read only)
 * Create autoscaling group for application cluster and host in private VPC
 * Create inbound load balancer in public VPC to connect to application cluster in private VPC
