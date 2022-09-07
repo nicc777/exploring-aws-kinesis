@@ -352,7 +352,7 @@ aws cloudformation deploy \
     --stack-name $GITHUB_SECRET_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/4100_github_secret.yaml
 
-export GITHUB_SECRET_ID=`aws secretsmanager list-secrets --filters Key=name,Values=GitHubSecret --output json | jq ".SecretList[0].ARN" | awk -F\" '{print $2}'` 
+export GITHUB_SECRET_ID=`aws cloudformation describe-stacks --stack-name $GITHUB_SECRET_STACK_NAME | jq ".Stacks[0].Outputs[0].OutputValue" | awk -F\" '{print $2}'`
 
 aws secretsmanager put-secret-value --secret-id $GITHUB_SECRET_ID --secret-string "$GITHUB_KEY"
 
