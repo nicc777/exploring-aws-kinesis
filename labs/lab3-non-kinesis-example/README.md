@@ -345,17 +345,20 @@ aws cloudformation deploy \
     --template-file labs/lab3-non-kinesis-example/cloudformation/4000_fsx_filesystem.yaml \
     --parameter-overrides VpcStackName="$VPC_STACK_NAME"
 
-# Assuming your GitHub SSH key is in the file ~/.ssh.github_key.pem, run the following command:
-export GITHUB_KEY=`cat ~/.ssh/github_key.pem`
-
 aws cloudformation deploy \
     --stack-name $GITHUB_SECRET_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/4100_github_secret.yaml
 
+# Assuming your GitHub SSH key is in the file ~/.ssh.github_key.pem, run the following command:
+export GITHUB_KEY=`cat ~/.ssh/github_key.pem`
+
+# Get the newly created secret ARN
 export GITHUB_SECRET_ID=`aws cloudformation describe-stacks --stack-name $GITHUB_SECRET_STACK_NAME | jq ".Stacks[0].Outputs[0].OutputValue" | awk -F\" '{print $2}'`
 
+# Load the SSH key data into the secret
 aws secretsmanager put-secret-value --secret-id $GITHUB_SECRET_ID --secret-string "$GITHUB_KEY"
 
+# SSH key data no longer required - ensure it is removed from our environment data
 unset GITHUB_KEY
 ```
 
