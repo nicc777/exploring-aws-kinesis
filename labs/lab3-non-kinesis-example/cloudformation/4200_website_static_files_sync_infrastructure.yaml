@@ -197,10 +197,7 @@ Resources:
               Content-Type: text/x-shellscript; charset="us-ascii"
 
               #!/bin/bash
-              yum install -y squid telnet bind-utils nmap-ncat nmap mc python3 python3-pip python3-setuptools git curl vim
-
-              systemctl enable squid.service
-              systemctl start squid
+              yum install -y git python3
 
               --==BOUNDARY==--
       TagSpecifications: 
