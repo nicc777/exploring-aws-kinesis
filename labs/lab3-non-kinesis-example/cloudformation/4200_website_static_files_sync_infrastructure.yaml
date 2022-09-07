@@ -73,25 +73,6 @@ Resources:
       MaxEntries: 3
       PrefixListName: "InterVpcHostsPrefixList"
 
-  Ec2InstanceSsmKmsKey:
-    Type: AWS::KMS::Key
-    Properties: 
-      Description: "KMS Key that can be used for traffic encryption when using SSM to connect to EC2 Instances"
-      Enabled: true
-      EnableKeyRotation: true
-      KeyPolicy:
-        Version: "2012-10-17"
-        Id: "KmsCustomPolicyForEc2Ssm"
-        Statement:
-          Sid: "Enable IAM policies"
-          Effect: "Allow"
-          Principal:
-            AWS: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
-          Action: "kms:*"
-          Resource: "*"
-      MultiRegion: false
-      PendingWindowInDays: 7
-
   RootRole: 
     Type: "AWS::IAM::Role"
     Properties: 
@@ -145,7 +126,7 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
-###                                                 PROXY SERVER                                                    ###
+###                                                   SYNC SERVER                                                   ###
 ###                                                                                                                 ###
 #######################################################################################################################
 
@@ -161,15 +142,15 @@ Resources:
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
-  WebsiteSyncServerProxyIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties: 
-      Description: "Allow port 3128/tcp (HTTP_PROXY)"
-      FromPort: 3128
-      ToPort: 3128
-      GroupId: !Ref WebsiteSyncServerSecurityGroup
-      IpProtocol: tcp
-      SourcePrefixListId: !Ref InterVpcHostsPrefixList
+  # WebsiteSyncServerProxyIngress:
+  #   Type: AWS::EC2::SecurityGroupIngress
+  #   Properties: 
+  #     Description: "Allow port 3128/tcp (HTTP_PROXY)"
+  #     FromPort: 3128
+  #     ToPort: 3128
+  #     GroupId: !Ref WebsiteSyncServerSecurityGroup
+  #     IpProtocol: tcp
+  #     SourcePrefixListId: !Ref InterVpcHostsPrefixList
 
   AllEgress:
     Type: AWS::EC2::SecurityGroupEgress
@@ -189,7 +170,7 @@ Resources:
           - 'ThisInstanceProfile'
       Path: "/"
       Roles: 
-        - !Ref WebsiteSyncServerInstanceRole
+        - !Ref RootRole
 
   WebsiteSyncServerInstanceHostLaunchTemplate:
     Type: "AWS::EC2::LaunchTemplate"
@@ -212,7 +193,6 @@ Resources:
  
         ImageId: !Ref WebsiteSyncServerEc2AmiParam
         InstanceType: t3.large
-        KeyName: !Ref Ec2KeyPairKeyNameParam
         SecurityGroupIds:
         - !Ref WebsiteSyncServerSecurityGroup
         MetadataOptions:
@@ -240,107 +220,7 @@ Resources:
             Value: "proxy-server"
 
 
-  WebsiteSyncServerElbv2TargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties: 
-      HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: 30
-      HealthCheckPath: "/"
-      HealthCheckPort: 3128
-      HealthCheckProtocol: "HTTP"
-      HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 3
-      IpAddressType: "ipv4"
-      Matcher: 
-        HttpCode: "200-400"
-      Name: "WebsiteSyncServerElbv2TargetGroup"
-      Port: 3128
-      Protocol: "HTTP"
-      TargetType: "instance"
-      UnhealthyThresholdCount: 3
-      VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
-  WebsiteSyncServerAutoscalingGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    Properties: 
-      AutoScalingGroupName: !Sub "${AWS::StackName}-WebsiteSyncServerASG"
-      DesiredCapacity: "1"
-      LaunchTemplate: 
-        LaunchTemplateId: !Ref WebsiteSyncServerInstanceHostLaunchTemplate
-        Version: !GetAtt WebsiteSyncServerInstanceHostLaunchTemplate.LatestVersionNumber
-      MaxSize: "1"
-      MinSize: "1"
-      NewInstancesProtectedFromScaleIn: false
-      VPCZoneIdentifier: 
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
-      TargetGroupARNs: 
-      - !Ref WebsiteSyncServerElbv2TargetGroup
-      Tags: 
-      - Key: "Name"
-        PropagateAtLaunch: true
-        Value: "internet-proxy"
-
-
-  WebsiteSyncServerElbv2SecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupName: "WebsiteSyncServerElbv2SecurityGroup"
-      GroupDescription: "Enable Proxy Server access on the inbound port for ELB"
-      VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 3128
-          ToPort: 3128
-          SourcePrefixListId: !Ref InterVpcHostsPrefixList
-      Tags:
-        - Key: Name
-          Value: WebsiteSyncServerElbv2SecurityGroup
-
-  WebsiteSyncServerElbv2:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties: 
-      IpAddressType: "ipv4"
-      Name: "WebsiteSyncServerElbv2"
-      Scheme: "internal"
-      SecurityGroups: 
-      - !Ref WebsiteSyncServerElbv2SecurityGroup
-      SubnetMappings: 
-      - SubnetId:
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
-      - SubnetId:
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
-      - SubnetId:
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
-      Type: "application"
-  
-  WebsiteSyncServerElbv2Listener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties: 
-      DefaultActions: 
-      - Type: "forward"
-        TargetGroupArn: !Ref WebsiteSyncServerElbv2TargetGroup
-      LoadBalancerArn: !Ref WebsiteSyncServerElbv2
-      Port: 8080
-      Protocol: "HTTP"
-
-  WebsiteSyncServerDnsRecord:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneId : 
-        Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsZoneId"
-      Name:
-        Fn::Sub:
-        - "proxy.${DomainName}"
-        - DomainName:
-            Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
-      ResourceRecords:
-      - !GetAtt WebsiteSyncServerElbv2.DNSName
-      TTL: 300
-      Type: "CNAME"
 
 # Outputs:
 
