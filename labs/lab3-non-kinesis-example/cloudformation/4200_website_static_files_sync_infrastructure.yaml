@@ -180,7 +180,6 @@ Resources:
             DeviceName: /dev/sda1
         IamInstanceProfile:
           Arn: !GetAtt WebsiteSyncServerInstanceIamProfile.Arn
- 
         ImageId: !Ref WebsiteSyncServerEc2AmiParam
         InstanceType: t3.large
         SecurityGroupIds:
