@@ -2,32 +2,32 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >
-  This template creates the base VPC resources. Please note that there are a limit of 5 VPC's per region per AWS 
-  account. Please refer to https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html for more 
-  information regarding AWS VPC Limits. This template will also create a HTTP proxy in the public VPC for Internet 
-  access. This is slightly cheaper than creating a NAT gateway stack.
+  This template creates the resources that retrieve the latest website static files and copy it onto the FSX volume.
+  The API Gateway will expose a Web Hook that can be defined in GitHub. The API Gateway End-Point will link to a Lambda
+  function that will start a EC2 instance that will mount the FSX volume, get the SSH key from Secrets Manager and copy
+  the required files to the FSX volume. Once all is done, the EC2 instance will terminate itself.
 
 # Metadata:
 #   template metadata
 
 Parameters:
-  ProxyServerEc2AmiParam:
+  WebsiteSyncServerEc2AmiParam:
     Description: "Refer to https://aws.amazon.com/blogs/compute/query-for-the-latest-amazon-linux-ami-ids-using-aws-systems-manager-parameter-store/"
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
-  Ec2KeyPairKeyNameParam:
-    Type: "AWS::EC2::KeyPair::KeyName"
-    Description: "The EC2 Key Pair to allow SSH access to the instances"
   VpcStackNameParam:
     Type: String
     Description: "The name of the VPC stack, in order to import values"
-  DnsStackNameParam:
+  InternetCidr:
     Type: String
-    Description: "The name of the DNS stack, in order to import values"
-  FirstTrustedInternetCiderParam:
-    Type: String
-    Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Public VPC"
+    Description: "CIDR of a host or network from the Internet to trust for incoming traffic"
     Default: "0.0.0.0/0"
+  GitHubSecretStackNameParam:
+    Type: String
+    Description: "the name of the CloudFormation Stack that deployed the GitHub SSH Key to Secrets Manager"
+  ProxyServerStackNameParam:
+    Type: String
+    Description: "the name of the CloudFormation Stack that deployed the Proxy Server Resources"
 
 # Rules:
 #   set of rules
@@ -54,7 +54,7 @@ Resources:
     Properties: 
       AddressFamily: "IPv4"
       Entries: 
-        - Cidr: !Ref FirstTrustedInternetCiderParam
+        - Cidr: !Ref InternetCidr
           Description: "A IP address or network from the Internet we trust"
       MaxEntries: 10
       PrefixListName: "TrustedInternetHostsPrefixList"
@@ -107,27 +107,7 @@ Resources:
               - "sts:AssumeRole"
       Path: "/"
 
-  ProxyServerInstanceRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - ec2.amazonaws.com
-          Action:
-          - "sts:AssumeRole"
-      ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/AdministratorAccess"
-      Path: /
-      RoleName:
-        Fn::Join:
-        - '-'
-        - - Ref: AWS::StackName
-          - "ProxyServerInstanceRole"
-
-  Ec2InstanceSsmPolicy:
+  WebsiteSyncServerSsmPolicy:
     Type: AWS::IAM::Policy
     Properties: 
       PolicyDocument:
@@ -148,58 +128,19 @@ Resources:
         - Effect: Allow
           Action:
           - kms:Decrypt
-          Resource: !GetAtt Ec2InstanceSsmKmsKey.Arn
-      PolicyName: "Ec2InstanceSsmPolicy"
+          Resource: 
+            Fn::ImportValue: !Sub "${ProxyServerStackNameParam}-Ec2InstanceSsmKmsKeyArn"
+        - Effect: Allow
+          Action:
+          - secretsmanager:GetSecretValue
+          - secretsmanager:DescribeSecret
+          Resource: !Sub "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:NAME"
+        - Effect: Allow
+          Action: ec2:TerminateInstances
+          Resource: !Sub "arn:${AWS::Partition}:ec2:*:${AWS::AccountId}:instance/*"
+      PolicyName: "WebsiteSyncServerSsmPolicy"
       Roles:
       - !Ref RootRole
-      - !Ref ProxyServerInstanceRole
-
-  # SSM Required VPC End Points - this will be required for EC2 instances launched in the Private VPC
-
-  SsmEndPointSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties: 
-      GroupDescription: "Proxy Server Security Group"
-      GroupName: 
-        Fn::Join:
-        - '-'
-        - - Ref: AWS::StackName
-          - 'SsmEndPointSecurityGroup'
-      VpcId: 
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
-
-  SsmEndPointIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties: 
-      Description: "Allow port 443/tcp (HTTPS)"
-      FromPort: 443
-      ToPort: 443
-      GroupId: !Ref SsmEndPointSecurityGroup
-      IpProtocol: tcp
-      CidrIp: 0.0.0.0/0
-
-  SsmEndPointAllEgress:
-    Type: AWS::EC2::SecurityGroupEgress
-    Properties: 
-      Description: "Allow all outgoing traffic"
-      GroupId: !Ref SsmEndPointSecurityGroup
-      IpProtocol: -1
-      CidrIp: 0.0.0.0/0
-
-  SsmEndPoint1:
-    Type: AWS::EC2::VPCEndpoint
-    Properties: 
-      PrivateDnsEnabled: true
-      SecurityGroupIds: 
-        - !Ref SsmEndPointSecurityGroup
-      ServiceName: "com.amazonaws.eu-central-1.ssm"
-      SubnetIds: 
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
-      VpcEndpointType: "Interface"
-      VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
 
 
 #######################################################################################################################
@@ -208,7 +149,7 @@ Resources:
 ###                                                                                                                 ###
 #######################################################################################################################
 
-  ProxyServerSecurityGroup:
+  WebsiteSyncServerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupDescription: "Proxy Server Security Group"
@@ -220,13 +161,13 @@ Resources:
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
-  ProxyServerProxyIngress:
+  WebsiteSyncServerProxyIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties: 
       Description: "Allow port 3128/tcp (HTTP_PROXY)"
       FromPort: 3128
       ToPort: 3128
-      GroupId: !Ref ProxyServerSecurityGroup
+      GroupId: !Ref WebsiteSyncServerSecurityGroup
       IpProtocol: tcp
       SourcePrefixListId: !Ref InterVpcHostsPrefixList
 
@@ -234,11 +175,11 @@ Resources:
     Type: AWS::EC2::SecurityGroupEgress
     Properties: 
       Description: "Allow all outgoing traffic"
-      GroupId: !Ref ProxyServerSecurityGroup
+      GroupId: !Ref WebsiteSyncServerSecurityGroup
       IpProtocol: -1
       CidrIp: 0.0.0.0/0
 
-  ProxyServerInstanceIamProfile:
+  WebsiteSyncServerInstanceIamProfile:
     Type: AWS::IAM::InstanceProfile
     Properties: 
       InstanceProfileName:
@@ -248,9 +189,9 @@ Resources:
           - 'ThisInstanceProfile'
       Path: "/"
       Roles: 
-        - !Ref ProxyServerInstanceRole
+        - !Ref WebsiteSyncServerInstanceRole
 
-  ProxyServerInstanceHostLaunchTemplate:
+  WebsiteSyncServerInstanceHostLaunchTemplate:
     Type: "AWS::EC2::LaunchTemplate"
     Properties:
       LaunchTemplateName:
@@ -267,13 +208,13 @@ Resources:
               Encrypted: true
             DeviceName: /dev/sda1
         IamInstanceProfile:
-          Arn: !GetAtt ProxyServerInstanceIamProfile.Arn
+          Arn: !GetAtt WebsiteSyncServerInstanceIamProfile.Arn
  
-        ImageId: !Ref ProxyServerEc2AmiParam
+        ImageId: !Ref WebsiteSyncServerEc2AmiParam
         InstanceType: t3.large
         KeyName: !Ref Ec2KeyPairKeyNameParam
         SecurityGroupIds:
-        - !Ref ProxyServerSecurityGroup
+        - !Ref WebsiteSyncServerSecurityGroup
         MetadataOptions:
           HttpTokens: required
         UserData: 
@@ -299,7 +240,7 @@ Resources:
             Value: "proxy-server"
 
 
-  ProxyServerElbv2TargetGroup:
+  WebsiteSyncServerElbv2TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
       HealthCheckEnabled: true
@@ -312,7 +253,7 @@ Resources:
       IpAddressType: "ipv4"
       Matcher: 
         HttpCode: "200-400"
-      Name: "ProxyServerElbv2TargetGroup"
+      Name: "WebsiteSyncServerElbv2TargetGroup"
       Port: 3128
       Protocol: "HTTP"
       TargetType: "instance"
@@ -320,14 +261,14 @@ Resources:
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
-  ProxyServerAutoscalingGroup:
+  WebsiteSyncServerAutoscalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties: 
-      AutoScalingGroupName: !Sub "${AWS::StackName}-ProxyServerASG"
+      AutoScalingGroupName: !Sub "${AWS::StackName}-WebsiteSyncServerASG"
       DesiredCapacity: "1"
       LaunchTemplate: 
-        LaunchTemplateId: !Ref ProxyServerInstanceHostLaunchTemplate
-        Version: !GetAtt ProxyServerInstanceHostLaunchTemplate.LatestVersionNumber
+        LaunchTemplateId: !Ref WebsiteSyncServerInstanceHostLaunchTemplate
+        Version: !GetAtt WebsiteSyncServerInstanceHostLaunchTemplate.LatestVersionNumber
       MaxSize: "1"
       MinSize: "1"
       NewInstancesProtectedFromScaleIn: false
@@ -336,17 +277,17 @@ Resources:
         - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
         - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
       TargetGroupARNs: 
-      - !Ref ProxyServerElbv2TargetGroup
+      - !Ref WebsiteSyncServerElbv2TargetGroup
       Tags: 
       - Key: "Name"
         PropagateAtLaunch: true
         Value: "internet-proxy"
 
 
-  ProxyServerElbv2SecurityGroup:
+  WebsiteSyncServerElbv2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: "ProxyServerElbv2SecurityGroup"
+      GroupName: "WebsiteSyncServerElbv2SecurityGroup"
       GroupDescription: "Enable Proxy Server access on the inbound port for ELB"
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
@@ -357,16 +298,16 @@ Resources:
           SourcePrefixListId: !Ref InterVpcHostsPrefixList
       Tags:
         - Key: Name
-          Value: ProxyServerElbv2SecurityGroup
+          Value: WebsiteSyncServerElbv2SecurityGroup
 
-  ProxyServerElbv2:
+  WebsiteSyncServerElbv2:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
       IpAddressType: "ipv4"
-      Name: "ProxyServerElbv2"
+      Name: "WebsiteSyncServerElbv2"
       Scheme: "internal"
       SecurityGroups: 
-      - !Ref ProxyServerElbv2SecurityGroup
+      - !Ref WebsiteSyncServerElbv2SecurityGroup
       SubnetMappings: 
       - SubnetId:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
@@ -376,17 +317,17 @@ Resources:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
       Type: "application"
   
-  ProxyServerElbv2Listener:
+  WebsiteSyncServerElbv2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties: 
       DefaultActions: 
       - Type: "forward"
-        TargetGroupArn: !Ref ProxyServerElbv2TargetGroup
-      LoadBalancerArn: !Ref ProxyServerElbv2
+        TargetGroupArn: !Ref WebsiteSyncServerElbv2TargetGroup
+      LoadBalancerArn: !Ref WebsiteSyncServerElbv2
       Port: 8080
       Protocol: "HTTP"
 
-  ProxyServerDnsRecord:
+  WebsiteSyncServerDnsRecord:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId : 
@@ -397,20 +338,14 @@ Resources:
         - DomainName:
             Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
       ResourceRecords:
-      - !GetAtt ProxyServerElbv2.DNSName
+      - !GetAtt WebsiteSyncServerElbv2.DNSName
       TTL: 300
       Type: "CNAME"
 
-Outputs:
+# Outputs:
 
-  Ec2InstanceSsmKmsKeyId:
-    Description: "ID for Ec2InstanceSsmKmsKey"
-    Value: !Ref Ec2InstanceSsmKmsKey
-    Export:
-      Name: !Sub "${AWS::StackName}-Ec2InstanceSsmKmsKeyId"
-
-  Ec2InstanceSsmKmsKeyArn:
-    Description: "ARN for Ec2InstanceSsmKmsKey"
-    Value: !GetAtt Ec2InstanceSsmKmsKey.Arn
-    Export:
-      Name: !Sub "${AWS::StackName}-Ec2InstanceSsmKmsKeyArn"
+#   PrivateVpcSubnet3Id:
+#     Description: "ID for PrivateVpcSubnet3"
+#     Value: !Ref PrivateVpcSubnet3
+#     Export:
+#       Name: !Sub "${AWS::StackName}-PrivateVpcSubnet3"
