@@ -44,19 +44,20 @@ Each of the API endpoints is services by a Lambda function.
 
 When running commands, the following environment variables are assumed to be set:
 
-| Environment Variable Example           | Description                                                    |
-|----------------------------------------|----------------------------------------------------------------|
-| `export AWS_PROFILE="..."`             | The AWS Credentials Profile to use                             |
-| `export AWS_REGION="..."`              | The AWS Region to deploy resources to                          |
-| `export PARAMETERS_FILE="..."`         | The file containing the stack parameters                       |
-| `export DYNAMODB_STACK_NAME="..."`     | The CloudFormation stack name for deploying the DynamoDB Table |
-| `export LAMBDA_STACK_NAME="..."`       | The CloudFormation stack name for deploying Lambda Functions   |
-| `export VPC_STACK_NAME="..."`          | The CloudFormation stack name for deploying the VPC resources  |
-| `export NFS_STACK_NAME="..."`          | The CloudFormation stack name for deploying a FSX Filesystem   |
-| `export DNS_STACK_NAME="..."`          | The CloudFormation stack name for deploying DNS and ACM        |
-| `export PROXY_STACK_NAME="..."`        | The CloudFormation stack name for deploying the Proxy server   |
-| `export ARTIFACT_S3_BUCKET_NAME="..."` | The S3 Bucket name containing any additional artifacts         |
-| `export EC2_KEYPAIR_KEY_NAME="..."`    | A pre-existing EC2 Key Pair Key Name                           |
+| Environment Variable Example             | Description                                                                         |
+|------------------------------------------|-------------------------------------------------------------------------------------|
+| `export AWS_PROFILE="..."`               | The AWS Credentials Profile to use                                                  |
+| `export AWS_REGION="..."`                | The AWS Region to deploy resources to                                               |
+| `export PARAMETERS_FILE="..."`           | The file containing the stack parameters                                            |
+| `export DYNAMODB_STACK_NAME="..."`       | The CloudFormation stack name for deploying the DynamoDB Table                      |
+| `export LAMBDA_STACK_NAME="..."`         | The CloudFormation stack name for deploying Lambda Functions                        |
+| `export VPC_STACK_NAME="..."`            | The CloudFormation stack name for deploying the VPC resources                       |
+| `export NFS_STACK_NAME="..."`            | The CloudFormation stack name for deploying a FSX Filesystem                        |
+| `export DNS_STACK_NAME="..."`            | The CloudFormation stack name for deploying DNS and ACM                             |
+| `export PROXY_STACK_NAME="..."`          | The CloudFormation stack name for deploying the Proxy server                        |
+| `export GITHUB_SECRET_STACK_NAME="..."`  | The CloudFormation stack name for deploying the GitHub SSH Key in Secrets Manager   |
+| `export ARTIFACT_S3_BUCKET_NAME="..."`   | The S3 Bucket name containing any additional artifacts                              |
+| `export EC2_KEYPAIR_KEY_NAME="..."`      | A pre-existing EC2 Key Pair Key Name                                                |
 
 Some of these variables, like 
 
@@ -343,6 +344,16 @@ aws cloudformation deploy \
     --stack-name $NFS_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/4000_fsx_filesystem.yaml \
     --parameter-overrides VpcStackName="$VPC_STACK_NAME"
+
+# Assuming your GitHub SSH key is in the file ~/.ssh.github_key.pem, run the following command:
+export GITHUB_KEY=`cat ~/.ssh/github_key.pem`
+
+aws cloudformation deploy \
+    --stack-name $GITHUB_SECRET_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/4100_github_secret.yaml \
+    --parameter-overrides SshKeyDataParam="$GITHUB_KEY"
+
+unset GITHUB_KEY
 ```
 
 ## Event Infrastructure
