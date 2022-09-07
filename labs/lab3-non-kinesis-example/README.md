@@ -326,10 +326,15 @@ Basic VPC design:
 TODO
 
 * ~~Create OpenZFS NFS Share for hosting web source files~~
+* Synchronize a SSH key (for GitHub) with Secrets Manager
 * Create application launch template to server these files using nginx (mount NFS read only)
 * Create autoscaling group for application cluster and host in private VPC
 * Create inbound load balancer in public VPC to connect to application cluster in private VPC
 * Add Route 53 entries for application (CNAME to Load Balancer) (intranet.DOMAIN) - NOTE: Even though this is an "internal" application, I don't have a VPN peering connection so I will come in via the Internet to test the application. Another option to consider is to use SSH tunneling through a jump host....
+
+As a demonstration, I wanted to synchronize the web site static files from GitHub to the FSX file system. 
+
+> _**Important Pre-Requisite**_: A SSH key must be available in order to create a copy of that key in Secrets Manager, that can later be accessed to connect to GitHub and synchronize the web site.
 
 To create the OpenZFS NFS Filesystem that will host the website static content, run the following command:
 

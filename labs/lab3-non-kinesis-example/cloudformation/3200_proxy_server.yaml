@@ -292,6 +292,12 @@ Resources:
               systemctl start squid
 
               --==BOUNDARY==--
+      TagSpecifications: 
+      - ResourceType: "instance"
+        Tags: 
+          - Key: "Role"
+            Value: "proxy-server"
+
 
   ProxyServerElbv2TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -331,6 +337,11 @@ Resources:
         - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
       TargetGroupARNs: 
       - !Ref ProxyServerElbv2TargetGroup
+      Tags: 
+      - Key: "Name"
+        PropagateAtLaunch: true
+        Value: "internet-proxy"
+
 
   ProxyServerElbv2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
