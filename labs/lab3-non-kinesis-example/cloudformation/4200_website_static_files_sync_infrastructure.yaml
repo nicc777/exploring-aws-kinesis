@@ -3,9 +3,9 @@ AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >
   This template creates the resources that retrieve the latest website static files and copy it onto the FSX volume.
-  The API Gateway will expose a Web Hook that can be defined in GitHub. The API Gateway End-Point will link to a Lambda
-  function that will start a EC2 instance that will mount the FSX volume, get the SSH key from Secrets Manager and copy
-  the required files to the FSX volume. Once all is done, the EC2 instance will terminate itself.
+  The API Gateway will expose a Web Hook that can be defined in GitHub. The Lambda Function End-Point URL will link to
+  a Lambda function that will start a EC2 instance that will mount the FSX volume, get the SSH key from Secrets Manager
+  and copy the required files to the FSX volume. Once all is done, the EC2 instance will terminate itself.
 
 # Metadata:
 #   template metadata
@@ -141,16 +141,6 @@ Resources:
           - 'InstanceSecurityGroup'
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
-
-  # WebsiteSyncServerProxyIngress:
-  #   Type: AWS::EC2::SecurityGroupIngress
-  #   Properties: 
-  #     Description: "Allow port 3128/tcp (HTTP_PROXY)"
-  #     FromPort: 3128
-  #     ToPort: 3128
-  #     GroupId: !Ref WebsiteSyncServerSecurityGroup
-  #     IpProtocol: tcp
-  #     SourcePrefixListId: !Ref InterVpcHostsPrefixList
 
   AllEgress:
     Type: AWS::EC2::SecurityGroupEgress
