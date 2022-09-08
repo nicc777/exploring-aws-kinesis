@@ -11,7 +11,7 @@ Description: >
 #   template metadata
 
 Parameters:
-  WebsiteSyncServerEc2AmiParam:
+  GitHubSyncServerEc2AmiParam:
     Description: "Refer to https://aws.amazon.com/blogs/compute/query-for-the-latest-amazon-linux-ami-ids-using-aws-systems-manager-parameter-store/"
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
@@ -85,7 +85,7 @@ Resources:
 ###                                                                                                                 ###
 #######################################################################################################################
 
-  WebsiteSyncServerRootRole: 
+  GitHubSyncServerRootRole: 
     Type: "AWS::IAM::Role"
     Properties: 
       AssumeRolePolicyDocument: 
@@ -100,7 +100,7 @@ Resources:
               - "sts:AssumeRole"
       Path: "/"
 
-  WebsiteSyncServerSsmPolicy:
+  GitHubSyncServerSsmPolicy:
     Type: AWS::IAM::Policy
     Properties: 
       PolicyDocument:
@@ -139,9 +139,9 @@ Resources:
           - "sqs:GetQueueAttributes"
           - "sqs:ChangeMessageVisibility"
           Resource: !GetAtt GitHubSyncRequestQueue.Arn
-      PolicyName: "WebsiteSyncServerSsmPolicy"
+      PolicyName: "GitHubSyncServerSsmPolicy"
       Roles:
-      - !Ref WebsiteSyncServerRootRole
+      - !Ref GitHubSyncServerRootRole
 
 
 #######################################################################################################################
@@ -150,7 +150,7 @@ Resources:
 ###                                                                                                                 ###
 #######################################################################################################################
 
-  WebsiteSyncServerSecurityGroup:
+  GitHubSyncServerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupDescription: "Proxy Server Security Group"
@@ -166,11 +166,11 @@ Resources:
     Type: AWS::EC2::SecurityGroupEgress
     Properties: 
       Description: "Allow all outgoing traffic"
-      GroupId: !Ref WebsiteSyncServerSecurityGroup
+      GroupId: !Ref GitHubSyncServerSecurityGroup
       IpProtocol: -1
       CidrIp: 0.0.0.0/0
 
-  WebsiteSyncServerInstanceIamProfile:
+  GitHubSyncServerInstanceIamProfile:
     Type: AWS::IAM::InstanceProfile
     Properties: 
       InstanceProfileName:
@@ -180,9 +180,9 @@ Resources:
           - 'ThisInstanceProfile'
       Path: "/"
       Roles: 
-        - !Ref WebsiteSyncServerRootRole
+        - !Ref GitHubSyncServerRootRole
 
-  WebsiteSyncServerInstanceHostLaunchTemplate:
+  GitHubSyncServerInstanceHostLaunchTemplate:
     Type: "AWS::EC2::LaunchTemplate"
     Properties:
       LaunchTemplateName:
@@ -199,11 +199,11 @@ Resources:
               Encrypted: true
             DeviceName: /dev/sda1
         IamInstanceProfile:
-          Arn: !GetAtt WebsiteSyncServerInstanceIamProfile.Arn
-        ImageId: !Ref WebsiteSyncServerEc2AmiParam
+          Arn: !GetAtt GitHubSyncServerInstanceIamProfile.Arn
+        ImageId: !Ref GitHubSyncServerEc2AmiParam
         InstanceType: t3.large
         SecurityGroupIds:
-        - !Ref WebsiteSyncServerSecurityGroup
+        - !Ref GitHubSyncServerSecurityGroup
         MetadataOptions:
           HttpTokens: required
         UserData: 
@@ -218,6 +218,7 @@ Resources:
 
               #!/bin/bash
               export PROXY_URL="http://${ProxyServerDnsName}:3128"
+
               export PROXY_COMMANDS=$(export http_proxy="$PROXY_URL"
               export https_proxy="$PROXY_URL"
               export ftp_proxy="$PROXY_URL"
