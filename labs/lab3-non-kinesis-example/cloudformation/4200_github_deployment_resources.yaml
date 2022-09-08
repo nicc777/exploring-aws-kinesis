@@ -217,7 +217,7 @@ Resources:
               Content-Type: text/x-shellscript; charset="us-ascii"
 
               #!/bin/bash
-              export PROXY_URL="http://${ProxyServerDnsName}:3128"
+              export PROXY_URL="${ProxyServer}"
               echo "PROXY_URL=$PROXY_URL"
 
               cat << EOF > /tmp/proxy
@@ -241,9 +241,9 @@ Resources:
               # TODO As a last step, terminate myself...
 
               --==BOUNDARY==--
-            - ProxyServerDnsName:
+            - ProxyServer:
                 Fn::Sub:
-                - "proxy.${DomainName}"
+                - "http://proxy.${DomainName}:8080"
                 - DomainName:
                     Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
       TagSpecifications: 

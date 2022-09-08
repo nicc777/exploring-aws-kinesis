@@ -352,8 +352,8 @@ Resources:
         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 3128
-          ToPort: 3128
+          FromPort: 8080
+          ToPort: 8080
           SourcePrefixListId: !Ref InterVpcHostsPrefixList
       Tags:
         - Key: Name
