@@ -18,10 +18,6 @@ Parameters:
   VpcStackNameParam:
     Type: String
     Description: "The name of the VPC stack, in order to import values"
-  InternetCidr:
-    Type: String
-    Description: "CIDR of a host or network from the Internet to trust for incoming traffic"
-    Default: "0.0.0.0/0"
   GitHubSecretStackNameParam:
     Type: String
     Description: "the name of the CloudFormation Stack that deployed the GitHub SSH Key to Secrets Manager"
