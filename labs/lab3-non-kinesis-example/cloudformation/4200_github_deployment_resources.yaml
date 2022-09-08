@@ -127,7 +127,8 @@ Resources:
           Action:
           - secretsmanager:GetSecretValue
           - secretsmanager:DescribeSecret
-          Resource: !Sub "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:NAME"
+          Resource:
+            Fn::ImportValue: !Sub "${GitHubSecretStackNameParam}-GitHubSecretArn"
         - Effect: Allow
           Action: ec2:TerminateInstances
           Resource: !Sub "arn:${AWS::Partition}:ec2:*:${AWS::AccountId}:instance/*"
