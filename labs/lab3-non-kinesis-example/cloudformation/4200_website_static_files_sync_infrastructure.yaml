@@ -45,6 +45,35 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
+###                                                  SQS Resources                                                  ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  GitHubSyncRequestDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: "GitHubSyncRequestDeadLetterQueue"
+      VisibilityTimeout: 60
+
+  GitHubSyncRequestQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: "GitHubSyncRequestQueue"
+      RedriveAllowPolicy:
+        redrivePermission: "allowAll"
+      RedrivePolicy:
+        deadLetterTargetArn : !GetAtt GitHubSyncRequestDeadLetterQueue.Arn
+        maxReceiveCount : 3
+      VisibilityTimeout: 60
+
+#######################################################################################################################
+###                                                                                                                 ###
 ###                                               COMMON EC2 RESOURCES                                              ###
 ###                                                                                                                 ###
 #######################################################################################################################
@@ -119,6 +148,13 @@ Resources:
         - Effect: Allow
           Action: ec2:TerminateInstances
           Resource: !Sub "arn:${AWS::Partition}:ec2:*:${AWS::AccountId}:instance/*"
+        - Effect: "Allow"
+          Action:
+          - "sqs:ReceiveMessage"
+          - "sqs:DeleteMessage"
+          - "sqs:GetQueueAttributes"
+          - "sqs:ChangeMessageVisibility"
+          Resource: !GetAtt GitHubSyncRequestQueue.Arn
       PolicyName: "WebsiteSyncServerSsmPolicy"
       Roles:
       - !Ref RootRole

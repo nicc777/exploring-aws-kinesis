@@ -293,7 +293,7 @@ Resources:
 
               --==BOUNDARY==--
       TagSpecifications: 
-      - ResourceType: "instance"
+      - ResourceType: "launch-template"
         Tags: 
           - Key: "Role"
             Value: "proxy-server"
@@ -339,8 +339,8 @@ Resources:
       - !Ref ProxyServerElbv2TargetGroup
       Tags: 
       - Key: "Name"
-        PropagateAtLaunch: true
         Value: "internet-proxy"
+        PropagateAtLaunch: true
 
 
   ProxyServerElbv2SecurityGroup:
