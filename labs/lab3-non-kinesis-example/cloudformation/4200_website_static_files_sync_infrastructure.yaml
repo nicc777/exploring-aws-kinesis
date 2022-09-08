@@ -159,7 +159,7 @@ Resources:
         - - Ref: AWS::StackName
           - 'InstanceSecurityGroup'
       VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
 
   AllEgress:
     Type: AWS::EC2::SecurityGroupEgress
