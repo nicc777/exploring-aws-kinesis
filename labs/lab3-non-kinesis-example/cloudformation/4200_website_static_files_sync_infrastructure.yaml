@@ -28,6 +28,9 @@ Parameters:
   ProxyServerStackNameParam:
     Type: String
     Description: "the name of the CloudFormation Stack that deployed the Proxy Server Resources"
+  DnsStackNameParam:
+    Type: String
+    Description: "The name of the DNS stack, in order to import values"
 
 # Rules:
 #   set of rules
@@ -71,6 +74,14 @@ Resources:
         deadLetterTargetArn : !GetAtt GitHubSyncRequestDeadLetterQueue.Arn
         maxReceiveCount : 3
       VisibilityTimeout: 60
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                       Lambda Function to monitor and start EC2 Instance if Queue Count > 0                      ###
+###                                                                                                                 ###
+#######################################################################################################################
+
 
 #######################################################################################################################
 ###                                                                                                                 ###
@@ -224,7 +235,8 @@ Resources:
           HttpTokens: required
         UserData: 
           Fn::Base64:
-            Fn::Sub: |
+            Fn::Sub: 
+            - |
               MIME-Version: 1.0
               Content-Type: multipart/mixed; boundary="==BOUNDARY=="
 
@@ -232,9 +244,35 @@ Resources:
               Content-Type: text/x-shellscript; charset="us-ascii"
 
               #!/bin/bash
-              yum install -y git python3
+              export PROXY_URL="http://${ProxyServerDnsName}:3128"
+              export PROXY_COMMANDS=$(export http_proxy="$PROXY_URL"
+              export https_proxy="$PROXY_URL"
+              export ftp_proxy="$PROXY_URL"
+              export no_proxy="127.0.0.1,localhost"
+              # For curl
+              export HTTP_PROXY="$PROXY_URL"
+              export HTTPS_PROXY="$PROXY_URL"
+              export FTP_PROXY="$PROXY_URL"
+              export NO_PROXY="127.0.0.1,localhost"
+              )
+
+              profile_config=$(PROXY_URL="http://${ProxyServerDnsName}:3128"
+              $PROXY_COMMANDS
+              )
+              echo $profile_config >> /etc/profile
+
+              source /etc/profile
+
+              yum install -y git python3 nfs-utils nfs4-acl-tools nfs-common
+
+              # TODO As a last step, terminate myself...
 
               --==BOUNDARY==--
+            - ProxyServerDnsName:
+                Fn::Sub:
+                - "proxy.${DomainName}"
+                - DomainName:
+                    Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
       TagSpecifications: 
       - ResourceType: "instance"
         Tags: 
