@@ -218,8 +218,10 @@ Resources:
 
               #!/bin/bash
               export PROXY_URL="http://${ProxyServerDnsName}:3128"
+              echo "PROXY_URL=$PROXY_URL"
 
-              export PROXY_COMMANDS=$(export http_proxy="$PROXY_URL"
+              cat << EOF > /tmp/proxy
+              export http_proxy="$PROXY_URL"
               export https_proxy="$PROXY_URL"
               export ftp_proxy="$PROXY_URL"
               export no_proxy="127.0.0.1,localhost"
@@ -228,14 +230,11 @@ Resources:
               export HTTPS_PROXY="$PROXY_URL"
               export FTP_PROXY="$PROXY_URL"
               export NO_PROXY="127.0.0.1,localhost"
-              )
+              EOF
 
-              profile_config=$(PROXY_URL="http://${ProxyServerDnsName}:3128"
-              $PROXY_COMMANDS
-              )
-              echo $profile_config >> /etc/profile
+              cat /tmp/proxy >> /etc/profile
 
-              source /etc/profile
+              source /tmp/proxy
 
               yum install -y git python3 nfs-utils nfs4-acl-tools nfs-common
 
