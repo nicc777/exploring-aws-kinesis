@@ -56,6 +56,7 @@ When running commands, the following environment variables are assumed to be set
 | `export DNS_STACK_NAME="..."`            | The CloudFormation stack name for deploying DNS and ACM                             |
 | `export PROXY_STACK_NAME="..."`          | The CloudFormation stack name for deploying the Proxy server                        |
 | `export GITHUB_SECRET_STACK_NAME="..."`  | The CloudFormation stack name for deploying the GitHub SSH Key in Secrets Manager   |
+| `export GITHUB_SYNC_STACK_NAME="..."`    | The CloudFormation stack name for deploying the GitHub Sync Resources               |
 | `export ARTIFACT_S3_BUCKET_NAME="..."`   | The S3 Bucket name containing any additional artifacts                              |
 | `export EC2_KEYPAIR_KEY_NAME="..."`      | A pre-existing EC2 Key Pair Key Name                                                |
 
@@ -312,7 +313,7 @@ aws cloudformation deploy \
 aws cloudformation deploy \
     --stack-name $PROXY_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_proxy_server.yaml \
-    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" DnsStackNameParam="$DNS_STACK_NAME"  Ec2KeyPairKeyNameParam="$EC2_KEYPAIR_KEY_NAME" \
+    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" DnsStackNameParam="$DNS_STACK_NAME" Ec2KeyPairKeyNameParam="$EC2_KEYPAIR_KEY_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 
@@ -362,6 +363,15 @@ aws secretsmanager put-secret-value --secret-id $GITHUB_SECRET_ID --secret-strin
 
 # SSH key data no longer required - ensure it is removed from our environment data
 unset GITHUB_KEY
+
+aws cloudformation deploy \
+    --stack-name $GITHUB_SYNC_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/4200_website_static_files_sync_infrastructure.yaml \
+    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
+        GitHubSecretStackNameParam="$GITHUB_SECRET_STACK_NAME" \
+        DnsStackNameParam="$DNS_STACK_NAME" \
+        ProxyServerStackNameParam="$PROXY_STACK_NAME" \
+    --capabilities CAPABILITY_NAMED_IAM
 ```
 
 ## Event Infrastructure
