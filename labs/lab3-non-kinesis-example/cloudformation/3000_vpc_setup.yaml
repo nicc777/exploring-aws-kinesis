@@ -75,6 +75,9 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}a"
       CidrBlock: !Ref PrivateVpcSubnet1CidrParam
       VpcId: !Ref PrivateVpc
+      Tags: 
+      - Key: "Name"
+        Value: "PrivateVpcSubnet1"
 
   PrivateVpcSubnet2:
     Type: AWS::EC2::Subnet
@@ -82,6 +85,9 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}b"
       CidrBlock: !Ref PrivateVpcSubnet2CidrParam
       VpcId: !Ref PrivateVpc
+      Tags: 
+      - Key: "Name"
+        Value: "PrivateVpcSubnet2"
 
   PrivateVpcSubnet3:
     Type: AWS::EC2::Subnet
@@ -89,6 +95,9 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}c"
       CidrBlock: !Ref PrivateVpcSubnet3CidrParam
       VpcId: !Ref PrivateVpc
+      Tags: 
+      - Key: "Name"
+        Value: "PrivateVpcSubnet3"
 
   PrivateVpcRouteTable:
     Type: AWS::EC2::RouteTable
@@ -153,6 +162,9 @@ Resources:
       CidrBlock: !Ref PublicVpcSubnet1CidrParam
       VpcId: !Ref PublicVpc
       MapPublicIpOnLaunch: true
+      Tags: 
+      - Key: "Name"
+        Value: "PublicVpcSubnet1"
 
   PublicVpcSubnet2:
     Type: AWS::EC2::Subnet
@@ -161,6 +173,9 @@ Resources:
       CidrBlock: !Ref PublicVpcSubnet2CidrParam
       VpcId: !Ref PublicVpc
       MapPublicIpOnLaunch: true
+      Tags: 
+      - Key: "Name"
+        Value: "PublicVpcSubnet2"
 
   PublicVpcSubnet3:
     Type: AWS::EC2::Subnet
@@ -169,6 +184,9 @@ Resources:
       CidrBlock: !Ref PublicVpcSubnet3CidrParam
       VpcId: !Ref PublicVpc
       MapPublicIpOnLaunch: true
+      Tags: 
+      - Key: "Name"
+        Value: "PublicVpcSubnet3"
 
   PublicVpcRouteTable:
     Type: AWS::EC2::RouteTable
