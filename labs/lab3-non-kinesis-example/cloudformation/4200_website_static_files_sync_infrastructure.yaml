@@ -89,31 +89,7 @@ Resources:
 ###                                                                                                                 ###
 #######################################################################################################################
 
-  TrustedInternetHostsPrefixList:
-    Type: AWS::EC2::PrefixList
-    Properties: 
-      AddressFamily: "IPv4"
-      Entries: 
-        - Cidr: !Ref InternetCidr
-          Description: "A IP address or network from the Internet we trust"
-      MaxEntries: 10
-      PrefixListName: "TrustedInternetHostsPrefixList"
-
-  InterVpcHostsPrefixList:
-    Type: AWS::EC2::PrefixList
-    Properties: 
-      AddressFamily: "IPv4"
-      Entries: 
-        - Cidr: 
-            Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
-          Description: "Public VPC CIDR"
-        - Cidr: 
-            Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
-          Description: "Private VPC CIDR"
-      MaxEntries: 3
-      PrefixListName: "InterVpcHostsPrefixList"
-
-  RootRole: 
+  WebsiteSyncServerRootRole: 
     Type: "AWS::IAM::Role"
     Properties: 
       AssumeRolePolicyDocument: 
@@ -168,7 +144,7 @@ Resources:
           Resource: !GetAtt GitHubSyncRequestQueue.Arn
       PolicyName: "WebsiteSyncServerSsmPolicy"
       Roles:
-      - !Ref RootRole
+      - !Ref WebsiteSyncServerRootRole
 
 
 #######################################################################################################################
@@ -207,7 +183,7 @@ Resources:
           - 'ThisInstanceProfile'
       Path: "/"
       Roles: 
-        - !Ref RootRole
+        - !Ref WebsiteSyncServerRootRole
 
   WebsiteSyncServerInstanceHostLaunchTemplate:
     Type: "AWS::EC2::LaunchTemplate"
@@ -274,7 +250,7 @@ Resources:
                 - DomainName:
                     Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
       TagSpecifications: 
-      - ResourceType: "instance"
+      - ResourceType: "launch-template"
         Tags: 
           - Key: "Role"
             Value: "proxy-server"
