@@ -330,6 +330,7 @@ TODO
 * ~~Create OpenZFS NFS Share for hosting web source files~~
 * ~~Synchronize a SSH key (for GitHub) with Secrets Manager~~
 * Create EC2 instance that the Lambda function can start in order to sync static web site artifacts to FSX. The EC2 instance will self-terminate once done
+    * Fix Proxy COnfig to include CIDR's
 * Create a Lambda function, exposed with a URL, that GitHub can call (webhook integration)
 * Create application launch template to server these files using nginx (mount NFS read only)
 * Create autoscaling group for application cluster and host in private VPC
