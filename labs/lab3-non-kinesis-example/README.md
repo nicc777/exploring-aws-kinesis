@@ -366,7 +366,7 @@ unset GITHUB_KEY
 
 aws cloudformation deploy \
     --stack-name $GITHUB_SYNC_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/4200_website_static_files_sync_infrastructure.yaml \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/4200_github_deployment_resources.yaml \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
         GitHubSecretStackNameParam="$GITHUB_SECRET_STACK_NAME" \
         DnsStackNameParam="$DNS_STACK_NAME" \
