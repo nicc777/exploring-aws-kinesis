@@ -270,7 +270,7 @@ Resources:
           Arn: !GetAtt ProxyServerInstanceIamProfile.Arn
  
         ImageId: !Ref ProxyServerEc2AmiParam
-        InstanceType: t3.large
+        InstanceType: t3.medium
         KeyName: !Ref Ec2KeyPairKeyNameParam
         SecurityGroupIds:
         - !Ref ProxyServerSecurityGroup
