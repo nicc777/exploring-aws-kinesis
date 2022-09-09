@@ -332,7 +332,7 @@ Resources:
         HttpCode: "200-400"
       Name: "ProxyServerElbv2TargetGroup"
       Port: 3128
-      Protocol: "HTTP"
+      Protocol: "TCP"
       TargetType: "instance"
       UnhealthyThresholdCount: 3
       VpcId:
@@ -402,7 +402,7 @@ Resources:
         TargetGroupArn: !Ref ProxyServerElbv2TargetGroup
       LoadBalancerArn: !Ref ProxyServerElbv2
       Port: 8080
-      Protocol: "HTTP"
+      Protocol: "TCP"
 
   ProxyServerDnsRecord:
     Type: AWS::Route53::RecordSet
