@@ -297,9 +297,9 @@ Resources:
 
               --==BOUNDARY==--
             - PrivateVpcCidr: 
-                Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+                Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
               PublicVpcCidr: 
-                Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
+                Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
       TagSpecifications: 
       - ResourceType: "launch-template"
         Tags: 
