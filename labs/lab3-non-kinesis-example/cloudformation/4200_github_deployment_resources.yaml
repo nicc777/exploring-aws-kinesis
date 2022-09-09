@@ -201,7 +201,7 @@ Resources:
         IamInstanceProfile:
           Arn: !GetAtt GitHubSyncServerInstanceIamProfile.Arn
         ImageId: !Ref GitHubSyncServerEc2AmiParam
-        InstanceType: t3.large
+        InstanceType: t3.medium
         SecurityGroupIds:
         - !Ref GitHubSyncServerSecurityGroup
         MetadataOptions:
