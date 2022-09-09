@@ -14,6 +14,7 @@
 - [Infrastructure Components](#infrastructure-components)
   - [VPC and Proxy Server](#vpc-and-proxy-server)
   - [Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC](#serving-of-a-web-site-from-ec2-private-only-accessed-via-a-proxy-server-in-a-public-vpc)
+  - [Handling Updates to Static Web Pages](#handling-updates-to-static-web-pages)
   - [Event Infrastructure](#event-infrastructure)
   - [Private API Gateway to access the Lambda API's.](#private-api-gateway-to-access-the-lambda-apis)
 - [Random Thoughts](#random-thoughts)
@@ -374,6 +375,16 @@ aws cloudformation deploy \
         ProxyServerStackNameParam="$PROXY_STACK_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
+
+## Handling Updates to Static Web Pages
+
+I want to try the following design:
+
+![GitHub Sync Server](../../images/github_sync_server_design.png)
+
+The basic idea is that any commits to a certain repository will then call the Lambda function (Exposed by a URL). The information from the call will be parsed (details still unknown) and from that information a message will be placed on SQS.
+
+A second Lambda function will retrieve that message
 
 ## Event Infrastructure
 
