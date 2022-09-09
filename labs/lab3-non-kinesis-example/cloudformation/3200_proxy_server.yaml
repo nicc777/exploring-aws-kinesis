@@ -374,8 +374,8 @@ Resources:
       IpAddressType: "ipv4"
       Name: "ProxyServerElbv2"
       Scheme: "internal"
-      SecurityGroups: 
-      - !Ref ProxyServerElbv2SecurityGroup
+      # SecurityGroups: 
+      # - !Ref ProxyServerElbv2SecurityGroup
       SubnetMappings: 
       - SubnetId:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
