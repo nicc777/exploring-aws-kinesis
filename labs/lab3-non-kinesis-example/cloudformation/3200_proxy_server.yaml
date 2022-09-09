@@ -278,7 +278,8 @@ Resources:
           HttpTokens: required
         UserData: 
           Fn::Base64:
-            Fn::Sub: |
+            Fn::Sub: 
+            - |
               MIME-Version: 1.0
               Content-Type: multipart/mixed; boundary="==BOUNDARY=="
 
@@ -288,10 +289,17 @@ Resources:
               #!/bin/bash
               yum install -y squid telnet bind-utils nmap-ncat nmap mc python3 python3-pip python3-setuptools git curl vim
 
+              sed -i '0,/RFC1918 possible internal network/ s/RFC1918 possible internal network/&\nacl localnet src ${PrivateVpcCidr}/g' squid.conf
+              sed -i '0,/RFC1918 possible internal network/ s/RFC1918 possible internal network/&\nacl localnet src ${PublicVpcCidr}/g' squid.conf
+
               systemctl enable squid.service
               systemctl start squid
 
               --==BOUNDARY==--
+            - PrivateVpcCidr: 
+                Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+              PublicVpcCidr: 
+                Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
       TagSpecifications: 
       - ResourceType: "launch-template"
         Tags: 
