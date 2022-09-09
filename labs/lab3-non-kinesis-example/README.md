@@ -384,7 +384,9 @@ I want to try the following design:
 
 The basic idea is that any commits to a certain repository will then call the Lambda function (Exposed by a URL). The information from the call will be parsed (details still unknown) and from that information a message will be placed on SQS.
 
-A second Lambda function will retrieve that message
+A second Lambda function will be triggered on a timed event and get the number of SQS messages in the queue. If the qty is more than 0, the Lambda function will check if an instance of the Sync Server is already running. If not, it will create the server instance based on a Launch Template.
+
+The server instance, once started, will have a small script that consumes the SQS messages and clone/pull changes from Git as well as run the relevant deployment scripts. If no more SQS messages are available for more than 5 minutes, the instance self-terminates. EVentually I hope to achieve all of this with Jenkins running a pipeline - all dynamically configured by what I hope could be in the SQS message.
 
 ## Event Infrastructure
 
