@@ -1,0 +1,92 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "This stack is specifically for creating a S3 Gateway VPC Endpoint."
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  VpcStackNameParam:
+    Type: String
+    Description: "The name of the VPC stack, in order to import values"
+  
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                               COMMON EC2 RESOURCES                                              ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  VpcEndPointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: "VPC End Point Security Group"
+      GroupName: 
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - 'VpcEndPointSecurityGroup'
+      VpcId: 
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+
+  VpcEndPointIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      Description: "Allow port 443/tcp (HTTPS) from trusted networks (Prefix List)"
+      FromPort: 443
+      ToPort: 443
+      GroupId: !Ref VpcEndPointSecurityGroup
+      IpProtocol: tcp
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
+
+  VpcEndPointAllEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties: 
+      Description: "Allow all outgoing traffic"
+      GroupId: !Ref VpcEndPointSecurityGroup
+      IpProtocol: -1
+      CidrIp: 0.0.0.0/0
+
+  S3GatewayEndpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action:
+              - "s3:GetObject"
+            Resource:
+            - !Sub "arn:${AWS::Partition}:s3:::aws-windows-downloads-${AWS::Region}/*"
+            - !Sub "arn:${AWS::Partition}:s3:::amazon-ssm-${AWS::Region}/*"
+            - !Sub "arn:${AWS::Partition}:s3:::amazon-ssm-packages-${AWS::Region}/*"
+            - !Sub "arn:${AWS::Partition}:s3:::${AWS::Region}-birdwatcher-prod/*"
+            - !Sub "arn:${AWS::Partition}:s3:::aws-ssm-document-attachments-${AWS::Region}/*"
+            - !Sub "arn:${AWS::Partition}:s3:::patch-baseline-snapshot-${AWS::Region}/*"
+            - !Sub "arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*"
+            - !Sub "arn:${AWS::Partition}:s3:::aws-patchmanager-macos-${AWS::Region}/*"
+      RouteTableIds:
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcRouteTableId"
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcRouteTableId"
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      SecurityGroupIds: 
+      - !Ref VpcEndPointSecurityGroup
+      VpcId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+

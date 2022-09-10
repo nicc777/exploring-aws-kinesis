@@ -349,3 +349,15 @@ Outputs:
     Value: !Ref PrivateVpcSubnet3
     Export:
       Name: !Sub "${AWS::StackName}-PrivateVpcSubnet3Id"
+
+  PublicVpcRouteTableId:
+    Description: "ID for PublicVpcRouteTable"
+    Value: !GetAtt PublicVpcRouteTable.RouteTableId
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicVpcRouteTableId"
+
+  PrivateVpcRouteTableId:
+    Description: "ID for PrivateVpcRouteTable"
+    Value: !GetAtt PrivateVpcRouteTable.RouteTableId
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateVpcRouteTableId"

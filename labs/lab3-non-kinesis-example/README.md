@@ -332,7 +332,10 @@ aws cloudformation deploy \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
         VpcEndPointServiceName="com.amazonaws.eu-central-1.kms"
 
-# TODO Create S3 Gateway Endpoint to allow EC2 instances in hte Private VPC to access S3
+aws cloudformation deploy \
+    --stack-name S3GatewayVpcEndPointStack \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/3250_s3_gateway_vpc_enpoint_stack.yaml \
+    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" 
 
 aws cloudformation deploy \
     --stack-name $PROXY_STACK_NAME \
