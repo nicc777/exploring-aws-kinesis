@@ -314,7 +314,7 @@ aws cloudformation deploy \
 
 aws cloudformation deploy \
     --stack-name $SSM_VPC_ENDPOINT_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/3200_vpc_endpoint_base_stack.yaml \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
         VpcEndPointServiceName="com.amazonaws.eu-central-1.ssm"
 
