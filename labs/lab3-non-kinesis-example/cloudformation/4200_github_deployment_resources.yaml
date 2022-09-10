@@ -30,6 +30,12 @@ Parameters:
   FsxStackNameParam:
     Type: String
     Description: "The name of the FSX stack, in order to import values"
+  PythonRequirementsFileParam:
+    Type: String
+    Description: "The URL (Permalink) to the requirements.txt file" 
+  PythonScriptFile:
+    Type: String
+    Description: "The URL (Permalink) to the github_sync.py file" 
 
 # Rules:
 #   set of rules
@@ -239,14 +245,42 @@ Resources:
 
               source /tmp/proxy
 
-              yum install -y git python3 nfs-utils nfs4-acl-tools nfs-common
+              yum install -y git nfs-utils nfs4-acl-tools nfs-common python3 python3-pip python3-setuptools
 
               mkdir /data
               mount -t nfs -o nfsvers=4.1 ${OpenZfsDnsName}:/fsx/ /data
               mkdir /data/github
               chown ec2-user:ec2-user /data/github
 
-              # TODO Retrieve the Python script from a remote resource
+              mkdir /home/ec2-user/script
+              chown ec2-user:ec2-user /home/ec2-user/script
+
+              REQUIREMENTS_FILE=${RequirementsFile}
+              SCRIPT_FILE=${ScriptFile}
+
+              curl $REQUIREMENTS_FILE --output /home/ec2-user/script/requirements.txt --silent
+              pip3 install -r /home/ec2-user/script/requirements.txt
+              curl $SCRIPT_FILE --output /home/ec2-user/script/github_sync.py --silent
+
+              cat << EOF >> /lib/systemd/system/githubsync.service
+              [Unit]
+              Description=Python based GitHub Sync Server
+              After=multi-user.target
+
+              [Service]
+              Type=simple
+              ExecStart=/usr/bin/python3 /home/ec2-user/script/github_sync.py
+              User=ec2-user
+              WorkingDirectory=/home/ec2-user
+
+              [Install]
+              WantedBy=multi-user.target
+              EOF
+
+              chmod 644 /lib/systemd/system/githubsync.service
+              systemctl daemon-reload
+              systemctl enable githubsync.service
+              systemctl start githubsync.service
 
               # TODO Define and Start the service - As a last step, terminate myself...
 
@@ -258,6 +292,8 @@ Resources:
                     Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
               OpenZfsDnsName:
                 Fn::ImportValue: !Sub "${FsxStackNameParam}-StaticWebRootFsxFilesystemDNSName"
+              RequirementsFile: !Ref PythonRequirementsFileParam
+              ScriptFile: !Ref PythonScriptFile
       TagSpecifications: 
       - ResourceType: "launch-template"
         Tags: 
