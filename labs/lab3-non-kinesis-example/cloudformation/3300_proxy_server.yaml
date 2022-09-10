@@ -59,19 +59,19 @@ Resources:
       MaxEntries: 10
       PrefixListName: "TrustedInternetHostsPrefixList"
 
-  InterVpcHostsPrefixList:
-    Type: AWS::EC2::PrefixList
-    Properties: 
-      AddressFamily: "IPv4"
-      Entries: 
-        - Cidr: 
-            Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
-          Description: "Public VPC CIDR"
-        - Cidr: 
-            Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
-          Description: "Private VPC CIDR"
-      MaxEntries: 3
-      PrefixListName: "InterVpcHostsPrefixList"
+  # InterVpcHostsPrefixList:
+  #   Type: AWS::EC2::PrefixList
+  #   Properties: 
+  #     AddressFamily: "IPv4"
+  #     Entries: 
+  #       - Cidr: 
+  #           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
+  #         Description: "Public VPC CIDR"
+  #       - Cidr: 
+  #           Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
+  #         Description: "Private VPC CIDR"
+  #     MaxEntries: 3
+  #     PrefixListName: "InterVpcHostsPrefixList"
 
   Ec2InstanceSsmKmsKey:
     Type: AWS::KMS::Key
@@ -228,7 +228,8 @@ Resources:
       ToPort: 3128
       GroupId: !Ref ProxyServerSecurityGroup
       IpProtocol: tcp
-      SourcePrefixListId: !Ref InterVpcHostsPrefixList
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
 
   AllEgress:
     Type: AWS::EC2::SecurityGroupEgress
@@ -363,7 +364,8 @@ Resources:
         - IpProtocol: tcp
           FromPort: 8080
           ToPort: 8080
-          SourcePrefixListId: !Ref InterVpcHostsPrefixList
+          SourcePrefixListId: 
+            Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
       Tags:
         - Key: Name
           Value: ProxyServerElbv2SecurityGroup

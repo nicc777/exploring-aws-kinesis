@@ -1,0 +1,102 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This is a base stack for creating one or more VPC End Points. Apply this stack for each INterface type end point 
+  required. This stack cannot be used for Gateway Endpoints.
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  VpcStackNameParam:
+    Type: String
+    Description: "The name of the VPC stack, in order to import values"
+  DnsStackNameParam:
+    Type: String
+    Description: "The name of the DNS stack, in order to import values"
+  FirstTrustedInternetCiderParam:
+    Type: String
+    Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Public VPC"
+    Default: "0.0.0.0/0"
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                               COMMON EC2 RESOURCES                                              ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  VpcEndPointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: "VPC End Point Security Group"
+      GroupName: 
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - 'VpcEndPointSecurityGroup'
+      VpcId: 
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+
+  VpcEndPointIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      Description: "Allow port 443/tcp (HTTPS) from trusted networks (Prefix List)"
+      FromPort: 443
+      ToPort: 443
+      GroupId: !Ref VpcEndPointSecurityGroup
+      IpProtocol: tcp
+      CidrIp: 0.0.0.0/0
+
+  VpcEndPointAllEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties: 
+      Description: "Allow all outgoing traffic"
+      GroupId: !Ref VpcEndPointSecurityGroup
+      IpProtocol: -1
+      CidrIp: 0.0.0.0/0
+
+  VpcEndPoint1:
+    Type: AWS::EC2::VPCEndpoint
+    Properties: 
+      PrivateDnsEnabled: true
+      SecurityGroupIds: 
+        - !Ref VpcEndPointSecurityGroup
+      ServiceName: "com.amazonaws.eu-central-1.ssm"
+      SubnetIds: 
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
+      VpcEndpointType: "Interface"
+      VpcId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+
+
+
+# Outputs:
+
+#   Ec2InstanceSsmKmsKeyId:
+#     Description: "ID for Ec2InstanceSsmKmsKey"
+#     Value: !Ref Ec2InstanceSsmKmsKey
+#     Export:
+#       Name: !Sub "${AWS::StackName}-Ec2InstanceSsmKmsKeyId"
+
+#   Ec2InstanceSsmKmsKeyArn:
+#     Description: "ARN for Ec2InstanceSsmKmsKey"
+#     Value: !GetAtt Ec2InstanceSsmKmsKey.Arn
+#     Export:
+#       Name: !Sub "${AWS::StackName}-Ec2InstanceSsmKmsKeyArn"
