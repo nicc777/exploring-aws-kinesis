@@ -147,7 +147,7 @@ Resources:
         S3Key: "github_webhook_lambda.zip"
       Description: "Handle the test event and emit event data to AWS Kinesis"
       FunctionName: "GitHubWebhookLambdaFunction"
-      Handler: "index.lambda_handler"
+      Handler: "github_webhook_lambda.handler"
       MemorySize: 128
       Role: !GetAtt GitHubWebhookLambdaFunctionRole.Arn
       Runtime: "python3.8"
@@ -155,6 +155,8 @@ Resources:
 
   GitHubWebhookLambdaFunctionUrl:
     Type: AWS::Lambda::Url
+    DependsOn:
+      - "GitHubWebhookLambdaFunction"
     Properties: 
       AuthType: "NONE"
       Cors: 
@@ -177,8 +179,8 @@ Resources:
         - "Date"
         - "x-api-id"
         MaxAge: 86400
-      Qualifier: "githbu-webhook"
-      TargetFunctionArn: !GetAtt GitHubWebhookLambdaFunction.Arn
+      Qualifier: "github-webhook"
+      TargetFunctionArn: !Ref GitHubWebhookLambdaFunction
 
 
 #######################################################################################################################
@@ -398,10 +400,10 @@ Resources:
 
 
 
-# Outputs:
+Outputs:
 
-#   PrivateVpcSubnet3Id:
-#     Description: "ID for PrivateVpcSubnet3"
-#     Value: !Ref PrivateVpcSubnet3
-#     Export:
-#       Name: !Sub "${AWS::StackName}-PrivateVpcSubnet3"
+  GitHubWebhookLambdaFunctionUrl:
+    Description: "ID for GitHubWebhookLambdaFunctionUrl"
+    Value: !GetAtt  GitHubWebhookLambdaFunctionUrl.FunctionUrl
+    Export:
+      Name: !Sub "${AWS::StackName}-GitHubWebhookLambdaFunctionUrl"
