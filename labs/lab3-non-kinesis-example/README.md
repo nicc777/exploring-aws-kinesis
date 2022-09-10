@@ -334,7 +334,7 @@ aws cloudformation deploy \
 
 aws cloudformation deploy \
     --stack-name S3GatewayVpcEndPointStack \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/3250_s3_gateway_vpc_enpoint_stack.yaml \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/3250_s3_gateway_vpc_endpoint_stack.yaml \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" 
 
 aws cloudformation deploy \
