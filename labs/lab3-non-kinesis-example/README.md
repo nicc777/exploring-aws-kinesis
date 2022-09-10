@@ -313,10 +313,24 @@ aws cloudformation deploy \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME"
 
 aws cloudformation deploy \
-    --stack-name $SSM_VPC_ENDPOINT_STACK_NAME \
+    --stack-name SsmVpcEndPointStack \
     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
         VpcEndPointServiceName="com.amazonaws.eu-central-1.ssm"
+
+aws cloudformation deploy \
+    --stack-name SsmMessagesVpcEndPointStack \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
+    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
+        VpcEndPointServiceName="com.amazonaws.eu-central-1.ssmmessages"
+
+aws cloudformation deploy \
+    --stack-name KmsVpcEndPointStack \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
+    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
+        VpcEndPointServiceName="com.amazonaws.eu-central-1.kms"
+
+# TODO Create S3 Gateway Endpoint
 
 aws cloudformation deploy \
     --stack-name $PROXY_STACK_NAME \
