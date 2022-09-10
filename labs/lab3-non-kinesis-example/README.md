@@ -402,6 +402,7 @@ aws cloudformation deploy \
         GitHubSecretStackNameParam="$GITHUB_SECRET_STACK_NAME" \
         DnsStackNameParam="$DNS_STACK_NAME" \
         ProxyServerStackNameParam="$PROXY_STACK_NAME" \
+        FsxStackNameParam="$NFS_STACK_NAME" \
         PythonRequirementsFileParam=$PYTHON_REQUIREMENTS_FILE_URL \
         PythonScriptFile=$PYTHON_SCRIPT_SRC_URL \
     --capabilities CAPABILITY_NAMED_IAM
