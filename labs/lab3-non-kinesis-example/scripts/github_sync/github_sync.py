@@ -7,7 +7,7 @@ import logging.handlers
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-ch = logging.handlers.TimedRotatingFileHandler('/data/logs/github_sync.log', when='midnight', interval=1, backupCount=0, encoding=None, delay=False, utc=True, atTime=None, errors=None)
+ch = logging.handlers.TimedRotatingFileHandler('/data/logs/github_sync.log', when='midnight', interval=1, backupCount=0, encoding=None, delay=False, utc=True)
 ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s:%(lineno)d - %(message)s')
 ch.setFormatter(formatter)
