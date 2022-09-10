@@ -312,6 +312,8 @@ aws cloudformation deploy \
     --template-file labs/lab3-non-kinesis-example/cloudformation/3100_dns.yaml \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME"
 
+# The following three VPC Endpoint stacks creates the end points required for SSM Console Access to running instances in the Private VPC
+
 aws cloudformation deploy \
     --stack-name SsmVpcEndPointStack \
     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
@@ -330,7 +332,7 @@ aws cloudformation deploy \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
         VpcEndPointServiceName="com.amazonaws.eu-central-1.kms"
 
-# TODO Create S3 Gateway Endpoint
+# TODO Create S3 Gateway Endpoint to allow EC2 instances in hte Private VPC to access S3
 
 aws cloudformation deploy \
     --stack-name $PROXY_STACK_NAME \
