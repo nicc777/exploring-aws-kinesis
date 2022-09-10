@@ -126,7 +126,7 @@ Resources:
       - !Ref StaticWebRootFsxFilesystemSecurityGroup
       StorageCapacity: 64
       SubnetIds: 
-      - Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcSubnet1"
+      - Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcSubnet1Id"
       Tags: 
       - Key: "ContainsPersonalInformation"
         Value: "FALSE"
