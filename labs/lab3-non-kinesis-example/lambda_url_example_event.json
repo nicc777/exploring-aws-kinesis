@@ -1,0 +1,39 @@
+{
+    "version": "2.0",
+    "routeKey": "$default",
+    "rawPath": "/",
+    "rawQueryString": "",
+    "headers": {
+        "content-length": "20",
+        "x-amzn-tls-cipher-suite": "ECDHE-RSA-AES128-GCM-SHA256",
+        "x-amzn-tls-version": "TLSv1.2",
+        "x-amzn-trace-id": "Root=1-xxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxx",
+        "x-forwarded-proto": "https",
+        "host": "xxxxxxxxxxxxxxxxxxxxxxxx.lambda-url.eu-central-1.on.aws",
+        "x-forwarded-port": "443",
+        "content-type": "application/json",
+        "x-forwarded-for": "xxxx:xxxx:xxxx:1:xxxx:xxxx:xxxx:xxxx",
+        "accept": "*/*",
+        "user-agent": "curl/7.81.0"
+    },
+    "requestContext": {
+        "accountId": "anonymous",
+        "apiId": "xxxxxxxxxxxxxxxxxxxxxxxx",
+        "domainName": "xxxxxxxxxxxxxxxxxxxxxxxx.lambda-url.eu-central-1.on.aws",
+        "domainPrefix": "xxxxxxxxxxxxxxxxxxxxxxxx",
+        "http": {
+            "method": "POST",
+            "path": "/",
+            "protocol": "HTTP/1.1",
+            "sourceIp": "xxxx:xxxx:xxxx:1:xxxx:xxxx:xxxx:xxxx",
+            "userAgent": "curl/7.81.0"
+        },
+        "requestId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "routeKey": "$default",
+        "stage": "$default",
+        "time": "10/Sep/2022:14:42:40 +0000",
+        "timeEpoch": 1662820960346
+    },
+    "body": "{\"Message\": \"Test1\"}",
+    "isBase64Encoded": false
+}

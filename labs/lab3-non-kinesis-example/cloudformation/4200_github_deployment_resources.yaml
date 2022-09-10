@@ -153,34 +153,21 @@ Resources:
       Runtime: "python3.8"
       Timeout: 30
 
+  GitHubWebhookLambdaFunctionUrlInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      Action: "lambda:InvokeFunctionUrl"
+      FunctionName: !GetAtt  GitHubWebhookLambdaFunction.Arn
+      FunctionUrlAuthType: "NONE"
+      Principal: "*"
+
   GitHubWebhookLambdaFunctionUrl:
     Type: AWS::Lambda::Url
     DependsOn:
-      - "GitHubWebhookLambdaFunction"
+      - "GitHubWebhookLambdaFunctionUrlInvokePermission"
     Properties: 
       AuthType: "NONE"
-      Cors: 
-        AllowCredentials: true
-        AllowHeaders: 
-        - "Content-Type"
-        - "X-Amz-Date"
-        - "Authorization"
-        - "X-Api-Key"
-        - "X-Amz-Security-Token"
-        AllowMethods: 
-        - GET
-        - POST
-        - PUT
-        AllowOrigins: 
-        - "http://localhost"
-        - "http://localhost:9000"
-        - "https://www.github.com"
-        ExposeHeaders: 
-        - "Date"
-        - "x-api-id"
-        MaxAge: 86400
-      Qualifier: "github-webhook"
-      TargetFunctionArn: !Ref GitHubWebhookLambdaFunction
+      TargetFunctionArn: !GetAtt  GitHubWebhookLambdaFunction.Arn
 
 
 #######################################################################################################################
