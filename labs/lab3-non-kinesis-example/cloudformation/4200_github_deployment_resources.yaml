@@ -243,6 +243,8 @@ Resources:
 
               mkdir /data
               mount -t nfs -o nfsvers=4.1 ${OpenZfsDnsName}:/fsx/ /data
+              mkdir /data/github
+              chown ec2-user:ec2-user /data/github
 
               # TODO Retrieve the Python script from a remote resource
 
