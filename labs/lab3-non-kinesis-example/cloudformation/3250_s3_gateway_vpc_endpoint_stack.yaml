@@ -51,7 +51,6 @@ Resources:
             - !Sub "arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*"
             - !Sub "arn:${AWS::Partition}:s3:::aws-patchmanager-macos-${AWS::Region}/*"
       RouteTableIds:
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcRouteTableId"
         - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcRouteTableId"
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
       VpcId:
