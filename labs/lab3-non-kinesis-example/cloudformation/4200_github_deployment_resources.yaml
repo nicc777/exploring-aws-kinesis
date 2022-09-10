@@ -250,7 +250,9 @@ Resources:
               mkdir /data
               mount -t nfs -o nfsvers=4.1 ${OpenZfsDnsName}:/fsx/ /data
               mkdir /data/github
+              mkdir /data/logs
               chmod 777 /data/github
+              chmod 777 /data/logs
 
               mkdir /home/ec2-user/script
               chown ec2-user:ec2-user /home/ec2-user/script
