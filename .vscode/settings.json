@@ -21,6 +21,7 @@
         "KEYPAIR",
         "localnet",
         "ncat",
+        "nfsvers",
         "nmap",
         "nosql",
         "OLDPWD",

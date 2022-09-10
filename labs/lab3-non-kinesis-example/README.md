@@ -402,6 +402,8 @@ aws cloudformation deploy \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 
+> In EC2 instances, the FSX volume can be mounted with the command: `mkdir /data && mount -t nfs fs-020a8bf3fe56670f4.fsx.eu-central-1.amazonaws.com:/fsx /data`
+
 ## Handling Updates to Static Web Pages
 
 I want to try the following design:

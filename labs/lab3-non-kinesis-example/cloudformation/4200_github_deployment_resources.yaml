@@ -27,6 +27,9 @@ Parameters:
   DnsStackNameParam:
     Type: String
     Description: "The name of the DNS stack, in order to import values"
+  FsxStackNameParam:
+    Type: String
+    Description: "The name of the FSX stack, in order to import values"
 
 # Rules:
 #   set of rules
@@ -238,6 +241,9 @@ Resources:
 
               yum install -y git python3 nfs-utils nfs4-acl-tools nfs-common
 
+              mkdir /data
+              mount -t nfs -o nfsvers=4.1 ${OpenZfsDnsName}:/fsx/ /data
+
               # TODO Retrieve the Python script from a remote resource
 
               # TODO Define and Start the service - As a last step, terminate myself...
@@ -248,6 +254,8 @@ Resources:
                 - "http://proxy.${DomainName}:8080"
                 - DomainName:
                     Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
+              OpenZfsDnsName:
+                Fn::ImportValue: !Sub "${FsxStackNameParam}-StaticWebRootFsxFilesystemDNSName"
       TagSpecifications: 
       - ResourceType: "launch-template"
         Tags: 
