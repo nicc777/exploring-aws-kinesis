@@ -156,50 +156,50 @@ Resources:
 
   # SSM Required VPC End Points - this will be required for EC2 instances launched in the Private VPC
 
-  SsmEndPointSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties: 
-      GroupDescription: "Proxy Server Security Group"
-      GroupName: 
-        Fn::Join:
-        - '-'
-        - - Ref: AWS::StackName
-          - 'SsmEndPointSecurityGroup'
-      VpcId: 
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+  # SsmEndPointSecurityGroup:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties: 
+  #     GroupDescription: "Proxy Server Security Group"
+  #     GroupName: 
+  #       Fn::Join:
+  #       - '-'
+  #       - - Ref: AWS::StackName
+  #         - 'SsmEndPointSecurityGroup'
+  #     VpcId: 
+  #       Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
 
-  SsmEndPointIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties: 
-      Description: "Allow port 443/tcp (HTTPS)"
-      FromPort: 443
-      ToPort: 443
-      GroupId: !Ref SsmEndPointSecurityGroup
-      IpProtocol: tcp
-      CidrIp: 0.0.0.0/0
+  # SsmEndPointIngress:
+  #   Type: AWS::EC2::SecurityGroupIngress
+  #   Properties: 
+  #     Description: "Allow port 443/tcp (HTTPS)"
+  #     FromPort: 443
+  #     ToPort: 443
+  #     GroupId: !Ref SsmEndPointSecurityGroup
+  #     IpProtocol: tcp
+  #     CidrIp: 0.0.0.0/0
 
-  SsmEndPointAllEgress:
-    Type: AWS::EC2::SecurityGroupEgress
-    Properties: 
-      Description: "Allow all outgoing traffic"
-      GroupId: !Ref SsmEndPointSecurityGroup
-      IpProtocol: -1
-      CidrIp: 0.0.0.0/0
+  # SsmEndPointAllEgress:
+  #   Type: AWS::EC2::SecurityGroupEgress
+  #   Properties: 
+  #     Description: "Allow all outgoing traffic"
+  #     GroupId: !Ref SsmEndPointSecurityGroup
+  #     IpProtocol: -1
+  #     CidrIp: 0.0.0.0/0
 
-  SsmEndPoint1:
-    Type: AWS::EC2::VPCEndpoint
-    Properties: 
-      PrivateDnsEnabled: true
-      SecurityGroupIds: 
-        - !Ref SsmEndPointSecurityGroup
-      ServiceName: "com.amazonaws.eu-central-1.ssm"
-      SubnetIds: 
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
-      VpcEndpointType: "Interface"
-      VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+  # SsmEndPoint1:
+  #   Type: AWS::EC2::VPCEndpoint
+  #   Properties: 
+  #     PrivateDnsEnabled: true
+  #     SecurityGroupIds: 
+  #       - !Ref SsmEndPointSecurityGroup
+  #     ServiceName: "com.amazonaws.eu-central-1.ssm"
+  #     SubnetIds: 
+  #       - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
+  #       - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
+  #       - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
+  #     VpcEndpointType: "Interface"
+  #     VpcId:
+  #       Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
 
 
 #######################################################################################################################

@@ -12,13 +12,9 @@ Parameters:
   VpcStackNameParam:
     Type: String
     Description: "The name of the VPC stack, in order to import values"
-  DnsStackNameParam:
+  VpcEndPointServiceName:
     Type: String
-    Description: "The name of the DNS stack, in order to import values"
-  FirstTrustedInternetCiderParam:
-    Type: String
-    Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Public VPC"
-    Default: "0.0.0.0/0"
+    Description: "The Interface service name. Try running something like the following to get the service name, for example for SSM: $ aws ec2 describe-vpc-endpoint-services --output json | jq \".ServiceDetails[].ServiceName\" | grep ssm"
 
 # Rules:
 #   set of rules
@@ -60,7 +56,8 @@ Resources:
       ToPort: 443
       GroupId: !Ref VpcEndPointSecurityGroup
       IpProtocol: tcp
-      CidrIp: 0.0.0.0/0
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
 
   VpcEndPointAllEgress:
     Type: AWS::EC2::SecurityGroupEgress
@@ -76,7 +73,7 @@ Resources:
       PrivateDnsEnabled: true
       SecurityGroupIds: 
         - !Ref VpcEndPointSecurityGroup
-      ServiceName: "com.amazonaws.eu-central-1.ssm"
+      ServiceName: !Ref VpcEndPointServiceName
       SubnetIds: 
         - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
         - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
@@ -85,18 +82,3 @@ Resources:
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
 
-
-
-# Outputs:
-
-#   Ec2InstanceSsmKmsKeyId:
-#     Description: "ID for Ec2InstanceSsmKmsKey"
-#     Value: !Ref Ec2InstanceSsmKmsKey
-#     Export:
-#       Name: !Sub "${AWS::StackName}-Ec2InstanceSsmKmsKeyId"
-
-#   Ec2InstanceSsmKmsKeyArn:
-#     Description: "ARN for Ec2InstanceSsmKmsKey"
-#     Value: !GetAtt Ec2InstanceSsmKmsKey.Arn
-#     Export:
-#       Name: !Sub "${AWS::StackName}-Ec2InstanceSsmKmsKeyArn"
