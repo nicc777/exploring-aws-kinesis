@@ -59,20 +59,6 @@ Resources:
       MaxEntries: 10
       PrefixListName: "TrustedInternetHostsPrefixList"
 
-  # InterVpcHostsPrefixList:
-  #   Type: AWS::EC2::PrefixList
-  #   Properties: 
-  #     AddressFamily: "IPv4"
-  #     Entries: 
-  #       - Cidr: 
-  #           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
-  #         Description: "Public VPC CIDR"
-  #       - Cidr: 
-  #           Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
-  #         Description: "Private VPC CIDR"
-  #     MaxEntries: 3
-  #     PrefixListName: "InterVpcHostsPrefixList"
-
   Ec2InstanceSsmKmsKey:
     Type: AWS::KMS::Key
     Properties: 
