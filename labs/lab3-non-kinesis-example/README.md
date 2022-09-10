@@ -392,8 +392,8 @@ aws secretsmanager put-secret-value --secret-id $GITHUB_SECRET_ID --secret-strin
 # SSH key data no longer required - ensure it is removed from our environment data
 unset GITHUB_KEY
 
-# Requirements File: https://raw.githubusercontent.com/nicc777/exploring-aws-kinesis/main/labs/lab3-non-kinesis-example/scripts/github_sync/requirements.txt
-# Script: https://raw.githubusercontent.com/nicc777/exploring-aws-kinesis/main/labs/lab3-non-kinesis-example/scripts/github_sync/github_sync.py
+export PYTHON_REQUIREMENTS_FILE_URL="https://raw.githubusercontent.com/nicc777/exploring-aws-kinesis/main/labs/lab3-non-kinesis-example/scripts/github_sync/github_sync.py"
+export PYTHON_SCRIPT_SRC_URL="https://raw.githubusercontent.com/nicc777/exploring-aws-kinesis/main/labs/lab3-non-kinesis-example/scripts/github_sync/github_sync.py"
 
 aws cloudformation deploy \
     --stack-name $GITHUB_SYNC_STACK_NAME \
@@ -402,6 +402,8 @@ aws cloudformation deploy \
         GitHubSecretStackNameParam="$GITHUB_SECRET_STACK_NAME" \
         DnsStackNameParam="$DNS_STACK_NAME" \
         ProxyServerStackNameParam="$PROXY_STACK_NAME" \
+        PythonRequirementsFileParam=$PYTHON_REQUIREMENTS_FILE_URL \
+        PythonScriptFile=$PYTHON_SCRIPT_SRC_URL \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 

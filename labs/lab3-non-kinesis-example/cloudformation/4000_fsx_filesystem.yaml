@@ -118,6 +118,7 @@ Resources:
                 - rw
                 - crossmnt
                 - sync
+                - root_squash
           ReadOnly: false
           RecordSizeKiB: 16
         ThroughputCapacity: 64
