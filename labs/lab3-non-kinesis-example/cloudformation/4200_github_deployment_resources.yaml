@@ -238,7 +238,9 @@ Resources:
 
               yum install -y git python3 nfs-utils nfs4-acl-tools nfs-common
 
-              # TODO As a last step, terminate myself...
+              # TODO Retrieve the Python script from a remote resource
+
+              # TODO Define and Start the service - As a last step, terminate myself...
 
               --==BOUNDARY==--
             - ProxyServer:
