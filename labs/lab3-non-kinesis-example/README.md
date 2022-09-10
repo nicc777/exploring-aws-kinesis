@@ -313,7 +313,7 @@ aws cloudformation deploy \
 
 aws cloudformation deploy \
     --stack-name $PROXY_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/3200_proxy_server.yaml \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/3300_proxy_server.yaml \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" DnsStackNameParam="$DNS_STACK_NAME" Ec2KeyPairKeyNameParam="$EC2_KEYPAIR_KEY_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
