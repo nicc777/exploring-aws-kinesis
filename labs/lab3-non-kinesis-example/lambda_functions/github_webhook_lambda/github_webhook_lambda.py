@@ -91,7 +91,7 @@ def refresh_environment_cache(logger=get_logger()):
     }
 
 
-def validate_valid_github_webhook_request(event)->bool:
+def validate_valid_github_webhook_request(event, logger=get_logger())->bool:
     
     if 'x-github-delivery' not in event['headers']:
         logger.error('Expected header x-github-delivery')
@@ -148,7 +148,19 @@ def decode_data(event, body: str):
     return body
 
 
-def validate_github_data(data: dict)->bool:
+def validate_github_data(data: dict, logger=get_logger())->bool:
+
+    if 'action' not in data:
+        logger.error('Expected "action" key')
+        return False
+
+    if data['action'] not in ("prereleased", "created"):
+        logger.error('Only pre-released or created actions are supported at the moment')
+        return False
+
+    if data['release']['author']['login'] != 'nicc777':
+        logger.error('Only pre-released or created actions are supported at the moment')
+        return False
 
     return True
 
@@ -194,13 +206,13 @@ def handler(
     
     debug_log(message='event={}', variable_as_list=[event,], logger=logger)
     
-    if not validate_valid_github_webhook_request(event=event):
+    if not validate_valid_github_webhook_request(event=event, logger=logger):
         logger.error('Invalid Request')
         debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
         return return_object
 
     github_data = decode_data(event=event, body=extract_post_data(event=event))
-    if validate_github_data(data=github_data) is False:
+    if validate_github_data(data=github_data, logger=logger) is False:
         logger.error('Invalid Request Body Data')
         debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
         return return_object
