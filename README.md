@@ -12,6 +12,7 @@
 - [Security](#security)
   - [What are the risks?](#what-are-the-risks)
   - [Controls](#controls)
+  - [Use at your own risk](#use-at-your-own-risk)
 
 # Exploring AWS Kinesis
 
@@ -194,5 +195,22 @@ Therefore, I identified the following risks:
 
 Keep in mind these are labs with all resources defined in CloudFormation templates, and as such the first very basic but important control is to delete the CloudFormation stacks as soon as the experiment is done or when there will be a period when no development or testing will take place (i.e. overnight). If the resources are not deployed, they cannot be exploited.
 
+From the CloudFormation template perspective, I will endeavour to limit the IAM roles (where applicable), to align to the [least privileged principle](https://www.techtarget.com/searchsecurity/definition/principle-of-least-privilege-POLP). Components that require elevated or administrator access will not be exposed directly to the Internet. A good example is the GitHub sync server, which requires to deploy resources and as such requires administrator privileges. In the case of the GitHub sync server, the EC2 instance will only be deployed in the Private only VPC and it will not directly be possible to connect to it. Instructions to this instance will be via SQS after ingestion of a GitHub webhook call that will first be parsed to ensure only whitelisted repositories are processed.
 
+During lab #3 I starting thinking about exposed end-points and how to limit access. In this context, I will implement the following controls (some may be work in progress at the time of writing):
+
+* Require an API key or special HTTP header and value before incoming requests are processed
+* White listing of trusted IP addresses as far as possible to allow only trusted sources from the Internet
+* Validation of parameters when processing API calls that include payloads
+
+In terms of vulnerability management, I choose to rely on the following controls:
+
+* Enable [Snyk](https://snyk.io/) scanning of my GitHub repositories
+* Rely on third party libraries from official sources (PyPi, for example). Snyk will also assist here in terms of identifying vulnerable components and information about mitigation
+
+## Use at your own risk
+
+I share these experiment on a public platform with the intention of sharing knowledge and also to accept potential advice. However, these labs are experiments and therefore any person wishing to take some of these into their own environments should first thoroughly review the code. I cannot take responsibility for how the examples presented here is used or adapted. I welcome feedback in order to improve security at any time.
+
+Please keep in mind that this is a repository for learning and experimentation and there should be _**No**_ expectation that any of the components demonstrated here are fully secured or used in a secure way.
 
