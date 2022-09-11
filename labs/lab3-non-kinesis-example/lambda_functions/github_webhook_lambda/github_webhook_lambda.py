@@ -184,9 +184,20 @@ def validate_github_data(data: dict, logger=get_logger())->bool:
 ###############################################################################
 
 
-# TODO POST to SQS
-def post_sqs():
-    client = boto3.client('sqs')
+def post_sqs(
+    data: dict,
+    logger=get_logger(),
+    boto3_clazz=boto3
+):
+    client = get_client(client_name='sqs', boto3_clazz=boto3_clazz)
+    try:    
+        response = client.send_message(
+            QueueUrl=os.getenv('SQS_URL'),
+            MessageBody=json.dumps(data)
+        )
+        logger.info('response={}'.format(response))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
 
 ###############################################################################
@@ -228,6 +239,11 @@ def handler(
         logger.error('Invalid Request Body Data')
         debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
         return return_object
+
+    sqs_data = dict()
+    sqs_data['repository'] = github_data['repository']['full_name']
+    sqs_data['tag_name'] = github_data['release']['tag_name']
+    sqs_data['tar_file'] = github_data['release']['tarball_url']
 
     debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
     return return_object
