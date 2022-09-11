@@ -91,6 +91,32 @@ def refresh_environment_cache(logger=get_logger()):
     }
 
 
+def validate_valid_github_webhook_request(event)->bool:
+    
+    if 'x-github-delivery' not in event['headers']:
+        logger.error('Expected header x-github-delivery')
+        return False
+    if 'x-github-hook-installation-target-id' not in event['headers']:
+        logger.error('Expected header x-github-hook-installation-target-id')
+        return False
+    if 'x-github-hook-id' not in event['headers']:
+        logger.error('Expected header x-github-hook-id')
+        return False
+    if 'x-github-hook-installation-target-type' not in event['headers']:
+        logger.error('Expected header x-github-hook-installation-target-type')
+        return False
+    
+    if event['headers']['x-github-hook-id'] != 'repository':
+        logger.error('Expected header x-github-hook-installation-target-type value to be "repository"')
+        return False
+    
+    if event['requestContext']['http']['userAgent'].startswith('GitHub-Hookshot/') is False:
+        logger.error('Expected a GitHub user-agent')
+        return False
+    
+    return True
+
+
 def extract_post_data(event)->str:
     if 'requestContext' in event:
         if 'http' in event['requestContext']:
@@ -120,6 +146,11 @@ def decode_data(event, body: str):
             if 'x-www-form-urlencoded' in event['headers']['content-type'].lower():
                 return parse_qs(body)
     return body
+
+
+def validate_github_data(data: dict)->bool:
+
+    return True
 
 
 ###############################################################################
@@ -163,6 +194,16 @@ def handler(
     
     debug_log(message='event={}', variable_as_list=[event,], logger=logger)
     
+    if not validate_valid_github_webhook_request(event=event):
+        logger.error('Invalid Request')
+        debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
+        return return_object
+
+    github_data = decode_data(event=event, body=extract_post_data(event=event))
+    if validate_github_data(data=github_data) is False:
+        logger.error('Invalid Request Body Data')
+        debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
+        return return_object
 
     debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
     return return_object
