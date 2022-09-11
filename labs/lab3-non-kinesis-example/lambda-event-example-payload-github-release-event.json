@@ -1,0 +1,43 @@
+{
+    "version": "2.0",
+    "routeKey": "$default",
+    "rawPath": "/",
+    "rawQueryString": "",
+    "headers": {
+        "content-length": "9040",
+        "x-amzn-tls-version": "TLSv1.2",
+        "x-forwarded-proto": "https",
+        "x-github-delivery": "...",
+        "x-forwarded-port": "443",
+        "x-forwarded-for": "nnn.nnn.nnn.nnn",
+        "x-github-hook-installation-target-id": "...",
+        "accept": "*/*",
+        "x-amzn-tls-cipher-suite": "ECDHE-RSA-AES128-GCM-SHA256",
+        "x-amzn-trace-id": "...",
+        "x-github-event": "release",
+        "host": "sss.lambda-url.eu-central-1.on.aws",
+        "content-type": "application/json",
+        "x-github-hook-id": "...",
+        "user-agent": "GitHub-Hookshot/...",
+        "x-github-hook-installation-target-type": "repository"
+    },
+    "requestContext": {
+        "accountId": "anonymous",
+        "apiId": "sss",
+        "domainName": "sss.lambda-url.eu-central-1.on.aws",
+        "domainPrefix": "sss",
+        "http": {
+            "method": "POST",
+            "path": "/",
+            "protocol": "HTTP/1.1",
+            "sourceIp": "nnn.nnn.nnn.nnn",
+            "userAgent": "GitHub-Hookshot/..."
+        },
+        "requestId": "...",
+        "routeKey": "$default",
+        "stage": "$default",
+        "time": "11/Sep/2022:13:56:27 +0000",
+        "timeEpoch": 1662904587931
+    },
+    "body": "...GitHub JSON Content here..."
+}
