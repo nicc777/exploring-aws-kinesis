@@ -34,6 +34,7 @@
         "Redrive",
         "RFID",
         "setuptools",
+        "strugling",
         "Tierings",
         "traceback",
         "zcat",
