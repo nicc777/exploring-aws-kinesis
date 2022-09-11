@@ -9,6 +9,9 @@
   - [Process: Exit building through a turnstile gate](#process-exit-building-through-a-turnstile-gate)
   - [Process: Authenticated user views access card usage events for an employee](#process-authenticated-user-views-access-card-usage-events-for-an-employee)
   - [Final Notes](#final-notes)
+- [Security](#security)
+  - [What are the risks?](#what-are-the-risks)
+  - [Controls](#controls)
 
 # Exploring AWS Kinesis
 
@@ -172,3 +175,24 @@ _**Note**_: Async events can use Kinesis if it is a potential high volume scenar
 Another business rule we will introduce is that access cannot be allowed if the current employee is considered to be already in the building. In other words, you must scan out before you can scan back in. This means that sometimes when an employee goes out, and immediately tries to go back in, they may have to wait a little.
 
 The actual card state will be maintained in a DynamoDB table.
+
+# Security
+
+Here are some guidelines to security while playing with these lab experiments.
+
+## What are the risks?
+
+There are some general AWS related risks that is beyond the scope of this document. A good example would be not to store any sensitive information like your AWS access key and secret key in a public repository. I will not dwell on these here, but rather focus only on the risks and controls related specifically to the lab experiments.
+
+Therefore, I identified the following risks:
+
+* Exposed public Internet endpoint misuse, (D)DoS or hacking attempts
+* Malware, especially in third party libraries in Lambda functions or in JavaScript libraries in the static web site components
+* Malware in EC2 instance packages
+
+## Controls
+
+Keep in mind these are labs with all resources defined in CloudFormation templates, and as such the first very basic but important control is to delete the CloudFormation stacks as soon as the experiment is done or when there will be a period when no development or testing will take place (i.e. overnight). If the resources are not deployed, they cannot be exploited.
+
+
+
