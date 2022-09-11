@@ -1,0 +1,40 @@
+{
+    "action": "prereleased",
+    "release": {
+        "id": 1,
+        "author": {
+            "login": "...",
+            "id": 1
+        },
+        "tag_name": "r0.0.2-SNAPSHOT",
+        "target_commitish": "main",
+        "name": "Release 0.0.2-SNAPSHOT",
+        "draft": false,
+        "prerelease": true,
+        "created_at": "2022-09-10T14:56:54Z",
+        "published_at": "2022-09-11T13:56:27Z",
+        "assets": [],
+        "tarball_url": "https://api.github.com/repos/nicc777/exploring-aws-kinesis-static-website/tarball/r0.0.2-SNAPSHOT",
+        "zipball_url": "https://api.github.com/repos/nicc777/exploring-aws-kinesis-static-website/zipball/r0.0.2-SNAPSHOT",
+        "body": "Another test release"
+    },
+    "repository": {
+        "id": 1,
+        "node_id": "...",
+        "name": "exploring-aws-kinesis-static-website",
+        "full_name": "nicc777/exploring-aws-kinesis-static-website",
+        "private": false,
+        "owner": {
+            "login": "...",
+            "id": 1
+        },
+        "default_branch": "main"
+    },
+    "sender": {
+        "login": "...",
+        "id": 1,
+        "node_id": "...",
+        "type": "User",
+        "site_admin": false
+    }
+}
