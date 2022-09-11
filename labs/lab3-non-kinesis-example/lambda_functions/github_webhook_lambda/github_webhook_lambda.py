@@ -11,6 +11,10 @@ from urllib.parse import parse_qs
 import boto3
 
 
+SUPPORTED_REPOSITORIES = tuple(os.getenv('SUPPORTED_REPOSITORIES', 'nothing').replace(' ', '').split(','))
+SUPPORTED_SENDER_LOGINS = tuple(os.getenv('GITHUB_AUTHORIZED_SENDERS', 'nothing').replace(' ', '').split(','))
+
+
 def get_logger(level=logging.INFO):
     logger = logging.getLogger()
     for h in logger.handlers:
@@ -158,8 +162,16 @@ def validate_github_data(data: dict, logger=get_logger())->bool:
         logger.error('Only pre-released or created actions are supported at the moment')
         return False
 
-    if data['release']['author']['login'] != 'nicc777':
+    if data['release']['author']['login'] not in SUPPORTED_SENDER_LOGINS:
         logger.error('Only pre-released or created actions are supported at the moment')
+        return False
+
+    if data['repository']['full_name'] not in SUPPORTED_REPOSITORIES:
+        logger.error('Repository full name not in SUPPORTED_REPOSITORIES')
+        return False
+
+    if data['sender']['login'] not in SUPPORTED_SENDER_LOGINS:
+        logger.error('Invalid sender login')
         return False
 
     return True

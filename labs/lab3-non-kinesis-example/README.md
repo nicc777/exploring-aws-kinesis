@@ -62,6 +62,8 @@ When running commands, the following environment variables are assumed to be set
 | `export SSM_VPC_ENDPOINT_STACK_NAME="..."`  | The CloudFormation stack name for deploying The SSM VPC End Point resource          |
 | `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                              |
 | `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                |
+| `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                  |
+| `export GITHUB_AUTHORIZED_SENDERS="..."`    | CSV List of supported sender login values                                           |
 
 Some of these variables, like 
 
@@ -413,6 +415,8 @@ aws cloudformation deploy \
         PythonRequirementsFileParam="$PYTHON_REQUIREMENTS_FILE_URL" \
         PythonScriptFile="$PYTHON_SCRIPT_SRC_URL" \
         S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
+        SupportedRepositoriesParam=$SUPPORTED_REPOSITORIES \
+        GitHubAuthorizedSendersParam=$GITHUB_AUTHORIZED_SENDERS \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 

@@ -39,6 +39,12 @@ Parameters:
   S3SourceBucketParam:
     Type: String
     Description: "The S3 bucket name containing the Lambda function ZIP file"
+  SupportedRepositoriesParam:
+    Type: String
+    Description: "Comma delimited list of GitHub repositories to accept web hook requests from. Must be the value expected in the 'full_name' value of the repository data"
+  GitHubAuthorizedSendersParam:
+    Type: String
+    Description: "Comma delimited list of authorized senders as what will be reported in the sender login field value"
 
 # Rules:
 #   set of rules
@@ -142,6 +148,9 @@ Resources:
       Environment:
         Variables: 
           SQS_URL: !GetAtt GitHubSyncRequestQueue.QueueUrl
+          DEBUG: "1"
+          SUPPORTED_REPOSITORIES: !Ref SupportedRepositoriesParam
+          GITHUB_AUTHORIZED_SENDERS: !Ref GitHubAuthorizedSendersParam
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: "github_webhook_lambda.zip"
