@@ -13,6 +13,7 @@
   - [What are the risks?](#what-are-the-risks)
   - [Controls](#controls)
   - [Use at your own risk](#use-at-your-own-risk)
+  - [Current Snyk Status](#current-snyk-status)
 
 # Exploring AWS Kinesis
 
@@ -215,3 +216,7 @@ I share these experiment on a public platform with the intention of sharing know
 Please keep in mind that this is a repository for learning and experimentation and there should be _**No**_ expectation that any of the components demonstrated here are fully secured or used in a secure way.
 
 The controls listed above is also in constant review and subject to continuos improvement. If you do spot glaring problems, please bring them to my attention by opening an issue.
+
+## Current Snyk Status
+
+[![Known Vulnerabilities](https://snyk.io/test/github/nicc777/exploring-aws-kinesis/badge.svg)](https://snyk.io/test/github/nicc777/exploring-aws-kinesis)
