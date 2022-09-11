@@ -110,7 +110,7 @@ def validate_valid_github_webhook_request(event, logger=get_logger())->bool:
         logger.error('Expected header x-github-hook-installation-target-type')
         return False
     
-    if event['headers']['x-github-hook-id'] != 'repository':
+    if event['headers']['x-github-hook-installation-target-type'] != 'repository':
         logger.error('Expected header x-github-hook-installation-target-type value to be "repository"')
         return False
     
@@ -159,19 +159,19 @@ def validate_github_data(data: dict, logger=get_logger())->bool:
         return False
 
     if data['action'] not in ("prereleased", "created"):
-        logger.error('Only pre-released or created actions are supported at the moment')
+        logger.error('Only pre-released or created actions are supported at the moment. input was "{}"'.format(data['action']))
         return False
 
     if data['release']['author']['login'] not in SUPPORTED_SENDER_LOGINS:
-        logger.error('Only pre-released or created actions are supported at the moment')
+        logger.error('Only pre-released or created actions are supported at the moment. input was "{}"'.format(data['release']['author']['login']))
         return False
 
     if data['repository']['full_name'] not in SUPPORTED_REPOSITORIES:
-        logger.error('Repository full name not in SUPPORTED_REPOSITORIES')
+        logger.error('Repository full name not in SUPPORTED_REPOSITORIES. input was "{}"'.format(data['repository']['full_name']))
         return False
 
     if data['sender']['login'] not in SUPPORTED_SENDER_LOGINS:
-        logger.error('Invalid sender login')
+        logger.error('Invalid sender login. input was "{}"'.format(data['sender']['login']))
         return False
 
     return True
@@ -244,6 +244,11 @@ def handler(
     sqs_data['repository'] = github_data['repository']['full_name']
     sqs_data['tag_name'] = github_data['release']['tag_name']
     sqs_data['tar_file'] = github_data['release']['tarball_url']
+    post_sqs(
+        data=sqs_data,
+        logger=logger,
+        boto3_clazz=boto3_clazz
+    )
 
     debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
     return return_object
