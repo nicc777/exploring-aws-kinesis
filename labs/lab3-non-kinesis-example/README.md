@@ -452,7 +452,7 @@ The actual body is what is of interest, and [it contained](lambda-event-example-
 
 ## Event Infrastructure
 
-TODO
+TODO 
 
 ## Private API Gateway to access the Lambda API's.
 

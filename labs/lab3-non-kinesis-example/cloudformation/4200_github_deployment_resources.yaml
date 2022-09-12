@@ -92,7 +92,7 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
-###                       Lambda Function to monitor and start EC2 Instance if Queue Count > 0                      ###
+###                                GitHub Webhook Lambda Function that exposes an URL                               ###
 ###                                                                                                                 ###
 #######################################################################################################################
 
@@ -177,6 +177,80 @@ Resources:
     Properties: 
       AuthType: "NONE"
       TargetFunctionArn: !GetAtt  GitHubWebhookLambdaFunction.Arn
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                       Lambda Function to monitor and start EC2 Instance if Queue Count > 0                      ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+
+  GitHubSyncServerStarterLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "GitHubWebhookLambdaFunctionRoleAssumeRolePolicyDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role for GitHubSyncServerStarterLambdaFunction"
+      Policies:
+      - PolicyName: GitHubWebhookLambdaFunctionPolicy01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+      - PolicyName: GitHubWebhookLambdaFunctionPolicy02
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "sqs:SendMessage"
+            Resource: !GetAtt GitHubSyncRequestQueue.Arn
+      RoleName: GitHubSyncServerStarterLambdaFunctionRole
+
+  GitHubSyncServerStarterLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref GitHubWebhookLambdaFunction
+      RetentionInDays: 7
+
+  GitHubSyncServerStarterLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Environment:
+        Variables: 
+          SQS_URL: !GetAtt GitHubSyncRequestQueue.QueueUrl
+          DEBUG: "1"
+          SUPPORTED_REPOSITORIES: !Ref SupportedRepositoriesParam
+          GITHUB_AUTHORIZED_SENDERS: !Ref GitHubAuthorizedSendersParam
+      Code: 
+        S3Bucket: !Ref S3SourceBucketParam
+        S3Key: "github_webhook_lambda.zip"
+      Description: "Handle the test event and emit event data to AWS Kinesis"
+      FunctionName: "GitHubWebhookLambdaFunction"
+      Handler: "github_webhook_lambda.handler"
+      MemorySize: 128
+      Role: !GetAtt GitHubSyncServerStarterLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 30
 
 
 #######################################################################################################################
