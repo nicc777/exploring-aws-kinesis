@@ -9,6 +9,7 @@ from inspect import getframeinfo, stack
 import base64
 from urllib.parse import parse_qs
 import boto3
+import random
 
 
 SUPPORTED_REPOSITORIES = tuple(os.getenv('SUPPORTED_REPOSITORIES', 'nothing').replace(' ', '').split(','))
@@ -139,6 +140,14 @@ def is_github_sync_server_running(ec2_instances: list, logger=get_logger())->boo
     return False
 
 
+def pick_random_subnet_id()->str:
+    subnet_ids = list()
+    subnet_ids.append(os.getenv('SUBNET1', 'NOT-FOUND-1'))
+    subnet_ids.append(os.getenv('SUBNET2', 'NOT-FOUND-2'))
+    subnet_ids.append(os.getenv('SUBNET3', 'NOT-FOUND-3'))
+    return random.choice(subnet_ids)
+
+
 ###############################################################################
 ###                                                                         ###
 ###                 A W S    A P I    I N T E G R A T I O N                 ###
@@ -249,12 +258,19 @@ def start_sync_server_instance(
     logger=get_logger(),
     boto3_clazz=boto3
 ):
-    result = list()
     client = get_client(client_name='ec2', boto3_clazz=boto3_clazz)
     try:
-        latest_version = get_launch_template_versions(logger=logger, boto3_clazz=boto3_clazz)[-1]
-        logger.info('Launch Template Latest Version: {}'.format(latest_version))
-        pass
+        response = client.run_instances(
+            SecurityGroupIds=[os.getenv('SECURITY_GROUP_ID'),],
+            SubnetId=pick_random_subnet_id(),
+            LaunchTemplate={
+                'LaunchTemplateId': os.getenv('LAUNCH_TEMPLATE_ID'),
+                'Version': '{}'.format(get_launch_template_versions(logger=logger, boto3_clazz=boto3_clazz)[-1]),
+            },
+            MaxCount=1,
+            MinCount=1
+        )
+        debug_log('response={}', variable_as_list=[json.dumps(response, default=str),], logger=logger)
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 

@@ -199,7 +199,7 @@ Resources:
           Action: "sts:AssumeRole"
       Description: "Lambda role for GitHubSyncServerStarterLambdaFunction"
       Policies:
-      - PolicyName: GitHubWebhookLambdaFunctionPolicy01
+      - PolicyName: GitHubSyncServerStarterLambdaFunctionPolicy01
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -209,7 +209,7 @@ Resources:
             - "logs:CreateLogStream"
             - "logs:PutLogEvents"
             Resource: arn:aws:logs:*:*:*
-      - PolicyName: GitHubWebhookLambdaFunctionPolicy02
+      - PolicyName: GitHubSyncServerStarterLambdaFunctionPolicy02
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -217,7 +217,7 @@ Resources:
             Action:
             - "sqs:GetQueueAttributes"
             Resource: !GetAtt GitHubSyncRequestQueue.Arn
-      - PolicyName: GitHubWebhookLambdaFunctionPolicy03
+      - PolicyName: GitHubSyncServerStarterLambdaFunctionPolicy03
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -250,6 +250,13 @@ Resources:
           SQS_URL: !GetAtt GitHubSyncRequestQueue.QueueUrl
           DEBUG: "1"
           LAUNCH_TEMPLATE_ID: !Ref GitHubSyncServerInstanceHostLaunchTemplate
+          SUBNET1:
+            Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
+          SUBNET2:
+            Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
+          SUBNET3:
+            Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
+          SECURITY_GROUP_ID: !Ref GitHubSyncServerSecurityGroup
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: "github_syncserver_starter_lambda.zip"
