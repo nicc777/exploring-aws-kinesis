@@ -224,6 +224,8 @@ Resources:
           - Effect: Allow
             Action:
             - "ec2:DescribeInstances"
+            - "ec2:RunInstances"
+            - "ec2:DescribeLaunchTemplateVersions"
             Resource: "*"
       RoleName: GitHubSyncServerStarterLambdaFunctionRole
 
@@ -247,8 +249,7 @@ Resources:
         Variables: 
           SQS_URL: !GetAtt GitHubSyncRequestQueue.QueueUrl
           DEBUG: "1"
-          SUPPORTED_REPOSITORIES: !Ref SupportedRepositoriesParam
-          GITHUB_AUTHORIZED_SENDERS: !Ref GitHubAuthorizedSendersParam
+          LAUNCH_TEMPLATE_ID: !Ref GitHubSyncServerInstanceHostLaunchTemplate
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: "github_syncserver_starter_lambda.zip"
