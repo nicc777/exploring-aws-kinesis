@@ -151,7 +151,7 @@ def get_sqs_queue_size(
                 'ApproximateNumberOfMessages',
             ]
         )
-        logger.info('response={}'.format(response))
+        logger.debug('response={}'.format(json.dumps(response, default=str)))
         if 'Attributes' in response:
             logger.debug('Attributes: {}'.format(response['Attributes']))
             if 'ApproximateNumberOfMessages' in response['Attributes']:
@@ -169,23 +169,25 @@ def get_running_ec2_instances(
 )->list:
     result = list()
     client = get_client(client_name='ec2', boto3_clazz=boto3_clazz)
+    logger.debug('get_running_ec2_instances() called')
     try:
         response = dict()
         if next_token is not None:
             response = client.describe_instances(NextToken=next_token)
         else:
             response = client.describe_instances()
-        logger.debug('response={}'.format(response))
+        logger.debug('response={}'.format(json.dumps(response, default=str)))
         
-        for instance in response['Reservations']['Instances']:
-            record = dict()
-            if instance['State']['Name'] in ('running', 'pending',):
-                record['InstanceId'] = instance['InstanceId']
-                record['State'] = instance['State']['Name']
-                record['Tags'] = dict()
-                for tag in instance['Tags']:
-                    record['Tags'][tag['Key']] = tag['Value']
-                result.append(record)
+        for r in response['Reservations']:
+            for instance in r['Instances']:
+                record = dict()
+                if instance['State']['Name'] in ('running', 'pending',):
+                    record['InstanceId'] = instance['InstanceId']
+                    record['State'] = instance['State']['Name']
+                    record['Tags'] = dict()
+                    for tag in instance['Tags']:
+                        record['Tags'][tag['Key']] = tag['Value']
+                    result.append(record)
         logger.info('Running instances qty: {}'.format(len(result)))
 
         if 'NextToken' in response:
@@ -217,9 +219,18 @@ def get_launch_template_versions(
             response = client.describe_launch_template_versions(
                 LaunchTemplateId=os.getenv('LAUNCH_TEMPLATE_ID')
             )
-        logger.debug('response={}'.format(response))
+        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        for lt in response['LaunchTemplateVersions']:
+            result.append(int(lt['VersionNumber']))
+        if 'NextToken' in response:
+            result += get_launch_template_versions(
+                logger=logger,
+                boto3_clazz=boto3_clazz,
+                next_token=response['NextToken']
+            )
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    result.sort()
     return result
 
 
@@ -229,7 +240,9 @@ def start_sync_server_instance(
 )->list:
     result = list()
     client = get_client(client_name='ec2', boto3_clazz=boto3_clazz)
-    try:    
+    try:
+        latest_version = get_launch_template_versions(logger=logger, boto3_clazz=boto3_clazz)[-1]
+        logger.info('Launch Template Latest Version: {}'.format(latest_version))
         pass
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
