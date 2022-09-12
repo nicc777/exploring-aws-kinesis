@@ -154,7 +154,7 @@ Resources:
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: "github_webhook_lambda.zip"
-      Description: "Handle the test event and emit event data to AWS Kinesis"
+      Description: "Catch GitHub web hook calls and process request"
       FunctionName: "GitHubWebhookLambdaFunction"
       Handler: "github_webhook_lambda.handler"
       MemorySize: 128
@@ -260,7 +260,7 @@ Resources:
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: "github_syncserver_starter_lambda.zip"
-      Description: "Handle the test event and emit event data to AWS Kinesis"
+      Description: "Start the GitHub Sync Server if required"
       FunctionName: "GitHubSyncServerStarterLambdaFunction"
       Handler: "github_syncserver_starter_lambda.handler"
       MemorySize: 128
@@ -367,7 +367,7 @@ Resources:
         Fn::Join:
         - '-'
         - - Ref: AWS::StackName
-          - 'ThisInstanceProfile'
+          - 'GitHubSyncServerInstanceIamProfile'
       Path: "/"
       Roles: 
         - !Ref GitHubSyncServerRootRole
