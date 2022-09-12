@@ -228,12 +228,15 @@ def handler(
         )
         logger.info('sync_server_running={}'.format(sync_server_running))
 
-        # If count > 0 and sync server is not running, start a new sync server instance
+        # If sync server is not running, start a new sync server instance
         if sync_server_running is False:
             logger.info('Attempting to start the Github Sync Server')
             start_sync_server_instance(logger=logger, boto3_clazz=boto3_clazz)
         else:
             logger.info('Github Sync Server appears to be running already')
+
+    else:
+        logger.info('No messages')
 
     debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
     return return_object
