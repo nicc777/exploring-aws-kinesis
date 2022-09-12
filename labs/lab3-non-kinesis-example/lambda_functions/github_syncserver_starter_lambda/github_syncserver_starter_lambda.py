@@ -136,8 +136,9 @@ def decode_data(event, body: str):
 def get_sqs_queue_size(
     logger=get_logger(),
     boto3_clazz=boto3
-):
+)->int:
     client = get_client(client_name='sqs', boto3_clazz=boto3_clazz)
+    result = 0
     try:    
         response = client.get_queue_attributes(
             QueueUrl=os.getenv('SQS_URL'),
@@ -148,8 +149,12 @@ def get_sqs_queue_size(
         logger.info('response={}'.format(response))
         if 'Attributes' in response:
             logger.debug('Attributes: {}'.format(response['Attributes']))
+            if 'ApproximateNumberOfMessages' in response['Attributes']:
+                result = response['Attributes']['ApproximateNumberOfMessages']
+                logger.info('result set to: {}'.format(result))
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return result
 
 
 ###############################################################################
@@ -183,6 +188,7 @@ def handler(
     
     
     # Get current SQS message count
+    sqs_queue_size = get_sqs_queue_size(logger=logger, boto3_clazz=boto3_clazz)
 
     # If count > 0, get the current running EC2 instances
 
