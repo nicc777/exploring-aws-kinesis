@@ -126,6 +126,11 @@ def decode_data(event, body: str):
     return body
 
 
+def is_github_sync_server_running(ec2_instances: list)->bool:
+
+    return False
+
+
 ###############################################################################
 ###                                                                         ###
 ###                 A W S    A P I    I N T E G R A T I O N                 ###
@@ -152,6 +157,30 @@ def get_sqs_queue_size(
             if 'ApproximateNumberOfMessages' in response['Attributes']:
                 result = response['Attributes']['ApproximateNumberOfMessages']
                 logger.info('result set to: {}'.format(result))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return result
+
+
+def get_running_ec2_instances(
+    logger=get_logger(),
+    boto3_clazz=boto3
+)->list:
+    result = list()
+    try:    
+        pass
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return result
+
+
+def start_sync_server_instance(
+    logger=get_logger(),
+    boto3_clazz=boto3
+)->list:
+    result = list()
+    try:    
+        pass
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     return result
@@ -191,10 +220,20 @@ def handler(
     sqs_queue_size = get_sqs_queue_size(logger=logger, boto3_clazz=boto3_clazz)
 
     # If count > 0, get the current running EC2 instances
+    if sqs_queue_size > 0:
 
-    # Is sync server running?
+        # Is sync server running?
+        sync_server_running = is_github_sync_server_running(
+            ec2_instances=get_running_ec2_instances(logger=logger, boto3_clazz=boto3_clazz)
+        )
+        logger.info('sync_server_running={}'.format(sync_server_running))
 
-    # If count > 0 and sync server is not running, start a new sync server instance
+        # If count > 0 and sync server is not running, start a new sync server instance
+        if sync_server_running is False:
+            logger.info('Attempting to start the Github Sync Server')
+            start_sync_server_instance(logger=logger, boto3_clazz=boto3_clazz)
+        else:
+            logger.info('Github Sync Server appears to be running already')
 
     debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
     return return_object
