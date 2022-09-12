@@ -192,7 +192,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-        - Sid: "GitHubWebhookLambdaFunctionRoleAssumeRolePolicyDocument"
+        - Sid: "GitHubSyncServerStarterFunctionRoleAssumeRolePolicyDocument"
           Effect: "Allow"
           Principal:
             Service: "lambda.amazonaws.com"
@@ -224,10 +224,25 @@ Resources:
           - Effect: Allow
             Action:
             - "ec2:DescribeInstances"
-            - "ec2:RunInstances"
             - "ec2:DescribeLaunchTemplateVersions"
             - "ec2:CreateTags"
             Resource: "*"
+      - PolicyName: GitHubSyncServerStarterLambdaFunctionPolicy04
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "ec2:RunInstances"
+            Resource: "*"
+            Condition:
+              ArnLike:
+                ec2:LaunchTemplate: 
+                  Fn::Sub: 
+                  - "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:launch-template/${LaunchTemplateId}"
+                  - LaunchTemplateId: !Ref GitHubSyncServerInstanceHostLaunchTemplate
+              Bool:
+                ec2:IsLaunchTemplateResource: 'true'
       RoleName: GitHubSyncServerStarterLambdaFunctionRole
 
   GitHubSyncServerStarterLambdaFunctionLogGroup:
