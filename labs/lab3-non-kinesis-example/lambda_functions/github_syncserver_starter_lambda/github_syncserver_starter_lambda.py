@@ -126,7 +126,7 @@ def decode_data(event, body: str):
     return body
 
 
-def is_github_sync_server_running(ec2_instances: list)->bool:
+def is_github_sync_server_running(ec2_instances: list, logger=get_logger())->bool:
     debug_log('ec2_instances={}', variable_as_list=[ec2_instances,], logger=logger)
     for record in ec2_instances:
         if 'Tags' in record:
@@ -297,7 +297,8 @@ def handler(
 
         # Is sync server running?
         sync_server_running = is_github_sync_server_running(
-            ec2_instances=get_running_ec2_instances(logger=logger, boto3_clazz=boto3_clazz)
+            ec2_instances=get_running_ec2_instances(logger=logger, boto3_clazz=boto3_clazz),
+            logger=logger
         )
         logger.info('sync_server_running={}'.format(sync_server_running))
 
