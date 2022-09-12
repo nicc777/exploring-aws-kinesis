@@ -199,11 +199,36 @@ def get_running_ec2_instances(
     return result
 
 
+def get_launch_template_versions(
+    logger=get_logger(),
+    boto3_clazz=boto3,
+    next_token: str=None
+)->list:
+    result = list()
+    client = get_client(client_name='ec2', boto3_clazz=boto3_clazz)
+    try:    
+        response = dict()
+        if next_token is not None:
+            response = client.describe_launch_template_versions(
+                LaunchTemplateId=os.getenv('LAUNCH_TEMPLATE_ID'),
+                NextToken=next_token
+            )
+        else:
+            response = client.describe_launch_template_versions(
+                LaunchTemplateId=os.getenv('LAUNCH_TEMPLATE_ID')
+            )
+        logger.debug('response={}'.format(response))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return result
+
+
 def start_sync_server_instance(
     logger=get_logger(),
     boto3_clazz=boto3
 )->list:
     result = list()
+    client = get_client(client_name='ec2', boto3_clazz=boto3_clazz)
     try:    
         pass
     except:
