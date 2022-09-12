@@ -227,7 +227,7 @@ Resources:
       LogGroupName:
         Fn::Sub:
         -  "/aws/lambda/${functionRef}"
-        - functionRef: !Ref GitHubWebhookLambdaFunction
+        - functionRef: !Ref GitHubSyncServerStarterLambdaFunction
       RetentionInDays: 7
 
   GitHubSyncServerStarterLambdaFunction:
