@@ -215,7 +215,7 @@ Resources:
           Statement:
           - Effect: Allow
             Action:
-            - "sqs:SendMessage"
+            - "sqs:GetQueueAttributes"
             Resource: !GetAtt GitHubSyncRequestQueue.Arn
       RoleName: GitHubSyncServerStarterLambdaFunctionRole
 

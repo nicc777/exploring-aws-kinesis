@@ -139,7 +139,7 @@ def get_sqs_queue_size(
 ):
     client = get_client(client_name='sqs', boto3_clazz=boto3_clazz)
     try:    
-        response = client.send_message(
+        response = client.get_queue_attributes(
             QueueUrl=os.getenv('SQS_URL'),
             AttributeNames=[
                 'ApproximateNumberOfMessages',
