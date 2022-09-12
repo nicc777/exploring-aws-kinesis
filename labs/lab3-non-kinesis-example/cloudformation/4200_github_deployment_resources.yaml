@@ -217,6 +217,14 @@ Resources:
             Action:
             - "sqs:GetQueueAttributes"
             Resource: !GetAtt GitHubSyncRequestQueue.Arn
+      - PolicyName: GitHubWebhookLambdaFunctionPolicy03
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "ec2:DescribeInstances"
+            Resource: "*"
       RoleName: GitHubSyncServerStarterLambdaFunctionRole
 
   GitHubSyncServerStarterLambdaFunctionLogGroup:

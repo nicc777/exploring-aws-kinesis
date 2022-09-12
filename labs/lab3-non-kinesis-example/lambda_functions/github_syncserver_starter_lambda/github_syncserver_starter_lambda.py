@@ -155,7 +155,7 @@ def get_sqs_queue_size(
         if 'Attributes' in response:
             logger.debug('Attributes: {}'.format(response['Attributes']))
             if 'ApproximateNumberOfMessages' in response['Attributes']:
-                result = response['Attributes']['ApproximateNumberOfMessages']
+                result = int(response['Attributes']['ApproximateNumberOfMessages'])
                 logger.info('result set to: {}'.format(result))
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
@@ -164,11 +164,36 @@ def get_sqs_queue_size(
 
 def get_running_ec2_instances(
     logger=get_logger(),
-    boto3_clazz=boto3
+    boto3_clazz=boto3,
+    next_token: str=None
 )->list:
     result = list()
-    try:    
-        pass
+    client = get_client(client_name='ec2', boto3_clazz=boto3_clazz)
+    try:
+        response = dict()
+        if next_token is not None:
+            response = client.describe_instances(NextToken=next_token)
+        else:
+            response = client.describe_instances()
+        logger.debug('response={}'.format(response))
+        
+        for instance in response['Reservations']['Instances']:
+            record = dict()
+            if instance['State']['Name'] in ('running', 'pending',):
+                record['InstanceId'] = instance['InstanceId']
+                record['State'] = instance['State']['Name']
+                record['Tags'] = dict()
+                for tag in instance['Tags']:
+                    record['Tags'][tag['Key']] = tag['Value']
+                result.append(record)
+        logger.info('Running instances qty: {}'.format(len(result)))
+
+        if 'NextToken' in response:
+            result += get_running_ec2_instances(
+                logger=logger,
+                boto3_clazz=boto3_clazz,
+                next_token=response['NextToken']
+            )
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     return result
