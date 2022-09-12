@@ -404,6 +404,12 @@ cd labs/lab3-non-kinesis-example/lambda_functions/github_webhook_lambda/ && zip 
 
 aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/github_webhook_lambda/github_webhook_lambda.zip s3://$ARTIFACT_S3_BUCKET_NAME/github_webhook_lambda.zip
 
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/github_syncserver_starter_lambda/github_syncserver_starter_lambda.zip
+
+cd labs/lab3-non-kinesis-example/lambda_functions/github_syncserver_starter_lambda/ && zip github_syncserver_starter_lambda.zip github_syncserver_starter_lambda.py && cd $OLDPWD 
+
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/github_syncserver_starter_lambda/github_syncserver_starter_lambda.zip s3://$ARTIFACT_S3_BUCKET_NAME/github_syncserver_starter_lambda.zip
+
 aws cloudformation deploy \
     --stack-name $GITHUB_SYNC_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/4200_github_deployment_resources.yaml \

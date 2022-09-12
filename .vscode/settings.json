@@ -38,6 +38,7 @@
         "setuptools",
         "Snyk",
         "strugling",
+        "syncserver",
         "Tierings",
         "traceback",
         "zcat",

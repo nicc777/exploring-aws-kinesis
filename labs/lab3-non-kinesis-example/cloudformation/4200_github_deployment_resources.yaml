@@ -183,7 +183,7 @@ Resources:
 ###                                                                                                                 ###
 ###                       Lambda Function to monitor and start EC2 Instance if Queue Count > 0                      ###
 ###                                                                                                                 ###
-#######################################################################################################################
+####################################################################################################################### 
 
 
   GitHubSyncServerStarterLambdaFunctionRole:
@@ -243,10 +243,10 @@ Resources:
           GITHUB_AUTHORIZED_SENDERS: !Ref GitHubAuthorizedSendersParam
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
-        S3Key: "github_webhook_lambda.zip"
+        S3Key: "github_syncserver_starter_lambda.zip"
       Description: "Handle the test event and emit event data to AWS Kinesis"
-      FunctionName: "GitHubWebhookLambdaFunction"
-      Handler: "github_webhook_lambda.handler"
+      FunctionName: "GitHubSyncServerStarterLambdaFunction"
+      Handler: "github_syncserver_starter_lambda.handler"
       MemorySize: 128
       Role: !GetAtt GitHubSyncServerStarterLambdaFunctionRole.Arn
       Runtime: "python3.8"
