@@ -127,7 +127,15 @@ def decode_data(event, body: str):
 
 
 def is_github_sync_server_running(ec2_instances: list)->bool:
-
+    debug_log('ec2_instances={}', variable_as_list=[ec2_instances,], logger=logger)
+    for record in ec2_instances:
+        if 'Tags' in record:
+            if 'aws:ec2launchtemplate:id' in record['Tags']:
+                if record['Tags']['aws:ec2launchtemplate:id'] == os.getenv('LAUNCH_TEMPLATE_ID'):
+                    logger.info('FOUND RUNNING INSTANCE: instance id "{}"'.format(record['InstanceId']))
+                    return True
+                else:
+                    logger.info('Instance id "{}" is not a type of GitHub Sync Server'.format(record['InstanceId']))
     return False
 
 
@@ -151,14 +159,15 @@ def get_sqs_queue_size(
                 'ApproximateNumberOfMessages',
             ]
         )
-        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        debug_log('response={}', variable_as_list=[json.dumps(response, default=str),], logger=logger)
         if 'Attributes' in response:
-            logger.debug('Attributes: {}'.format(response['Attributes']))
+            debug_log('Attributes: {}', variable_as_list=[response['Attributes'],], logger=logger)
             if 'ApproximateNumberOfMessages' in response['Attributes']:
                 result = int(response['Attributes']['ApproximateNumberOfMessages'])
                 logger.info('result set to: {}'.format(result))
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log('result={}', variable_as_list=[result,], logger=logger)
     return result
 
 
@@ -176,7 +185,7 @@ def get_running_ec2_instances(
             response = client.describe_instances(NextToken=next_token)
         else:
             response = client.describe_instances()
-        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        debug_log('response={}', variable_as_list=[json.dumps(response, default=str),], logger=logger)
         
         for r in response['Reservations']:
             for instance in r['Instances']:
@@ -198,6 +207,7 @@ def get_running_ec2_instances(
             )
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log('result={}', variable_as_list=[result,], logger=logger)
     return result
 
 
@@ -219,7 +229,7 @@ def get_launch_template_versions(
             response = client.describe_launch_template_versions(
                 LaunchTemplateId=os.getenv('LAUNCH_TEMPLATE_ID')
             )
-        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        debug_log('response={}', variable_as_list=[json.dumps(response, default=str),], logger=logger)
         for lt in response['LaunchTemplateVersions']:
             result.append(int(lt['VersionNumber']))
         if 'NextToken' in response:
@@ -231,13 +241,14 @@ def get_launch_template_versions(
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     result.sort()
+    debug_log('result={}', variable_as_list=[result,], logger=logger)
     return result
 
 
 def start_sync_server_instance(
     logger=get_logger(),
     boto3_clazz=boto3
-)->list:
+):
     result = list()
     client = get_client(client_name='ec2', boto3_clazz=boto3_clazz)
     try:
@@ -246,7 +257,6 @@ def start_sync_server_instance(
         pass
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-    return result
 
 
 ###############################################################################
