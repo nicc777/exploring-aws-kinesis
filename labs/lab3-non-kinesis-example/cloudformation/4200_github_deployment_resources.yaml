@@ -226,6 +226,10 @@ Resources:
             - "ec2:DescribeInstances"
             - "ec2:DescribeLaunchTemplateVersions"
             - "ec2:CreateTags"
+            - "ec2:CreateNetworkInterface"
+            - "ec2:CreateNetworkInterfacePermission"
+            - "ec2:CreateTags"
+            - "ec2:CreateVolume"
             Resource: "*"
       - PolicyName: GitHubSyncServerStarterLambdaFunctionPolicy04
         PolicyDocument:
