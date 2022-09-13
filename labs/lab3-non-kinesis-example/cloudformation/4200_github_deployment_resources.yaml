@@ -239,14 +239,14 @@ Resources:
             Action:
             - "ec2:RunInstances"
             Resource: "*"
-            Condition:
-              ArnLike:
-                ec2:LaunchTemplate: 
-                  Fn::Sub: 
-                  - "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:launch-template/${LaunchTemplateId}"
-                  - LaunchTemplateId: !Ref GitHubSyncServerInstanceHostLaunchTemplate
-              Bool:
-                ec2:IsLaunchTemplateResource: 'true'
+      - PolicyName: GitHubSyncServerStarterLambdaFunctionPolicy05
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "iam:PassRole"
+            Resource: "*"
       RoleName: GitHubSyncServerStarterLambdaFunctionRole
 
   GitHubSyncServerStarterLambdaFunctionLogGroup:
