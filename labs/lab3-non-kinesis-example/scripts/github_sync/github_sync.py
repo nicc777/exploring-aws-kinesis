@@ -129,7 +129,6 @@ def main():
 
         if consecutive_zero_count > 20:
             logger.warning('No new messages in over 10 minutes... Terminating Self')
-            time.sleep(30)
             terminate_self()
 
         time.sleep(30)
