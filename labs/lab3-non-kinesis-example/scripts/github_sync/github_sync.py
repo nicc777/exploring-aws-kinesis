@@ -3,6 +3,9 @@ import logging.handlers
 import time
 from datetime import datetime
 import logging.handlers
+import boto3
+import json
+import traceback
 
 
 logger = logging.getLogger()
@@ -16,6 +19,13 @@ logger.info('Logging Configured')
 logger.debug('Debug Enabled')
 
 
+#######################################################################################################################
+###                                                                                                                 ###
+###                                        G E N E R A L    F U N C T I O N S                                       ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+
 def get_utc_timestamp(with_decimal: bool=False): # pragma: no cover
     epoch = datetime(1970,1,1,0,0,0) 
     now = datetime.utcnow() 
@@ -25,9 +35,63 @@ def get_utc_timestamp(with_decimal: bool=False): # pragma: no cover
     return int(timestamp) 
 
 
+def get_client(client_name: str, region: str='eu-central-1', boto3_clazz=boto3):
+    return boto3_clazz.client(client_name, region_name=region)
 
-while True:
-    logger.info('MAIN LOOP')
 
-    time.sleep(30)
+def get_sqs_url()->str:
+    url = None
+    with open('/tmp/sqs_url', 'r') as f:
+        url = f.read()
+        logger.info('SQS URL: "{}"'.format(url))
+    return url
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                            A W S    F U N C T I O N S                                           ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+
+def receive_messages(sqs_url: str)->list:
+    messages = list()
+    try:
+        client = get_client(client_name='sqs')
+        response = client.receive_message(
+            QueueUrl=sqs_url,
+            AttributeNames=[
+                'All',
+            ],
+            MaxNumberOfMessages=10,
+            VisibilityTimeout=600,
+            WaitTimeSeconds=10
+        )
+        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        for message in response['Messages']:
+            # TODO Process... populate result
+            pass
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    logger.debug('messages={}'.format(json.dumps(messages, default=str)))
+    return messages
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                            M A I N    F U N C T I O N S                                         ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+
+def main():
+    sqs_url = get_sqs_url()
+    while True:
+        logger.info('MAIN LOOP')
+
+        time.sleep(30)
+
+
+if __name__ == '__main__':
+    main()
 

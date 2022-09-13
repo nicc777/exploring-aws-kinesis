@@ -465,6 +465,8 @@ Resources:
               pip3 install -r /home/ec2-user/script/requirements.txt
               curl $SCRIPT_FILE --output /home/ec2-user/script/github_sync.py --silent
 
+              echo "${SqsUrl}" > /tmp/sqs_url"
+
               cat << EOF >> /lib/systemd/system/githubsync.service
               [Unit]
               Description=Python based GitHub Sync Server
@@ -497,6 +499,7 @@ Resources:
                 Fn::ImportValue: !Sub "${FsxStackNameParam}-StaticWebRootFsxFilesystemDNSName"
               RequirementsFile: !Ref PythonRequirementsFileParam
               ScriptFile: !Ref PythonScriptFile
+              SqsUrl: !GetAtt GitHubSyncRequestQueue.QueueUrl
       TagSpecifications: 
       - ResourceType: "launch-template"
         Tags: 
