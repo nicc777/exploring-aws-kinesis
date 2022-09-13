@@ -48,6 +48,15 @@ def get_sqs_url()->str:
     return url
 
 
+def get_instance_id()->str:
+    instance_id = None
+    with open('/tmp/instance-id', 'r') as f:
+        instance_id = f.read()
+        instance_id = instance_id.splitlines()[0]
+        logger.info('Instance ID: "{}"'.format(instance_id))
+    return instance_id
+
+
 #######################################################################################################################
 ###                                                                                                                 ###
 ###                                            A W S    F U N C T I O N S                                           ###
@@ -70,12 +79,9 @@ def receive_messages(sqs_url: str)->list:
         )
         logger.debug('response={}'.format(json.dumps(response, default=str)))
         for message in response['Messages']:
-            # TODO Process... populate result
             logger.debug('message={}'.format(json.dumps(message, default=str)))
             receipt_handle = message['ReceiptHandle']
-
-
-
+            messages.append(message)
             logger.info('Deleting message "{}"'.format(receipt_handle))
             client.delete_message(
                 QueueUrl=sqs_url,
@@ -87,6 +93,18 @@ def receive_messages(sqs_url: str)->list:
     return messages
 
 
+def terminate_self():
+    try:
+        client = get_client(client_name='ec2')
+        client.terminate_instances(
+            InstanceIds=[
+                get_instance_id(),
+            ]
+        )
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
 #######################################################################################################################
 ###                                                                                                                 ###
 ###                                            M A I N    F U N C T I O N S                                         ###
@@ -96,8 +114,23 @@ def receive_messages(sqs_url: str)->list:
 
 def main():
     sqs_url = get_sqs_url()
+    consecutive_zero_count = 0
     while True:
         logger.info('MAIN LOOP')
+        messages = receive_messages(sqs_url=sqs_url)
+        logger.info('Received {} message(s)'.format(len(messages)))
+
+        # Should I die?
+        if len(messages) == 0:
+            consecutive_zero_count += 1
+            logger.info('consecutive_zero_count={}'.format(consecutive_zero_count))
+        else:
+            consecutive_zero_count = 0
+
+        if consecutive_zero_count > 20:
+            logger.warning('No new messages in over 10 minutes... Terminating Self')
+            time.sleep(30)
+            terminate_self()
 
         time.sleep(30)
 
