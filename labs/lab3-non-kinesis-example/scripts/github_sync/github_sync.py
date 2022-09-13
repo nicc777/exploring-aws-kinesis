@@ -43,6 +43,7 @@ def get_sqs_url()->str:
     url = None
     with open('/tmp/sqs_url', 'r') as f:
         url = f.read()
+        url = url.splitlines()[0]
         logger.info('SQS URL: "{}"'.format(url))
     return url
 
@@ -70,7 +71,16 @@ def receive_messages(sqs_url: str)->list:
         logger.debug('response={}'.format(json.dumps(response, default=str)))
         for message in response['Messages']:
             # TODO Process... populate result
-            pass
+            logger.debug('message={}'.format(json.dumps(message, default=str)))
+            receipt_handle = message['ReceiptHandle']
+
+
+
+            logger.info('Deleting message "{}"'.format(receipt_handle))
+            client.delete_message(
+                QueueUrl=sqs_url,
+                ReceiptHandle=receipt_handle
+            )
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     logger.debug('messages={}'.format(json.dumps(messages, default=str)))
