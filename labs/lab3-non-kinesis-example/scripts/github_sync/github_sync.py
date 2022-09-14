@@ -161,6 +161,7 @@ def download_file(
 
 
 def untar_file(file: str, work_dir: str='/tmp')->str:
+    # Based on examples from https://www.geeksforgeeks.org/how-to-uncompress-a-tar-gz-file-using-python/
     target_dir = '{}/untarred-{}-{}'.format(
         work_dir,
         get_utc_timestamp(with_decimal=False),
