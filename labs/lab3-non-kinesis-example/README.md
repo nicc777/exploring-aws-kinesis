@@ -515,6 +515,7 @@ Therefore, the basic steps to deploy the new release is as follows:
 When the process runs, you can expect files to be created as shown in the example below:
 
 ```shell
+# This is inside GITHUB_WORKDIR
 sh-4.2$ ls -lahrt /data/github/
 total 30K
 drwxrwxrwx 5 root      root         5 Sep 14 04:22 ..
@@ -523,6 +524,7 @@ drwxr-xr-x 3 ec2-user  ec2-user     3 Sep 14 05:20 untarred-1663132816-eujrkgh0
 drwxrwxrwx 3 nfsnobody nfsnobody    4 Sep 14 05:20 .
 
 
+# Looking inside the temporary directory for the untarred archive
 sh-4.2$ ls -lahrt /data/github/untarred-1663132816-eujrkgh0/
 total 34K
 drwxrwxr-x 4 ec2-user  ec2-user  7 Sep 10 14:56 nicc777-exploring-aws-kinesis-static-website-6962cbf
@@ -530,6 +532,7 @@ drwxrwxrwx 3 nfsnobody nfsnobody 4 Sep 14 05:20 ..
 drwxr-xr-x 3 ec2-user  ec2-user  3 Sep 14 05:20 .
 
 
+# The contents of one of the directories from the untarred archive, which should correspond to the contents of the MAIN branch on GitHub
 sh-4.2$ ls -lahrt /data/github/untarred-1663132816-eujrkgh0/nicc777-exploring-aws-kinesis-static-website-6962cbf/
 total 48K
 drwxrwxr-x 2 ec2-user ec2-user    3 Sep 10 14:56 public-website
