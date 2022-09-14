@@ -7,6 +7,10 @@ import boto3
 import json
 import traceback
 import os
+import requests
+import random
+import string
+import tarfile
 
 
 logger = logging.getLogger()
@@ -56,6 +60,27 @@ def get_instance_id()->str:
         instance_id = instance_id.splitlines()[0]
         logger.info('Instance ID: "{}"'.format(instance_id))
     return instance_id
+
+
+def get_global_environment()->dict:
+    environment = dict()
+    environment['GITHUB_WORKDIR'] = '/tmp'
+    environment['DEPLOYMENT_TARGET_DIR'] = '/tmp'
+    try:
+        with open('/etc/environment', 'r') as f:
+            for line in f:
+                values = line.split('=')
+                if len(values) > 1:
+                    environment[values[0]] = '='.join(values[1:])
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    logger.debug('environment={}'.format(environment))
+    return environment
+
+
+def randStr(chars = string.ascii_lowercase + string.digits, N=10):
+    # Used implementation from https://pythonexamples.org/python-generate-random-string-of-specific-length/
+	return ''.join(random.choice(chars) for _ in range(N))
 
 
 #######################################################################################################################
@@ -113,14 +138,83 @@ def terminate_self():
 #######################################################################################################################
 
 
+def download_file(
+    url:str,
+    target_dir: str
+)->str:
+    output_file = '{}/download-{}-{}.tar.gz'.format(
+        target_dir,
+        get_utc_timestamp(with_decimal=False),
+        randStr(N=8)
+    )
+    try:
+        req = requests.get(url, Stream=True)
+        with open(output_file,'wb') as f:
+            for current_chunk in req.iter_content(chunk_size=1024):
+                if current_chunk:
+                    f.write(ch)
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        output_file = None
+    logger.debug('output_file={}'.format(output_file))
+    return output_file
+
+
+def untar_file(file: str, work_dir: str='/tmp')->str:
+    target_dir = '{}/untarred-{}-{}'.format(
+        work_dir,
+        get_utc_timestamp(with_decimal=False),
+        randStr(N=8)
+    )
+    try:
+        file = tarfile.open('gfg.tar.gz')
+        # print(file.getnames())
+        file.extractall(target_dir)
+        file.close()
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        target_dir = None
+    logger.debug('target_dir={}'.format(target_dir))
+    return target_dir
+
+
+def process_message(
+    message: dict,
+    global_env: dict=get_global_environment()
+):
+    logger.info('/'*80)
+    logger.debug('message={}'.format(message))
+
+    local_tar_file = None
+    try:
+        url = message['tar_file']
+        logger.info('Attempting to download {}'.format(url))
+        local_tar_file = download_file(url=url, target_dir=global_env['GITHUB_WORKDIR'])
+        work_dir =  untar_file(file=local_tar_file, work_dir=global_env['GITHUB_WORKDIR'])
+        
+        logger.warning('TODO Change into work_dir and run the deployment file within each sub-directory in the work_dir')
+
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+    logger.info('\\'*80)
+
+
 def main():
     sqs_url = get_sqs_url()
     consecutive_zero_count = 0
+    global_env = get_global_environment()
     while True:
         logger.info('-'*80)
         logger.info('MAIN LOOP')
         messages = receive_messages(sqs_url=sqs_url)
         logger.info('Received {} message(s)'.format(len(messages)))
+
+        for message in messages:
+            process_message(
+                message=json.loads(messages['Body']),
+                global_env=global_env
+            )
 
         # Should I die?
         if len(messages) == 0:

@@ -41,6 +41,8 @@
         "syncserver",
         "Tierings",
         "traceback",
+        "untar",
+        "untarred",
         "WORKDIR",
         "zcat",
         "zfill",
