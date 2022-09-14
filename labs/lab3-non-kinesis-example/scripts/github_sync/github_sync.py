@@ -69,6 +69,7 @@ def get_global_environment()->dict:
     try:
         with open('/etc/environment', 'r') as f:
             for line in f:
+                line.splitlines()[0]
                 values = line.split('=')
                 if len(values) > 1:
                     environment[values[0]] = '='.join(values[1:])
