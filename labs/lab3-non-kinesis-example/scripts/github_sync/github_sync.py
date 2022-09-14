@@ -183,7 +183,7 @@ def download_file(
         with open(output_file,'wb') as f:
             for current_chunk in req.iter_content(chunk_size=1024):
                 if current_chunk:
-                    f.write(ch)
+                    f.write(current_chunk)
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
         output_file = None
