@@ -106,61 +106,6 @@ def randStr(chars = string.ascii_lowercase + string.digits, N=10):
 	return ''.join(random.choice(chars) for _ in range(N))
 
 
-#######################################################################################################################
-###                                                                                                                 ###
-###                                            A W S    F U N C T I O N S                                           ###
-###                                                                                                                 ###
-#######################################################################################################################
-
-
-def receive_messages(sqs_url: str)->list:
-    messages = list()
-    try:
-        client = get_client(client_name='sqs')
-        response = client.receive_message(
-            QueueUrl=sqs_url,
-            AttributeNames=[
-                'All',
-            ],
-            MaxNumberOfMessages=10,
-            VisibilityTimeout=600,
-            WaitTimeSeconds=10
-        )
-        logger.debug('response={}'.format(json.dumps(response, default=str)))
-        for message in response['Messages']:
-            logger.debug('message={}'.format(json.dumps(message, default=str)))
-            receipt_handle = message['ReceiptHandle']
-            messages.append(message)
-            logger.info('Deleting message "{}"'.format(receipt_handle))
-            client.delete_message(
-                QueueUrl=sqs_url,
-                ReceiptHandle=receipt_handle
-            )
-    except:
-        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-    logger.debug('messages={}'.format(json.dumps(messages, default=str)))
-    return messages
-
-
-def terminate_self():
-    try:
-        client = get_client(client_name='ec2')
-        client.terminate_instances(
-            InstanceIds=[
-                get_instance_id(),
-            ]
-        )
-    except:
-        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-
-
-#######################################################################################################################
-###                                                                                                                 ###
-###                                            M A I N    F U N C T I O N S                                         ###
-###                                                                                                                 ###
-#######################################################################################################################
-
-
 def download_file(
     url:str,
     target_dir: str
@@ -214,8 +159,7 @@ def untar_file(file: str, work_dir: str='/tmp')->str:
 
 def rm_file(file: str):
     try:
-        # TODO implement delete file
-        pass
+        os.remove(file) 
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
@@ -226,6 +170,61 @@ def append_line_to_file(file: str, line: str):
             f.write('{}\n'.format(line))
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                            A W S    F U N C T I O N S                                           ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+
+def receive_messages(sqs_url: str)->list:
+    messages = list()
+    try:
+        client = get_client(client_name='sqs')
+        response = client.receive_message(
+            QueueUrl=sqs_url,
+            AttributeNames=[
+                'All',
+            ],
+            MaxNumberOfMessages=10,
+            VisibilityTimeout=600,
+            WaitTimeSeconds=10
+        )
+        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        for message in response['Messages']:
+            logger.debug('message={}'.format(json.dumps(message, default=str)))
+            receipt_handle = message['ReceiptHandle']
+            messages.append(message)
+            logger.info('Deleting message "{}"'.format(receipt_handle))
+            client.delete_message(
+                QueueUrl=sqs_url,
+                ReceiptHandle=receipt_handle
+            )
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    logger.debug('messages={}'.format(json.dumps(messages, default=str)))
+    return messages
+
+
+def terminate_self():
+    try:
+        client = get_client(client_name='ec2')
+        client.terminate_instances(
+            InstanceIds=[
+                get_instance_id(),
+            ]
+        )
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                            M A I N    F U N C T I O N S                                         ###
+###                                                                                                                 ###
+#######################################################################################################################
 
 
 def process_deployment_scripts(root_dir: str):
