@@ -72,7 +72,7 @@ def get_global_environment()->dict:
                 line.splitlines()[0]
                 values = line.split('=')
                 if len(values) > 1:
-                    environment[values[0]] = '='.join(values[1:])
+                    environment[values[0]] = '='.join(values[1:]).replace('\n', '')
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     logger.debug('environment={}'.format(environment))
@@ -88,7 +88,7 @@ def get_proxies()->list:
                 values = line.split('=')
                 if len(values) > 1:
                     if 'http_proxy' in values[0] or 'https_proxy' in values[0]:
-                        proxy_addr = '='.join(values[1:])
+                        proxy_addr = '='.join(values[1:]).replace('\n', '')
                         proxy_addr = proxy_addr.replace('"', '')
                         proxy_addr = proxy_addr.replace(' ', '')
                         if proxy_addr not in proxies:
