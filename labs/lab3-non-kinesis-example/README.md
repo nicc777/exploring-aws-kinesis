@@ -472,7 +472,9 @@ The actual body is what is of interest, and [it contained](lambda-event-example-
 
 The webhook Lambda function will parse the data and place the relevant information on SQS.
 
-For security reasons, the Lambda function will check via environment variables which changes to accept from GitHub.
+For security reasons, the Lambda function will check via environment variables which changes to accept from GitHub, matching both the author login field (set as a comma separated list of approved logins in the `SUPPORTED_SENDER_LOGINS` environment variable) and the whitelisted of repository (matching the repository `full_name` field with the comma separated list of approved values in the `SUPPORTED_REPOSITORIES` environment variable).
+
+Any non-matching event will be silently ignored. The exact same response is always send back to the caller regardless of the final outcome.
 
 ### Managing the GitHub Sync Server
 
