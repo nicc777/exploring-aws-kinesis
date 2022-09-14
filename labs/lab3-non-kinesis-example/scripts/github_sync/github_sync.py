@@ -211,11 +211,14 @@ def main():
         messages = receive_messages(sqs_url=sqs_url)
         logger.info('Received {} message(s)'.format(len(messages)))
 
-        for message in messages:
-            process_message(
-                message=json.loads(message['Body']),
-                global_env=global_env
-            )
+        try:
+            for message in messages:
+                process_message(
+                    message=json.loads(message['Body']),
+                    global_env=global_env
+                )
+        except:
+            logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
         # Should I die?
         if len(messages) == 0:
