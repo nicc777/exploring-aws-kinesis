@@ -512,6 +512,36 @@ Therefore, the basic steps to deploy the new release is as follows:
 * Identify every directory that was in the tar file, and then loop through them, changing into each directory and run the file `deploy.sh` if present
 * Once done, delete all artifacts (tar file and directories/files created during the archive extraction)
 
+When the process runs, you can expect files to be created as shown in the example below:
+
+```shell
+sh-4.2$ ls -lahrt /data/github/
+total 30K
+drwxrwxrwx 5 root      root         5 Sep 14 04:22 ..
+-rw-r--r-- 1 ec2-user  ec2-user  2.0K Sep 14 05:20 download-1663132816-8jdl2tfs.tar.gz
+drwxr-xr-x 3 ec2-user  ec2-user     3 Sep 14 05:20 untarred-1663132816-eujrkgh0
+drwxrwxrwx 3 nfsnobody nfsnobody    4 Sep 14 05:20 .
+
+
+sh-4.2$ ls -lahrt /data/github/untarred-1663132816-eujrkgh0/
+total 34K
+drwxrwxr-x 4 ec2-user  ec2-user  7 Sep 10 14:56 nicc777-exploring-aws-kinesis-static-website-6962cbf
+drwxrwxrwx 3 nfsnobody nfsnobody 4 Sep 14 05:20 ..
+drwxr-xr-x 3 ec2-user  ec2-user  3 Sep 14 05:20 .
+
+
+sh-4.2$ ls -lahrt /data/github/untarred-1663132816-eujrkgh0/nicc777-exploring-aws-kinesis-static-website-6962cbf/
+total 48K
+drwxrwxr-x 2 ec2-user ec2-user    3 Sep 10 14:56 public-website
+drwxrwxr-x 2 ec2-user ec2-user    3 Sep 10 14:56 private-website
+-rw-rw-r-- 1 ec2-user ec2-user  182 Sep 10 14:56 README.md
+-rw-rw-r-- 1 ec2-user ec2-user 1.1K Sep 10 14:56 LICENSE
+-rw-rw-r-- 1 ec2-user ec2-user 1.6K Sep 10 14:56 .gitignore
+drwxrwxr-x 4 ec2-user ec2-user    7 Sep 10 14:56 .
+drwxr-xr-x 3 ec2-user ec2-user    3 Sep 14 05:20 ..
+```
+
+
 ## Event Infrastructure
 
 TODO 
