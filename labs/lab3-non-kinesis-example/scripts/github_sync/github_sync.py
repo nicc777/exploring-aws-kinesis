@@ -213,7 +213,7 @@ def main():
 
         for message in messages:
             process_message(
-                message=json.loads(messages['Body']),
+                message=json.loads(message['Body']),
                 global_env=global_env
             )
 
