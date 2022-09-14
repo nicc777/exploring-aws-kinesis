@@ -149,7 +149,7 @@ def download_file(
         randStr(N=8)
     )
     try:
-        req = requests.get(url, Stream=True)
+        req = requests.get(url, stream=True)
         with open(output_file,'wb') as f:
             for current_chunk in req.iter_content(chunk_size=1024):
                 if current_chunk:
@@ -169,7 +169,7 @@ def untar_file(file: str, work_dir: str='/tmp')->str:
         randStr(N=8)
     )
     try:
-        file = tarfile.open('gfg.tar.gz')
+        file = tarfile.open(file)
         # print(file.getnames())
         file.extractall(target_dir)
         file.close()
