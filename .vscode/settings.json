@@ -23,6 +23,7 @@
         "KEYPAIR",
         "levelname",
         "localnet",
+        "mdep",
         "ncat",
         "nfsvers",
         "nicc",

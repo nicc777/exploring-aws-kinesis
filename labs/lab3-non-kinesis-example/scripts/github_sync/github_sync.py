@@ -212,18 +212,39 @@ def untar_file(file: str, work_dir: str='/tmp')->str:
     return target_dir
 
 
+def rm_file(file: str):
+    try:
+        # TODO implement delete file
+        pass
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
+def append_line_to_file(file: str, line: str):
+    try:
+        with open(file, 'a') as f:
+            f.write('{}\n'.format(line))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
 def process_deployment_scripts(root_dir: str):
     try:
+        mdep = '/tmp/deployments.sh'
+        rm_file(file=mdep)
+        append_line_to_file(file=mdep, line='#!/bin/sh')
+        append_line_to_file(file=mdep, line='export $(grep -v \'^#\' /etc/environment | xargs -d \'\n\')')
         for dirpath, dirnames, filenames in os.walk(root_dir):
             logger.info('Looking for deployment file in directory "{}"'.format(dirpath))
             for file in filenames:
                 logger.debug('      --> eval file "{}"'.format(file))
                 if file == 'deploy.sh':
                     full_file = '{}{}{}'.format(dirpath, os.sep, file)
-                    logger.info('   Running deployment from file "{}"'.format(full_file))
-                    os.chmod(full_file, 0o700)
-                    # TODO set environment variables from /etc/environment and run script
-                    # subprocess.call(shlex.split('{}'.format(full_file)))
+                    logger.info('   Adding deployment from file "{}"'.format(full_file))
+                    append_line_to_file(file=mdep, line='cd {}'.format(dirpath))
+                    append_line_to_file(file=mdep, line='sh {}'.format(full_file))
+        os.system(mdep)
+        rm_file(file=mdep)
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
