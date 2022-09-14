@@ -6,6 +6,7 @@ import logging.handlers
 import boto3
 import json
 import traceback
+import os
 
 
 logger = logging.getLogger()
@@ -116,6 +117,7 @@ def main():
     sqs_url = get_sqs_url()
     consecutive_zero_count = 0
     while True:
+        logger.info('-'*80)
         logger.info('MAIN LOOP')
         messages = receive_messages(sqs_url=sqs_url)
         logger.info('Received {} message(s)'.format(len(messages)))
@@ -135,5 +137,13 @@ def main():
 
 
 if __name__ == '__main__':
+    logger.info('='*80)
+    logger.info('===')
+    logger.info('===          SYNC CYCLE MAIN START')
+    logger.info('===')
+    logger.info('='*80)
+    for k, v in os.environ.items():
+        logger.debug('ENVIRONMENT:   {}={}'.format(k,v))
+
     main()
 

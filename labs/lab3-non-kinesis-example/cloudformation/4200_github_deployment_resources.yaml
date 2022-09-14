@@ -473,6 +473,8 @@ Resources:
               chmod 777 /data/github
               chmod 777 /data/logs
 
+              echo "GITHUB_WORKDIR=/data/github" >> /etc/environment
+
               mkdir /home/ec2-user/script
               chown ec2-user:ec2-user /home/ec2-user/script
 
