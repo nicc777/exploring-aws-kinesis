@@ -508,8 +508,6 @@ Resources:
               systemctl enable githubsync.service
               systemctl start githubsync.service
 
-              # TODO Define and Start the service - As a last step, terminate myself...
-
               --==BOUNDARY==--
             - ProxyServer:
                 Fn::Sub:
