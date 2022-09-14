@@ -474,7 +474,7 @@ The webhook Lambda function will parse the data and place the relevant informati
 
 For security reasons, the Lambda function will check via environment variables which changes to accept from GitHub, matching both the author login field (set as a comma separated list of approved logins in the `SUPPORTED_SENDER_LOGINS` environment variable) and the whitelisted of repository (matching the repository `full_name` field with the comma separated list of approved values in the `SUPPORTED_REPOSITORIES` environment variable).
 
-Any non-matching event will be silently ignored. The exact same response is always send back to the caller regardless of the final outcome.
+Any non-matching event will be silently ignored. The exact same response is always send back to the caller regardless of the final outcome. The reasoning behind such behavior is to not give potentially helpful clues to bad actors.
 
 ### Managing the GitHub Sync Server
 
