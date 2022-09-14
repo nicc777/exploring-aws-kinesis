@@ -75,8 +75,8 @@ Resources:
         - !Ref VpcEndPointSecurityGroup
       ServiceName: !Ref VpcEndPointServiceName
       SubnetIds: 
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
+        # - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
+        # - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
         - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
       VpcEndpointType: "Interface"
       VpcId:
