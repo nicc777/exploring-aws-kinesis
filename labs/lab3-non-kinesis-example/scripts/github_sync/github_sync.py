@@ -79,6 +79,26 @@ def get_global_environment()->dict:
     return environment
 
 
+def get_proxies()->list:
+    proxies = list()
+    try:
+        with open('/etc/profile', 'r') as f:
+            for line in f:
+                line.splitlines()[0]
+                values = line.split('=')
+                if len(values) > 1:
+                    if 'http_proxy' in values[0] or 'https_proxy' in values[0]:
+                        proxy_addr = '='.join(values[1:])
+                        proxy_addr = proxy_addr.replace('"', '')
+                        proxy_addr = proxy_addr.replace(' ', '')
+                        if proxy_addr not in proxies:
+                            proxies.append(proxy_addr)
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    logger.debug('proxies={}'.format(proxies))
+    return proxies
+
+
 def randStr(chars = string.ascii_lowercase + string.digits, N=10):
     # Used implementation from https://pythonexamples.org/python-generate-random-string-of-specific-length/
 	return ''.join(random.choice(chars) for _ in range(N))
@@ -149,7 +169,17 @@ def download_file(
         randStr(N=8)
     )
     try:
-        req = requests.get(url, stream=True)
+
+        proxies = dict()
+        for proxy_server in get_proxies():
+            proxies['http'] = proxy_server
+            proxies['https'] = proxy_server
+
+        req = None
+        if len(proxies) > 0:
+            req = requests.get(url, stream=True, proxies=proxies)
+        else:
+            req = requests.get(url, stream=True)
         with open(output_file,'wb') as f:
             for current_chunk in req.iter_content(chunk_size=1024):
                 if current_chunk:
