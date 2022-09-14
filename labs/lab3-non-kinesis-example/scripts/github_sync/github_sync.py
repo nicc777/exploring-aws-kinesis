@@ -11,6 +11,8 @@ import requests
 import random
 import string
 import tarfile
+import subprocess
+import shlex
 
 
 logger = logging.getLogger()
@@ -210,6 +212,22 @@ def untar_file(file: str, work_dir: str='/tmp')->str:
     return target_dir
 
 
+def process_deployment_scripts(root_dir: str):
+    try:
+        for dirpath, dirnames, filenames in os.walk(root_dir):
+            logger.info('Looking for deployment file in directory "{}"'.format(dirpath))
+            for file in filenames:
+                logger.debug('      --> eval file "{}"'.format(file))
+                if file == 'deploy.sh':
+                    full_file = '{}{}{}'.format(dirpath, os.sep, file)
+                    logger.info('   Running deployment from file "{}"'.format(full_file))
+                    os.chmod(full_file, 0o700)
+                    # TODO set environment variables from /etc/environment and run script
+                    # subprocess.call(shlex.split('{}'.format(full_file)))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
 def process_message(
     message: dict,
     global_env: dict=get_global_environment()
@@ -223,6 +241,7 @@ def process_message(
         logger.info('Attempting to download {}'.format(url))
         local_tar_file = download_file(url=url, target_dir=global_env['GITHUB_WORKDIR'])
         work_dir =  untar_file(file=local_tar_file, work_dir=global_env['GITHUB_WORKDIR'])
+        process_deployment_scripts(root_dir=work_dir)
         
         logger.warning('TODO Change into work_dir and run the deployment file within each sub-directory in the work_dir')
 
