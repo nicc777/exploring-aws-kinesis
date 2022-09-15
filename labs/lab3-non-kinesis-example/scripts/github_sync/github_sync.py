@@ -11,8 +11,6 @@ import requests
 import random
 import string
 import tarfile
-import subprocess
-import shlex
 
 
 logger = logging.getLogger()
