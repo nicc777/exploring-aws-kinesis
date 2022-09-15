@@ -242,7 +242,8 @@ def process_deployment_scripts(root_dir: str):
                     logger.info('   Adding deployment from file "{}"'.format(full_file))
                     append_line_to_file(file=mdep, line='cd {}'.format(dirpath))
                     append_line_to_file(file=mdep, line='sh {}'.format(full_file))
-        os.system(mdep)
+        exit_status = os.system(mdep)
+        logger.info('Master deployment status: {}'.format(exit_status))
         rm_file(file=mdep)
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
