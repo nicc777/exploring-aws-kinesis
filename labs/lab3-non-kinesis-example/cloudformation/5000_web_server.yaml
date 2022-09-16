@@ -386,6 +386,7 @@ Resources:
     Properties: 
       IpAddressType: "ipv4"
       Name: "PrivVpcInternalDomWebServerElbv2"
+      Scheme: "internal"
       SubnetMappings: 
       - SubnetId:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
