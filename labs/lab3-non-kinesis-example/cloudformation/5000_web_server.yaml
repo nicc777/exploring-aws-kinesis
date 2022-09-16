@@ -151,7 +151,7 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
-###                                                 Web SERVER                                                    ###
+###                                                    WEB SERVER                                                   ###
 ###                                                                                                                 ###
 #######################################################################################################################
 
@@ -360,11 +360,11 @@ Resources:
         - Key: Name
           Value: WebServerElbv2SecurityGroup
 
-  PublicWebServerElbv2:
+  WwwDomainWebServerElbv2:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PublicWebServerElbv2"
+      Name: "WwwDomainWebServerElbv2"
       SubnetMappings: 
       - SubnetId:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
@@ -375,11 +375,11 @@ Resources:
       Type: "network"
 
 
-  PrivateWebServerElbv2:
+  InternalDomainWebServerElbv2:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PrivateWebServerElbv2"
+      Name: "InternalDomainWebServerElbv2"
       SubnetMappings: 
       - SubnetId:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
@@ -410,7 +410,7 @@ Resources:
       DefaultActions: 
       - Type: "forward"
         TargetGroupArn: !Ref WebServer8080Elbv2TargetGroup
-      LoadBalancerArn: !Ref PublicWebServerElbv2
+      LoadBalancerArn: !Ref WwwDomainWebServerElbv2
       Port: 8080
       Protocol: "TCP"
 
@@ -422,7 +422,7 @@ Resources:
       DefaultActions: 
       - Type: "forward"
         TargetGroupArn: !Ref WebServer8081Elbv2TargetGroup
-      LoadBalancerArn: !Ref PrivateWebServerElbv2
+      LoadBalancerArn: !Ref InternalDomainWebServerElbv2
       Port: 8081
       Protocol: "TCP"
 
@@ -436,7 +436,7 @@ Resources:
         - "www.${DomainName}"
         - DomainName: !Ref PublicDnsNameParam
       ResourceRecords:
-      - !GetAtt PublicWebServerElbv2.DNSName
+      - !GetAtt WwwDomainWebServerElbv2.DNSName
       TTL: 300
       Type: "CNAME"
 
@@ -450,7 +450,7 @@ Resources:
         - "internal.${DomainName}"
         - DomainName: !Ref PublicDnsNameParam
       ResourceRecords:
-      - !GetAtt PrivateWebServerElbv2.DNSName
+      - !GetAtt InternalDomainWebServerElbv2.DNSName
       TTL: 300
       Type: "CNAME"
 
@@ -491,16 +491,16 @@ Resources:
   #     ProtocolType: "HTTP"
   #     Version: "v1"
 
-Outputs:
+# Outputs:
 
-  PrivateEventApiGatewayId:
-    Description: "PrivateEventApiGateway ID"
-    Value: !Ref PrivateEventApiGateway
-    Export:
-      Name: !Sub "${AWS::StackName}-PrivateEventApiGatewayId"
+#   PrivateEventApiGatewayId:
+#     Description: "PrivateEventApiGateway ID"
+#     Value: !Ref PrivateEventApiGateway
+#     Export:
+#       Name: !Sub "${AWS::StackName}-PrivateEventApiGatewayId"
 
-  PrivateEventApiGatewayEndPoint:
-    Description: "PrivateEventApiGateway EndPoint"
-    Value: !GetAtt PrivateEventApiGateway.ApiEndpoint
-    Export:
-      Name: !Sub "${AWS::StackName}-PrivateEventApiGatewayEndPoint"
+#   PrivateEventApiGatewayEndPoint:
+#     Description: "PrivateEventApiGateway EndPoint"
+#     Value: !GetAtt PrivateEventApiGateway.ApiEndpoint
+#     Export:
+#       Name: !Sub "${AWS::StackName}-PrivateEventApiGatewayEndPoint"
