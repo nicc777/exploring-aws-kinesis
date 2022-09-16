@@ -166,7 +166,7 @@ Resources:
       GroupId: !Ref WebServerSecurityGroup
       IpProtocol: tcp
       CidrIp:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
 
   AllEgress:
     Type: AWS::EC2::SecurityGroupEgress
@@ -474,18 +474,18 @@ Resources:
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
       SecurityGroupEgress:
-      - DestinationSecurityGroupId: !Ref WebServerSecurityGroup
+      - DestinationSecurityGroupId: !Ref PrivateVpcWebServerElbv2SecurityGroup
         IpProtocol: tcp
-        FromPort: 8080
-        ToPort: 8090
-      - DestinationSecurityGroupId: !Ref WebServerSecurityGroup
-        IpProtocol: udp
         FromPort: 8080
         ToPort: 8090
       SecurityGroupIngress:
       - IpProtocol: tcp
-        FromPort: 8080
-        ToPort: 8090
+        FromPort: 443
+        ToPort: 443
+        SourcePrefixListId: !Ref TrustedInternetHostsPrefixList
+      - IpProtocol: tcp
+        FromPort: 8443
+        ToPort: 8443
         SourcePrefixListId: !Ref TrustedInternetHostsPrefixList
       Tags:
         - Key: Name
@@ -546,7 +546,7 @@ Resources:
       - Type: "forward"
         TargetGroupArn: !Ref PublicVpcWebServer8080Elbv2TargetGroup
       LoadBalancerArn: !Ref PublicVpcWwwDomainWebServerElbv2
-      Port: 8080
+      Port: 443
       Protocol: "HTTPS"
       SslPolicy: "ELBSecurityPolicy-2016-08"
 
@@ -559,7 +559,7 @@ Resources:
       - Type: "forward"
         TargetGroupArn: !Ref PublicVpcWebServer8081Elbv2TargetGroup
       LoadBalancerArn: !Ref PublicVpcInternalDomainWebServerElbv2
-      Port: 8081
+      Port: 8443
       Protocol: "HTTPS"
       SslPolicy: "ELBSecurityPolicy-2016-08"
 
