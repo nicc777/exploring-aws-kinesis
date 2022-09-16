@@ -30,6 +30,12 @@ Parameters:
   FsxStackNameParam:
     Type: String
     Description: "The name of the FSX stack, in order to import values"
+  PublicDnsHostedZoneIdParam:
+    Type: String
+    Description: "The Hosted Zone ID (Route 53) of the public DNS zone"
+  PublicDnsNameParam:
+    Type: String
+    Description: "The domain name of the public DNS zone, for example: example.tld"
 
 # Rules:
 #   set of rules
@@ -354,12 +360,26 @@ Resources:
         - Key: Name
           Value: WebServerElbv2SecurityGroup
 
-  WebServerElbv2:
+  PublicWebServerElbv2:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
       IpAddressType: "ipv4"
-      Name: "WebServerElbv2"
-      Scheme: "internal"
+      Name: "PublicWebServerElbv2"
+      SubnetMappings: 
+      - SubnetId:
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
+      - SubnetId:
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
+      - SubnetId:
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
+      Type: "network"
+
+
+  PrivateWebServerElbv2:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      IpAddressType: "ipv4"
+      Name: "PrivateWebServerElbv2"
       SubnetMappings: 
       - SubnetId:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
@@ -375,7 +395,7 @@ Resources:
       DefaultActions: 
       - Type: "forward"
         TargetGroupArn: !Ref WebServer8080Elbv2TargetGroup
-      LoadBalancerArn: !Ref WebServerElbv2
+      LoadBalancerArn: !Ref PublicWebServerElbv2
       Port: 8080
       Protocol: "TCP"
 
@@ -385,22 +405,35 @@ Resources:
       DefaultActions: 
       - Type: "forward"
         TargetGroupArn: !Ref WebServer8081Elbv2TargetGroup
-      LoadBalancerArn: !Ref WebServerElbv2
+      LoadBalancerArn: !Ref PrivateWebServerElbv2
       Port: 8081
       Protocol: "TCP"
 
-  WebServerDnsRecord:
+  WebServerPublicDnsRecord:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId : 
-        Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsZoneId"
+        Fn::ImportValue: !Ref PublicDnsHostedZoneIdParam
       Name:
         Fn::Sub:
-        - "static-web.${DomainName}"
-        - DomainName:
-            Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
+        - "www.${DomainName}"
+        - DomainName: !Ref PublicDnsNameParam
       ResourceRecords:
-      - !GetAtt WebServerElbv2.DNSName
+      - !GetAtt PublicWebServerElbv2.DNSName
+      TTL: 300
+      Type: "CNAME"
+
+  WebServerPrivateDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId : 
+        Fn::ImportValue: !Ref PublicDnsHostedZoneIdParam
+      Name:
+        Fn::Sub:
+        - "internal.${DomainName}"
+        - DomainName: !Ref PublicDnsNameParam
+      ResourceRecords:
+      - !GetAtt PrivateWebServerElbv2.DNSName
       TTL: 300
       Type: "CNAME"
 
