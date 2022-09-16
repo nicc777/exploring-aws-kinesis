@@ -67,6 +67,8 @@ When running commands, the following environment variables are assumed to be set
 | `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                  |
 | `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                    |
 | `export GITHUB_AUTHORIZED_SENDERS="..."`    | CSV List of supported sender login values                                             |
+| `export ROUTE53_PUBLIC_ZONEID="..."`        | The Route 53 Hosted Zone ID of the Public DNS Domain                                  |
+| `export ROUTE53_PUBLIC_DNSNAME="..."`       | The Route 53 Hosted Public DNS Domain Name                                            |
 
 Some of these variables, like 
 
@@ -450,16 +452,9 @@ aws cloudformation deploy \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
         DnsStackNameParam="$DNS_STACK_NAME" \
         FirstTrustedInternetCiderParam="$TRUSTED_IP" \
-
-        GitHubSecretStackNameParam="$GITHUB_SECRET_STACK_NAME" \
-        DnsStackNameParam="$DNS_STACK_NAME" \
-        ProxyServerStackNameParam="$PROXY_STACK_NAME" \
         FsxStackNameParam="$NFS_STACK_NAME" \
-        PythonRequirementsFileParam="$PYTHON_REQUIREMENTS_FILE_URL" \
-        PythonScriptFile="$PYTHON_SCRIPT_SRC_URL" \
-        S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
-        SupportedRepositoriesParam=$SUPPORTED_REPOSITORIES \
-        GitHubAuthorizedSendersParam=$GITHUB_AUTHORIZED_SENDERS \
+        PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
+        PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 
