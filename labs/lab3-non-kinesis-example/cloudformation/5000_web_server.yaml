@@ -294,7 +294,7 @@ Resources:
       TargetType: "instance"
       UnhealthyThresholdCount: 3
       VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
   WebServer8081Elbv2TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -306,7 +306,7 @@ Resources:
       TargetType: "instance"
       UnhealthyThresholdCount: 3
       VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
   WebServerAutoscalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
