@@ -166,7 +166,7 @@ Resources:
     Properties: 
       Description: "Allow port 8080/tcp (HTTP_Web)"
       FromPort: 8080
-      ToPort: 8080
+      ToPort: 8090
       GroupId: !Ref WebServerSecurityGroup
       IpProtocol: tcp
       SourcePrefixListId:
@@ -255,8 +255,10 @@ Resources:
               mount -t nfs -o nfsvers=4.1 ${OpenZfsDnsName}:/fsx/ /data
               mkdir /data/github
               mkdir /data/logs
+              mkdir /data/deployments
               chmod 777 /data/github
               chmod 777 /data/logs
+              chmod 777 /data/deployments
 
               echo "GITHUB_WORKDIR=/data/github" >> /etc/environment
               echo "DEPLOYMENT_TARGET_DIR=/data/deployments" >> /etc/environment
@@ -265,6 +267,9 @@ Resources:
               service docker start
               usermod -a -G docker ec2-user
               chkconfig docker on
+
+              # PUBLIC SITE
+              docker run -it --rm -d -p 8080:80 --name web -v ~/site-content:/usr/share/nginx/html nginx
 
               --==BOUNDARY==--
             - ProxyServer:
