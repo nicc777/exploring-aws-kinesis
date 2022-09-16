@@ -389,9 +389,24 @@ Resources:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
       Type: "network"
   
+  WebServerAcmCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties: 
+      DomainName: 
+        Fn::Sub:
+        - "*.${DomainName}"
+        - DomainName: !Ref PublicDnsNameParam
+      DomainValidationOptions: 
+      - DomainName: !Ref PublicDnsNameParam
+        HostedZoneId: !Ref PublicDnsHostedZoneIdParam
+      ValidationMethod: "DNS"
+
+
   WebServer8080Elbv2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties: 
+      Certificates:
+      - CertificateArn: !Ref WebServerAcmCertificate
       DefaultActions: 
       - Type: "forward"
         TargetGroupArn: !Ref WebServer8080Elbv2TargetGroup
@@ -402,6 +417,8 @@ Resources:
   WebServer8081Elbv2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties: 
+      Certificates:
+      - CertificateArn: !Ref WebServerAcmCertificate
       DefaultActions: 
       - Type: "forward"
         TargetGroupArn: !Ref WebServer8081Elbv2TargetGroup
@@ -443,36 +460,36 @@ Resources:
 ###                                                                                                                 ###
 #######################################################################################################################
 
-  PrivateEventApiGateway:
-    Type: AWS::ApiGatewayV2::Api
-    Properties: 
-      CorsConfiguration:
-        AllowCredentials: true
-        AllowHeaders: 
-        - "Content-Type"
-        - "X-Amz-Date"
-        - "Authorization"
-        - "X-Api-Key"
-        - "X-Amz-Security-Token"
-        AllowMethods: 
-        - OPTIONS
-        - GET
-        - POST
-        - PUT
-        - DELETE
-        AllowOrigins: 
-          Fn::Split:
-          - ","
-          - !Ref CorsTrustedDomainsParam
-        ExposeHeaders: 
-        - "Date"
-        - "x-api-id"
-        MaxAge: 86400
-      Description: "A Private API Gateway"
-      DisableExecuteApiEndpoint: false  # For production, this will typically be disabled/true to force clients to use the custom domain
-      Name: "lab3-api"
-      ProtocolType: "HTTP"
-      Version: "v1"
+  # PrivateEventApiGateway:
+  #   Type: AWS::ApiGatewayV2::Api
+  #   Properties: 
+  #     CorsConfiguration:
+  #       AllowCredentials: true
+  #       AllowHeaders: 
+  #       - "Content-Type"
+  #       - "X-Amz-Date"
+  #       - "Authorization"
+  #       - "X-Api-Key"
+  #       - "X-Amz-Security-Token"
+  #       AllowMethods: 
+  #       - OPTIONS
+  #       - GET
+  #       - POST
+  #       - PUT
+  #       - DELETE
+  #       AllowOrigins: 
+  #         Fn::Split:
+  #         - ","
+  #         - !Ref CorsTrustedDomainsParam
+  #       ExposeHeaders: 
+  #       - "Date"
+  #       - "x-api-id"
+  #       MaxAge: 86400
+  #     Description: "A Private API Gateway"
+  #     DisableExecuteApiEndpoint: false  # For production, this will typically be disabled/true to force clients to use the custom domain
+  #     Name: "lab3-api"
+  #     ProtocolType: "HTTP"
+  #     Version: "v1"
 
 Outputs:
 
