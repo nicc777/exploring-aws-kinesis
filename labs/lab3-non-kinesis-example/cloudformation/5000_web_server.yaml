@@ -1,0 +1,403 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This template is the base template for the API Gateway basic resources. It does not include routes or integrations - 
+  each route and integration will have their own stack.
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  CorsTrustedDomainsParam:
+    Type: String
+    Description: "A CSV string with trusted domains for API calls. Example to add two sites: https://www.example.tld,http://localhost:5000"
+    Default: "http://localhost,http://localhost:9000,https://internal.sandybox.com"
+  WebServerEc2AmiParam:
+    Description: "Refer to https://aws.amazon.com/blogs/compute/query-for-the-latest-amazon-linux-ami-ids-using-aws-systems-manager-parameter-store/"
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  Ec2KeyPairKeyNameParam:
+    Type: "AWS::EC2::KeyPair::KeyName"
+    Description: "The EC2 Key Pair to allow SSH access to the instances"
+  VpcStackNameParam:
+    Type: String
+    Description: "The name of the VPC stack, in order to import values"
+  DnsStackNameParam:
+    Type: String
+    Description: "The name of the DNS stack, in order to import values"
+  FirstTrustedInternetCiderParam:
+    Type: String
+    Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Private VPC"
+    Default: "0.0.0.0/0"
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                               COMMON EC2 RESOURCES                                              ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  TrustedInternetHostsPrefixList:
+    Type: AWS::EC2::PrefixList
+    Properties: 
+      AddressFamily: "IPv4"
+      Entries: 
+        - Cidr: !Ref FirstTrustedInternetCiderParam
+          Description: "A IP address or network from the Internet we trust"
+      MaxEntries: 10
+      PrefixListName: "TrustedInternetHostsPrefixList"
+
+  Ec2InstanceSsmKmsKey:
+    Type: AWS::KMS::Key
+    Properties: 
+      Description: "KMS Key that can be used for traffic encryption when using SSM to connect to EC2 Instances"
+      Enabled: true
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: "KmsCustomPolicyForEc2Ssm"
+        Statement:
+          Sid: "Enable IAM policies"
+          Effect: "Allow"
+          Principal:
+            AWS: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+          Action: "kms:*"
+          Resource: "*"
+      MultiRegion: false
+      PendingWindowInDays: 7
+
+  RootRole: 
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "ec2.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+
+  WebServerInstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/AdministratorAccess"
+      Path: /
+      RoleName:
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - "WebServerInstanceRole"
+
+  Ec2InstanceSsmPolicy:
+    Type: AWS::IAM::Policy
+    Properties: 
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - ssm:UpdateInstanceInformation
+          - ssmmessages:CreateControlChannel
+          - ssmmessages:CreateDataChannel
+          - ssmmessages:OpenControlChannel
+          - ssmmessages:OpenDataChannel
+          Resource: "*"
+        - Effect: Allow
+          Action:
+          - s3:GetEncryptionConfiguration
+          Resource: "*"
+        - Effect: Allow
+          Action:
+          - kms:Decrypt
+          Resource: !GetAtt Ec2InstanceSsmKmsKey.Arn
+      PolicyName: "Ec2InstanceSsmPolicy"
+      Roles:
+      - !Ref RootRole
+      - !Ref WebServerInstanceRole
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                 Web SERVER                                                    ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  WebServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: "Web Server Security Group"
+      GroupName: 
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - 'InstanceSecurityGroup'
+      VpcId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+
+  WebServerWebIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      Description: "Allow port 3128/tcp (HTTP_Web)"
+      FromPort: 3128
+      ToPort: 3128
+      GroupId: !Ref WebServerSecurityGroup
+      IpProtocol: tcp
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
+
+  AllEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties: 
+      Description: "Allow all outgoing traffic"
+      GroupId: !Ref WebServerSecurityGroup
+      IpProtocol: -1
+      CidrIp: 0.0.0.0/0
+
+  WebServerInstanceIamProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      InstanceProfileName:
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - 'ThisInstanceProfile'
+      Path: "/"
+      Roles: 
+        - !Ref WebServerInstanceRole
+
+  WebServerInstanceHostLaunchTemplate:
+    Type: "AWS::EC2::LaunchTemplate"
+    Properties:
+      LaunchTemplateName:
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - 'LaunchTemplate'
+      LaunchTemplateData:
+        BlockDeviceMappings:
+          - Ebs:
+              VolumeSize: 8
+              VolumeType: gp2
+              DeleteOnTermination: true
+              Encrypted: true
+            DeviceName: /dev/sda1
+        IamInstanceProfile:
+          Arn: !GetAtt WebServerInstanceIamProfile.Arn
+ 
+        ImageId: !Ref WebServerEc2AmiParam
+        InstanceType: t3.medium
+        KeyName: !Ref Ec2KeyPairKeyNameParam
+        SecurityGroupIds:
+        - !Ref WebServerSecurityGroup
+        MetadataOptions:
+          HttpTokens: required
+        UserData: 
+          Fn::Base64:
+            Fn::Sub: 
+            - |
+              MIME-Version: 1.0
+              Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+
+              --==BOUNDARY==
+              Content-Type: text/x-shellscript; charset="us-ascii"
+
+              #!/bin/bash
+              yum install -y squid telnet bind-utils nmap-ncat nmap mc python3 python3-pip python3-setuptools git curl vim
+
+              ip1="${PrivateVpcCidr}"
+              ip2="${PrivateVpcCidr}"
+              ip1f=`echo $ip1 | awk -F\/ '{print $1}'`
+              ip1fb=`echo $ip1 | awk -F\/ '{print $2}'`
+              ip2f=`echo $ip2 | awk -F\/ '{print $1}'`
+              ip2fb=`echo $ip2 | awk -F\/ '{print $2}'`
+              sed -i '0,/RFC1918 possible internal network/ s/RFC1918 possible internal network/&\nacl localnet src XXX\/YYY/g' /etc/squid/squid.conf 
+              sed -i -r "s/XXX/$ip1f/g" /etc/squid/squid.conf 
+              sed -i -r "s/YYY/$ip1fb/g" /etc/squid/squid.conf 
+              sed -i '0,/RFC1918 possible internal network/ s/RFC1918 possible internal network/&\nacl localnet src XXX\/YYY/g' /etc/squid/squid.conf 
+              sed -i -r "s/XXX/$ip2f/g" /etc/squid/squid.conf 
+              sed -i -r "s/YYY/$ip2fb/g" /etc/squid/squid.conf 
+
+              systemctl enable squid.service
+              systemctl start squid
+
+              --==BOUNDARY==--
+            - PrivateVpcCidr: 
+                Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
+              PublicVpcCidr: 
+                Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
+      TagSpecifications: 
+      - ResourceType: "launch-template"
+        Tags: 
+          - Key: "Role"
+            Value: "Web-server"
+
+
+  WebServerElbv2TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties: 
+      IpAddressType: "ipv4"
+      Name: "WebServerElbv2TargetGroup"
+      Port: 3128
+      Protocol: "TCP"
+      TargetType: "instance"
+      UnhealthyThresholdCount: 3
+      VpcId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+
+  WebServerAutoscalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties: 
+      AutoScalingGroupName: !Sub "${AWS::StackName}-WebServerASG"
+      DesiredCapacity: "1"
+      LaunchTemplate: 
+        LaunchTemplateId: !Ref WebServerInstanceHostLaunchTemplate
+        Version: !GetAtt WebServerInstanceHostLaunchTemplate.LatestVersionNumber
+      MaxSize: "1"
+      MinSize: "1"
+      NewInstancesProtectedFromScaleIn: false
+      VPCZoneIdentifier: 
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
+      TargetGroupARNs: 
+      - !Ref WebServerElbv2TargetGroup
+      Tags: 
+      - Key: "Name"
+        Value: "internet-Web"
+        PropagateAtLaunch: true
+
+
+  WebServerElbv2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "WebServerElbv2SecurityGroup"
+      GroupDescription: "Enable Web Server access on the inbound port for ELB"
+      VpcId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          SourcePrefixListId: 
+            Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
+      Tags:
+        - Key: Name
+          Value: WebServerElbv2SecurityGroup
+
+  WebServerElbv2:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      IpAddressType: "ipv4"
+      Name: "WebServerElbv2"
+      Scheme: "internal"
+      SubnetMappings: 
+      - SubnetId:
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
+      - SubnetId:
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
+      - SubnetId:
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
+      Type: "network"
+  
+  WebServerElbv2Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties: 
+      DefaultActions: 
+      - Type: "forward"
+        TargetGroupArn: !Ref WebServerElbv2TargetGroup
+      LoadBalancerArn: !Ref WebServerElbv2
+      Port: 8080
+      Protocol: "TCP"
+
+  WebServerDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId : 
+        Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsZoneId"
+      Name:
+        Fn::Sub:
+        - "static-web.${DomainName}"
+        - DomainName:
+            Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
+      ResourceRecords:
+      - !GetAtt WebServerElbv2.DNSName
+      TTL: 300
+      Type: "CNAME"
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                 API HTTP GATEWAY                                                ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  PrivateEventApiGateway:
+    Type: AWS::ApiGatewayV2::Api
+    Properties: 
+      CorsConfiguration:
+        AllowCredentials: true
+        AllowHeaders: 
+        - "Content-Type"
+        - "X-Amz-Date"
+        - "Authorization"
+        - "X-Api-Key"
+        - "X-Amz-Security-Token"
+        AllowMethods: 
+        - OPTIONS
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        AllowOrigins: 
+          Fn::Split:
+          - ","
+          - !Ref CorsTrustedDomainsParam
+        ExposeHeaders: 
+        - "Date"
+        - "x-api-id"
+        MaxAge: 86400
+      Description: "A Private API Gateway"
+      DisableExecuteApiEndpoint: false  # For production, this will typically be disabled/true to force clients to use the custom domain
+      Name: "lab3-api"
+      ProtocolType: "HTTP"
+      Version: "v1"
+
+Outputs:
+
+  PrivateEventApiGatewayId:
+    Description: "PrivateEventApiGateway ID"
+    Value: !Ref PrivateEventApiGateway
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateEventApiGatewayId"
+
+  PrivateEventApiGatewayEndPoint:
+    Description: "PrivateEventApiGateway EndPoint"
+    Value: !GetAtt PrivateEventApiGateway.ApiEndpoint
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateEventApiGatewayEndPoint"
