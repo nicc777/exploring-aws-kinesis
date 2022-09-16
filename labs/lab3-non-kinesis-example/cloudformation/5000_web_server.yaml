@@ -295,7 +295,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PrivateVpcWebServer8080Elbv2TargetGroup"
+      Name: "PrivVpcWebServer8080Elbv2TG"
       Port: 8080
       Protocol: "HTTP"
       TargetType: "instance"
@@ -307,7 +307,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PrivateVpcWebServer8081Elbv2TargetGroup"
+      Name: "PrivVpcWebServer8081Elbv2TG"
       Port: 8081
       Protocol: "HTTP"
       TargetType: "instance"
@@ -341,7 +341,7 @@ Resources:
   PrivateVpcWebServerElbv2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: "PrivateVpcWebServerElbv2SecurityGroup"
+      GroupName: "PrivVpcWebServerElbv2SG"
       GroupDescription: "Enable Web Server access on the inbound port for ELB"
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
@@ -362,13 +362,13 @@ Resources:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
       Tags:
         - Key: Name
-          Value: PrivateVpcWebServerElbv2SecurityGroup
+          Value: PrivVpcWebServerElbv2SG
 
   PrivateVpcWwwDomainWebServerElbv2:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PrivateVpcWwwDomainWebServerElbv2"
+      Name: "PrivVpcWwwDomWebServerElbv2"
       SubnetMappings: 
       - SubnetId:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
@@ -385,7 +385,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PrivateVpcInternalDomainWebServerElbv2"
+      Name: "PrivVpcInternalDomWebServerElbv2"
       SubnetMappings: 
       - SubnetId:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
@@ -438,7 +438,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PublicVpcWebServer8080Elbv2TargetGroup"
+      Name: "PubVpcWebServer8080Elbv2TG"
       Port: 8080
       Protocol: "HTTP"
       TargetType: "alb"
@@ -454,7 +454,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PublicVpcWebServer8081Elbv2TargetGroup"
+      Name: "PubVpcWebServer8081Elbv2TG"
       Port: 8081
       Protocol: "HTTP"
       TargetType: "alb"
@@ -469,7 +469,7 @@ Resources:
   PublicVpcWebServerElbv2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: "PublicVpcWebServerElbv2SecurityGroup"
+      GroupName: "PubVpcWebServerElbv2SG"
       GroupDescription: "Enable Web Server access on the inbound port for ELB"
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
@@ -489,13 +489,13 @@ Resources:
         SourcePrefixListId: !Ref TrustedInternetHostsPrefixList
       Tags:
         - Key: Name
-          Value: PublicVpcWebServerElbv2SecurityGroup
+          Value: PubVpcWebServerElbv2SG
 
   PublicVpcWwwDomainWebServerElbv2:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PublicVpcWwwDomainWebServerElbv2"
+      Name: "PubVpcWwwDomWebServerElbv2"
       SubnetMappings: 
       - SubnetId:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
@@ -512,7 +512,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PublicVpcInternalDomainWebServerElbv2"
+      Name: "PubVpcInternalDomWebServerElbv2"
       SubnetMappings: 
       - SubnetId:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
