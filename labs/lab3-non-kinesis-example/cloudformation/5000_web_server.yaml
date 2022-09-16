@@ -16,7 +16,7 @@ Parameters:
   WebServerEc2AmiParam:
     Description: "Refer to https://aws.amazon.com/blogs/compute/query-for-the-latest-amazon-linux-ami-ids-using-aws-systems-manager-parameter-store/"
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-arm64-gp2'
   VpcStackNameParam:
     Type: String
     Description: "The name of the VPC stack, in order to import values"
@@ -165,8 +165,8 @@ Resources:
       ToPort: 8090
       GroupId: !Ref WebServerSecurityGroup
       IpProtocol: tcp
-      SourcePrefixListId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
+      CidrIp:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
 
   AllEgress:
     Type: AWS::EC2::SecurityGroupEgress
@@ -206,7 +206,6 @@ Resources:
             DeviceName: /dev/sda1
         IamInstanceProfile:
           Arn: !GetAtt WebServerInstanceIamProfile.Arn
- 
         ImageId: !Ref WebServerEc2AmiParam
         InstanceType: a1.medium
         SecurityGroupIds:
