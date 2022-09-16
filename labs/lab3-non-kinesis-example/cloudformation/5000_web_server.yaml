@@ -57,16 +57,6 @@ Resources:
 ###                                                                                                                 ###
 #######################################################################################################################
 
-  TrustedInternetHostsPrefixList:
-    Type: AWS::EC2::PrefixList
-    Properties: 
-      AddressFamily: "IPv4"
-      Entries: 
-        - Cidr: !Ref FirstTrustedInternetCiderParam
-          Description: "A IP address or network from the Internet we trust"
-      MaxEntries: 10
-      PrefixListName: "TrustedInternetHostsPrefixList"
-
   Ec2InstanceSsmKmsKey:
     Type: AWS::KMS::Key
     Properties: 
@@ -343,6 +333,16 @@ Resources:
         PropagateAtLaunch: true
 
 
+  TrustedInternetHostsPrefixList:
+    Type: AWS::EC2::PrefixList
+    Properties: 
+      AddressFamily: "IPv4"
+      Entries: 
+        - Cidr: !Ref FirstTrustedInternetCiderParam
+          Description: "A IP address or network from the Internet we trust"
+      MaxEntries: 10
+      PrefixListName: "TrustedInternetHostsPrefixList"
+
   WebServerElbv2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -350,12 +350,20 @@ Resources:
       GroupDescription: "Enable Web Server access on the inbound port for ELB"
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
+      SecurityGroupEgress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: udp
+        FromPort: 0
+        ToPort: 65535
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8090
-          SourcePrefixListId: 
-            Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8090
+        SourcePrefixListId: !Ref TrustedInternetHostsPrefixList
       Tags:
         - Key: Name
           Value: WebServerElbv2SecurityGroup
@@ -372,7 +380,9 @@ Resources:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
       - SubnetId:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
-      Type: "network"
+      SecurityGroups: 
+      - !Ref WebServerElbv2SecurityGroup
+      Type: "application"
 
 
   InternalDomainWebServerElbv2:
@@ -387,7 +397,9 @@ Resources:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
       - SubnetId:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
-      Type: "network"
+      SecurityGroups: 
+      - !Ref WebServerElbv2SecurityGroup
+      Type: "application"
   
   WebServerAcmCertificate:
     Type: AWS::CertificateManager::Certificate
@@ -413,6 +425,7 @@ Resources:
       LoadBalancerArn: !Ref WwwDomainWebServerElbv2
       Port: 8080
       Protocol: "TCP"
+      SslPolicy: "ELBSecurityPolicy-2016-08"
 
   WebServer8081Elbv2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -425,6 +438,7 @@ Resources:
       LoadBalancerArn: !Ref InternalDomainWebServerElbv2
       Port: 8081
       Protocol: "TCP"
+      SslPolicy: "ELBSecurityPolicy-2016-08"
 
   WebServerPublicDnsRecord:
     Type: AWS::Route53::RecordSet

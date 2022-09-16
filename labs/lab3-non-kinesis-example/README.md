@@ -48,24 +48,25 @@ Each of the API endpoints is services by a Lambda function.
 
 When running commands, the following environment variables are assumed to be set:
 
-| Environment Variable Example                | Description                                                                         |
-|---------------------------------------------|-------------------------------------------------------------------------------------|
-| `export AWS_PROFILE="..."`                  | The AWS Credentials Profile to use                                                  |
-| `export AWS_REGION="..."`                   | The AWS Region to deploy resources to                                               |
-| `export PARAMETERS_FILE="..."`              | The file containing the stack parameters                                            |
-| `export DYNAMODB_STACK_NAME="..."`          | The CloudFormation stack name for deploying the DynamoDB Table                      |
-| `export LAMBDA_STACK_NAME="..."`            | The CloudFormation stack name for deploying Lambda Functions                        |
-| `export VPC_STACK_NAME="..."`               | The CloudFormation stack name for deploying the VPC resources                       |
-| `export NFS_STACK_NAME="..."`               | The CloudFormation stack name for deploying a FSX Filesystem                        |
-| `export DNS_STACK_NAME="..."`               | The CloudFormation stack name for deploying DNS and ACM                             |
-| `export PROXY_STACK_NAME="..."`             | The CloudFormation stack name for deploying the Proxy server                        |
-| `export GITHUB_SECRET_STACK_NAME="..."`     | The CloudFormation stack name for deploying the GitHub SSH Key in Secrets Manager   |
-| `export GITHUB_SYNC_STACK_NAME="..."`       | The CloudFormation stack name for deploying the GitHub Sync Resources               |
-| `export SSM_VPC_ENDPOINT_STACK_NAME="..."`  | The CloudFormation stack name for deploying The SSM VPC End Point resource          |
-| `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                              |
-| `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                |
-| `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                  |
-| `export GITHUB_AUTHORIZED_SENDERS="..."`    | CSV List of supported sender login values                                           |
+| Environment Variable Example                | Description                                                                           |
+|---------------------------------------------|---------------------------------------------------------------------------------------|
+| `export AWS_PROFILE="..."`                  | The AWS Credentials Profile to use                                                    |
+| `export AWS_REGION="..."`                   | The AWS Region to deploy resources to                                                 |
+| `export PARAMETERS_FILE="..."`              | The file containing the stack parameters                                              |
+| `export DYNAMODB_STACK_NAME="..."`          | The CloudFormation stack name for deploying the DynamoDB Table                        |
+| `export LAMBDA_STACK_NAME="..."`            | The CloudFormation stack name for deploying Lambda Functions                          |
+| `export VPC_STACK_NAME="..."`               | The CloudFormation stack name for deploying the VPC resources                         |
+| `export NFS_STACK_NAME="..."`               | The CloudFormation stack name for deploying a FSX Filesystem                          |
+| `export DNS_STACK_NAME="..."`               | The CloudFormation stack name for deploying DNS and ACM                               |
+| `export PROXY_STACK_NAME="..."`             | The CloudFormation stack name for deploying the Proxy server                          |
+| `export GITHUB_SECRET_STACK_NAME="..."`     | The CloudFormation stack name for deploying the GitHub SSH Key in Secrets Manager     |
+| `export GITHUB_SYNC_STACK_NAME="..."`       | The CloudFormation stack name for deploying the GitHub Sync Resources                 |
+| `export SSM_VPC_ENDPOINT_STACK_NAME="..."`  | The CloudFormation stack name for deploying The SSM VPC End Point resource            |
+| `export WEB_SERVER_STACK_NAME="..."`        | The CloudFormation stack name for deploying The Web Server and API Gateway Resources  |
+| `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                                |
+| `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                  |
+| `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                    |
+| `export GITHUB_AUTHORIZED_SENDERS="..."`    | CSV List of supported sender login values                                             |
 
 Some of these variables, like 
 
@@ -428,6 +429,28 @@ aws cloudformation deploy \
     --stack-name $GITHUB_SYNC_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/4200_github_deployment_resources.yaml \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
+        GitHubSecretStackNameParam="$GITHUB_SECRET_STACK_NAME" \
+        DnsStackNameParam="$DNS_STACK_NAME" \
+        ProxyServerStackNameParam="$PROXY_STACK_NAME" \
+        FsxStackNameParam="$NFS_STACK_NAME" \
+        PythonRequirementsFileParam="$PYTHON_REQUIREMENTS_FILE_URL" \
+        PythonScriptFile="$PYTHON_SCRIPT_SRC_URL" \
+        S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
+        SupportedRepositoriesParam=$SUPPORTED_REPOSITORIES \
+        GitHubAuthorizedSendersParam=$GITHUB_AUTHORIZED_SENDERS \
+    --capabilities CAPABILITY_NAMED_IAM
+
+
+# WEB_SERVER_STACK_NAME
+export TRUSTED_IP=$(curl http://checkip.amazonaws.com/)
+
+aws cloudformation deploy \
+    --stack-name $WEB_SERVER_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5000_web_server.yaml \
+    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
+        DnsStackNameParam="$DNS_STACK_NAME" \
+        FirstTrustedInternetCiderParam="$TRUSTED_IP" \
+
         GitHubSecretStackNameParam="$GITHUB_SECRET_STACK_NAME" \
         DnsStackNameParam="$DNS_STACK_NAME" \
         ProxyServerStackNameParam="$PROXY_STACK_NAME" \
