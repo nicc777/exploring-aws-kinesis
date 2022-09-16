@@ -17,9 +17,6 @@ Parameters:
     Description: "Refer to https://aws.amazon.com/blogs/compute/query-for-the-latest-amazon-linux-ami-ids-using-aws-systems-manager-parameter-store/"
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
-  Ec2KeyPairKeyNameParam:
-    Type: "AWS::EC2::KeyPair::KeyName"
-    Description: "The EC2 Key Pair to allow SSH access to the instances"
   VpcStackNameParam:
     Type: String
     Description: "The name of the VPC stack, in order to import values"
@@ -30,6 +27,9 @@ Parameters:
     Type: String
     Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Private VPC"
     Default: "0.0.0.0/0"
+  FsxStackNameParam:
+    Type: String
+    Description: "The name of the FSX stack, in order to import values"
 
 # Rules:
 #   set of rules
@@ -164,13 +164,13 @@ Resources:
   WebServerWebIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties: 
-      Description: "Allow port 3128/tcp (HTTP_Web)"
-      FromPort: 3128
-      ToPort: 3128
+      Description: "Allow port 8080/tcp (HTTP_Web)"
+      FromPort: 8080
+      ToPort: 8080
       GroupId: !Ref WebServerSecurityGroup
       IpProtocol: tcp
       SourcePrefixListId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
 
   AllEgress:
     Type: AWS::EC2::SecurityGroupEgress
@@ -212,8 +212,7 @@ Resources:
           Arn: !GetAtt WebServerInstanceIamProfile.Arn
  
         ImageId: !Ref WebServerEc2AmiParam
-        InstanceType: t3.medium
-        KeyName: !Ref Ec2KeyPairKeyNameParam
+        InstanceType: a1.medium
         SecurityGroupIds:
         - !Ref WebServerSecurityGroup
         MetadataOptions:
@@ -229,29 +228,52 @@ Resources:
               Content-Type: text/x-shellscript; charset="us-ascii"
 
               #!/bin/bash
-              yum install -y squid telnet bind-utils nmap-ncat nmap mc python3 python3-pip python3-setuptools git curl vim
+              
+              export PROXY_URL="${ProxyServer}"
+              echo "PROXY_URL=$PROXY_URL"
 
-              ip1="${PrivateVpcCidr}"
-              ip2="${PrivateVpcCidr}"
-              ip1f=`echo $ip1 | awk -F\/ '{print $1}'`
-              ip1fb=`echo $ip1 | awk -F\/ '{print $2}'`
-              ip2f=`echo $ip2 | awk -F\/ '{print $1}'`
-              ip2fb=`echo $ip2 | awk -F\/ '{print $2}'`
-              sed -i '0,/RFC1918 possible internal network/ s/RFC1918 possible internal network/&\nacl localnet src XXX\/YYY/g' /etc/squid/squid.conf 
-              sed -i -r "s/XXX/$ip1f/g" /etc/squid/squid.conf 
-              sed -i -r "s/YYY/$ip1fb/g" /etc/squid/squid.conf 
-              sed -i '0,/RFC1918 possible internal network/ s/RFC1918 possible internal network/&\nacl localnet src XXX\/YYY/g' /etc/squid/squid.conf 
-              sed -i -r "s/XXX/$ip2f/g" /etc/squid/squid.conf 
-              sed -i -r "s/YYY/$ip2fb/g" /etc/squid/squid.conf 
+              cat << EOF > /tmp/proxy
+              export http_proxy="$PROXY_URL"
+              export https_proxy="$PROXY_URL"
+              export ftp_proxy="$PROXY_URL"
+              export no_proxy="127.0.0.1,localhost,169.254.169.254"
+              # For curl
+              export HTTP_PROXY="$PROXY_URL"
+              export HTTPS_PROXY="$PROXY_URL"
+              export FTP_PROXY="$PROXY_URL"
+              export NO_PROXY="127.0.0.1,localhost,169.254.169.254"
+              EOF
 
-              systemctl enable squid.service
-              systemctl start squid
+              cat /tmp/proxy >> /etc/profile
+
+              source /tmp/proxy
+
+              yum update -y
+              yum install -y git nfs-utils nfs4-acl-tools nfs-common python3 python3-pip python3-setuptools telnet bind-utils nmap-ncat nmap mc curl vim
+              
+              mkdir /data
+              mount -t nfs -o nfsvers=4.1 ${OpenZfsDnsName}:/fsx/ /data
+              mkdir /data/github
+              mkdir /data/logs
+              chmod 777 /data/github
+              chmod 777 /data/logs
+
+              echo "GITHUB_WORKDIR=/data/github" >> /etc/environment
+              echo "DEPLOYMENT_TARGET_DIR=/data/deployments" >> /etc/environment
+
+              amazon-linux-extras install docker
+              service docker start
+              usermod -a -G docker ec2-user
+              chkconfig docker on
 
               --==BOUNDARY==--
-            - PrivateVpcCidr: 
-                Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
-              PublicVpcCidr: 
-                Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
+            - ProxyServer:
+                Fn::Sub:
+                - "http://proxy.${DomainName}:8080"
+                - DomainName:
+                    Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
+              OpenZfsDnsName:
+                Fn::ImportValue: !Sub "${FsxStackNameParam}-StaticWebRootFsxFilesystemDNSName"
       TagSpecifications: 
       - ResourceType: "launch-template"
         Tags: 
