@@ -258,6 +258,8 @@ Resources:
               echo "GITHUB_WORKDIR=/data/github" >> /etc/environment
               echo "DEPLOYMENT_TARGET_DIR=/data/deployments" >> /etc/environment
 
+              # TODO configure proxy for docker...
+
               amazon-linux-extras install docker
               service docker start
               usermod -a -G docker ec2-user
@@ -498,6 +500,7 @@ Resources:
   #     VpcId:
   #       Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
+  ### LEAVE THIS OUT WHEN USING NLB...
   # PublicVpcWebServerElbv2SecurityGroup:
   #   Type: AWS::EC2::SecurityGroup
   #   Properties:
@@ -535,9 +538,9 @@ Resources:
   #         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
   #     - SubnetId:
   #         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
-  #     SecurityGroups: 
-  #     - !Ref PublicVpcWebServerElbv2SecurityGroup
-  #     Type: "application"
+  #     # SecurityGroups: 
+  #     # - !Ref PublicVpcWebServerElbv2SecurityGroup
+  #     Type: "network"
 
 
   # PublicVpcInternalDomainWebServerElbv2:
@@ -552,9 +555,9 @@ Resources:
   #         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
   #     - SubnetId:
   #         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
-  #     SecurityGroups: 
-  #     - !Ref PublicVpcWebServerElbv2SecurityGroup
-  #     Type: "application"
+  #     # SecurityGroups: 
+  #     # - !Ref PublicVpcWebServerElbv2SecurityGroup
+  #     Type: "network"
   
   # WebServerAcmCertificate:
   #   Type: AWS::CertificateManager::Certificate
