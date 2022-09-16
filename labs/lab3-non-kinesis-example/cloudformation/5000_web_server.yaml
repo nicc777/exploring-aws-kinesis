@@ -443,8 +443,7 @@ Resources:
   WebServerPublicDnsRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneId : 
-        Fn::ImportValue: !Ref PublicDnsHostedZoneIdParam
+      HostedZoneId: !Ref PublicDnsHostedZoneIdParam
       Name:
         Fn::Sub:
         - "www.${DomainName}"
@@ -457,8 +456,7 @@ Resources:
   WebServerPrivateDnsRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneId : 
-        Fn::ImportValue: !Ref PublicDnsHostedZoneIdParam
+      HostedZoneId: !Ref PublicDnsHostedZoneIdParam
       Name:
         Fn::Sub:
         - "internal.${DomainName}"

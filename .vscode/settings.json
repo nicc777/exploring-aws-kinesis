@@ -11,6 +11,7 @@
         "crossmnt",
         "dfcb",
         "dfdc",
+        "DNSNAME",
         "eaefed",
         "ecfdcb",
         "Elbv",
@@ -49,6 +50,7 @@
         "WORKDIR",
         "zcat",
         "zfill",
+        "ZONEID",
         "ZSTD"
     ]
 }
