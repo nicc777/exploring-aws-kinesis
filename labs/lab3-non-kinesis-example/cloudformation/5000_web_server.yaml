@@ -423,7 +423,7 @@ Resources:
         TargetGroupArn: !Ref WebServer8080Elbv2TargetGroup
       LoadBalancerArn: !Ref WwwDomainWebServerElbv2
       Port: 8080
-      Protocol: "TCP"
+      Protocol: "HTTPS"
       SslPolicy: "ELBSecurityPolicy-2016-08"
 
   WebServer8081Elbv2Listener:
@@ -436,7 +436,7 @@ Resources:
         TargetGroupArn: !Ref WebServer8081Elbv2TargetGroup
       LoadBalancerArn: !Ref InternalDomainWebServerElbv2
       Port: 8081
-      Protocol: "TCP"
+      Protocol: "HTTPS"
       SslPolicy: "ELBSecurityPolicy-2016-08"
 
   WebServerPublicDnsRecord:
