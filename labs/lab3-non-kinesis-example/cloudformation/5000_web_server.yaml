@@ -269,7 +269,10 @@ Resources:
               chkconfig docker on
 
               # PUBLIC SITE
-              docker run -it --rm -d -p 8080:80 --name web -v ~/site-content:/usr/share/nginx/html nginx
+              docker run -it --rm -d -p 8080:80 --name web -v $DEPLOYMENT_TARGET_DIR/www-static:/usr/share/nginx/html nginx
+
+              # PRIVATE SITE
+              docker run -it --rm -d -p 8081:80 --name web -v $DEPLOYMENT_TARGET_DIR/intranet-static:/usr/share/nginx/html nginx
 
               --==BOUNDARY==--
             - ProxyServer:
@@ -286,12 +289,24 @@ Resources:
             Value: "Web-server"
 
 
-  WebServerElbv2TargetGroup:
+  WebServer8080Elbv2TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
       IpAddressType: "ipv4"
-      Name: "WebServerElbv2TargetGroup"
-      Port: 3128
+      Name: "WebServer8080Elbv2TargetGroup"
+      Port: 8080
+      Protocol: "TCP"
+      TargetType: "instance"
+      UnhealthyThresholdCount: 3
+      VpcId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+
+  WebServer8081Elbv2TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties: 
+      IpAddressType: "ipv4"
+      Name: "WebServer8081Elbv2TargetGroup"
+      Port: 8081
       Protocol: "TCP"
       TargetType: "instance"
       UnhealthyThresholdCount: 3
@@ -314,7 +329,8 @@ Resources:
         - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
         - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
       TargetGroupARNs: 
-      - !Ref WebServerElbv2TargetGroup
+      - !Ref WebServer8080Elbv2TargetGroup
+      - !Ref WebServer8081Elbv2TargetGroup
       Tags: 
       - Key: "Name"
         Value: "internet-Web"
@@ -331,9 +347,9 @@ Resources:
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 8080
-          ToPort: 8080
+          ToPort: 8090
           SourcePrefixListId: 
-            Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
+            Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
       Tags:
         - Key: Name
           Value: WebServerElbv2SecurityGroup
@@ -353,14 +369,24 @@ Resources:
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
       Type: "network"
   
-  WebServerElbv2Listener:
+  WebServer8080Elbv2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties: 
       DefaultActions: 
       - Type: "forward"
-        TargetGroupArn: !Ref WebServerElbv2TargetGroup
+        TargetGroupArn: !Ref WebServer8080Elbv2TargetGroup
       LoadBalancerArn: !Ref WebServerElbv2
       Port: 8080
+      Protocol: "TCP"
+
+  WebServer8081Elbv2Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties: 
+      DefaultActions: 
+      - Type: "forward"
+        TargetGroupArn: !Ref WebServer8081Elbv2TargetGroup
+      LoadBalancerArn: !Ref WebServerElbv2
+      Port: 8081
       Protocol: "TCP"
 
   WebServerDnsRecord:
