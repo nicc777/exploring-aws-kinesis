@@ -290,7 +290,7 @@ Resources:
       IpAddressType: "ipv4"
       Name: "WebServer8080Elbv2TargetGroup"
       Port: 8080
-      Protocol: "TCP"
+      Protocol: "HTTP"
       TargetType: "instance"
       UnhealthyThresholdCount: 3
       VpcId:
@@ -302,7 +302,7 @@ Resources:
       IpAddressType: "ipv4"
       Name: "WebServer8081Elbv2TargetGroup"
       Port: 8081
-      Protocol: "TCP"
+      Protocol: "HTTP"
       TargetType: "instance"
       UnhealthyThresholdCount: 3
       VpcId:
