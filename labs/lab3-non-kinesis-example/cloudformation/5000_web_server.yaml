@@ -368,13 +368,11 @@ Resources:
       - IpProtocol: tcp
         FromPort: 8080
         ToPort: 8080
-        CidrIp: 
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
+        CidrIp: !Ref FirstTrustedInternetCiderParam
       - IpProtocol: tcp
         FromPort: 8081
         ToPort: 8081
-        CidrIp: 
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
+        CidrIp: !Ref FirstTrustedInternetCiderParam
       Tags:
         - Key: Name
           Value: PubVpcWebServerElbv2SG
