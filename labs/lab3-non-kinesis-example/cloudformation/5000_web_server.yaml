@@ -269,8 +269,6 @@ Resources:
               echo "GITHUB_WORKDIR=/data/github" >> /etc/environment
               echo "DEPLOYMENT_TARGET_DIR=/data/deployments" >> /etc/environment
 
-              # TODO configure proxy for docker...
-
               amazon-linux-extras install docker
               service docker start
               usermod -a -G docker ec2-user
