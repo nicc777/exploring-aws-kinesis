@@ -269,6 +269,9 @@ Resources:
               echo "GITHUB_WORKDIR=/data/github" >> /etc/environment
               echo "DEPLOYMENT_TARGET_DIR=/data/deployments" >> /etc/environment
 
+              export GITHUB_WORKDIR=/data/github
+              export DEPLOYMENT_TARGET_DIR=/data/deployments
+
               amazon-linux-extras install docker
               service docker start
               usermod -a -G docker ec2-user

@@ -45,6 +45,9 @@ Parameters:
   GitHubAuthorizedSendersParam:
     Type: String
     Description: "Comma delimited list of authorized senders as what will be reported in the sender login field value"
+  PublicDnsNameParam:
+    Type: String
+    Description: "The domain name of the public DNS zone, for example: example.tld"
 
 # Rules:
 #   set of rules
@@ -515,8 +518,7 @@ Resources:
             - ProxyServer:
                 Fn::Sub:
                 - "http://proxy.${DomainName}:8080"
-                - DomainName:
-                    Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
+                - DomainName: !Ref PublicDnsNameParam
               OpenZfsDnsName:
                 Fn::ImportValue: !Sub "${FsxStackNameParam}-StaticWebRootFsxFilesystemDNSName"
               RequirementsFile: !Ref PythonRequirementsFileParam
