@@ -155,18 +155,29 @@ Resources:
         - - Ref: AWS::StackName
           - 'InstanceSecurityGroup'
       VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
-  WebServerWebIngress:
+  WebServer8080Ingress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties: 
       Description: "Allow port 8080/tcp (HTTP_Web)"
       FromPort: 8080
-      ToPort: 8090
+      ToPort: 8080
       GroupId: !Ref WebServerSecurityGroup
       IpProtocol: tcp
       CidrIp:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcCidrBlock"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
+
+  WebServe8081Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      Description: "Allow port 8081/tcp (HTTP_Web)"
+      FromPort: 8081
+      ToPort: 8081
+      GroupId: !Ref WebServerSecurityGroup
+      IpProtocol: tcp
+      CidrIp:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
 
   AllEgress:
     Type: AWS::EC2::SecurityGroupEgress
@@ -288,34 +299,34 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
-###                                    WEB SERVER LOAD BALANCER - PRIVATE SUBNET                                    ###
+###                                    WEB SERVER LOAD BALANCER - PUBLIC SUBNET                                     ###
 ###                                                                                                                 ###
 #######################################################################################################################
 
 
-  PrivateVpcWebServer8080Elbv2TargetGroup:
+  PublicVpcWebServer8080Elbv2TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PrivVpcWebServer8080Elbv2TG"
+      Name: "PubVpcWebServer8080Elbv2TG"
       Port: 8080
       Protocol: "HTTP"
       TargetType: "instance"
       UnhealthyThresholdCount: 3
       VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
-  PrivateVpcWebServer8081Elbv2TargetGroup:
+  PublicVpcWebServer8081Elbv2TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PrivVpcWebServer8081Elbv2TG"
+      Name: "PubVpcWebServer8081Elbv2TG"
       Port: 8081
       Protocol: "HTTP"
       TargetType: "instance"
       UnhealthyThresholdCount: 3
       VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
   WebServerAutoscalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -329,18 +340,18 @@ Resources:
       MinSize: "1"
       NewInstancesProtectedFromScaleIn: false
       VPCZoneIdentifier: 
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
-        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
       TargetGroupARNs: 
-      - !Ref PrivateVpcWebServer8080Elbv2TargetGroup
-      - !Ref PrivateVpcWebServer8081Elbv2TargetGroup
+      - !Ref PublicVpcWebServer8080Elbv2TargetGroup
+      - !Ref PublicVpcWebServer8081Elbv2TargetGroup
       Tags: 
       - Key: "Name"
         Value: "WebAsg"
         PropagateAtLaunch: true
 
-  PrivateVpcWebServerElbv2SecurityGroup:
+  PublicVpcWebServerElbv2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: "PrivVpcWebServerElbv2SG"
@@ -351,278 +362,105 @@ Resources:
       - DestinationSecurityGroupId: !Ref WebServerSecurityGroup
         IpProtocol: tcp
         FromPort: 8080
-        ToPort: 8090
+        ToPort: 8080
       - DestinationSecurityGroupId: !Ref WebServerSecurityGroup
-        IpProtocol: udp
-        FromPort: 8080
-        ToPort: 8090
+        IpProtocol: tcp
+        FromPort: 8081
+        ToPort: 8081
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: 8080
-        ToPort: 8090
+        ToPort: 8080
+        CidrIp: 
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
+      - IpProtocol: tcp
+        FromPort: 8081
+        ToPort: 8081
         CidrIp: 
           Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcCidrBlock"
       Tags:
         - Key: Name
-          Value: PrivVpcWebServerElbv2SG
+          Value: PubVpcWebServerElbv2SG
 
-  PrivateVpcWwwDomainWebServerElbv2:
+  PublicVpcWwwDomainWebServerElbv2:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
       IpAddressType: "ipv4"
-      Name: "PrivVpcWwwDomWebServerElbv2"
-      Scheme: "internal"
+      Name: "PubVpcWwwDomWebServerElbv2"
       SubnetMappings: 
       - SubnetId:
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
       - SubnetId:
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
       - SubnetId:
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
+          Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
       SecurityGroups: 
-      - !Ref PrivateVpcWebServerElbv2SecurityGroup
+      - !Ref PublicVpcWebServerElbv2SecurityGroup
       Type: "application"
 
-
-  PrivateVpcInternalDomainWebServerElbv2:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+  WebServerAcmCertificate:
+    Type: AWS::CertificateManager::Certificate
     Properties: 
-      IpAddressType: "ipv4"
-      Name: "PrivVpcInternalDomWebServerElbv2"
-      Scheme: "internal"
-      SubnetMappings: 
-      - SubnetId:
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
-      - SubnetId:
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
-      - SubnetId:
-          Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
-      SecurityGroups: 
-      - !Ref PrivateVpcWebServerElbv2SecurityGroup
-      Type: "application"
-  
+      DomainName: 
+        Fn::Sub:
+        - "*.${DomainName}"
+        - DomainName: !Ref PublicDnsNameParam
+      DomainValidationOptions: 
+      - DomainName: !Ref PublicDnsNameParam
+        HostedZoneId: !Ref PublicDnsHostedZoneIdParam
+      ValidationMethod: "DNS"
 
-  PrivateVpcWebServer8080Elbv2Listener:
+  PublicVpcWebServer8080Elbv2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties: 
+      Certificates:
+      - CertificateArn: !Ref WebServerAcmCertificate
       DefaultActions: 
       - Type: "forward"
-        TargetGroupArn: !Ref PrivateVpcWebServer8080Elbv2TargetGroup
-      LoadBalancerArn: !Ref PrivateVpcWwwDomainWebServerElbv2
-      Port: 8080
-      Protocol: "HTTP"
+        TargetGroupArn: !Ref PublicVpcWebServer8080Elbv2TargetGroup
+      LoadBalancerArn: !Ref PublicVpcWwwDomainWebServerElbv2
+      Port: 443
+      Protocol: "HTTPS"
+      SslPolicy: "ELBSecurityPolicy-2016-08"
 
-  PrivateVpcWebServer8081Elbv2Listener:
+  PublicVpcWebServer8081Elbv2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties: 
+      Certificates:
+      - CertificateArn: !Ref WebServerAcmCertificate
       DefaultActions: 
       - Type: "forward"
-        TargetGroupArn: !Ref PrivateVpcWebServer8081Elbv2TargetGroup
-      LoadBalancerArn: !Ref PrivateVpcInternalDomainWebServerElbv2
-      Port: 8081
-      Protocol: "HTTP"
+        TargetGroupArn: !Ref PublicVpcWebServer8081Elbv2TargetGroup
+      LoadBalancerArn: !Ref PublicVpcWwwDomainWebServerElbv2
+      Port: 8443
+      Protocol: "HTTPS"
+      SslPolicy: "ELBSecurityPolicy-2016-08"
 
-  PrivateVpcWebServer8080DnsRecord:
+  WebServerPublicDnsRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneId : 
-        Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsZoneId"
+      HostedZoneId: !Ref PublicDnsHostedZoneIdParam
       Name:
         Fn::Sub:
-        - "web8080.${DomainName}"
-        - DomainName:
-            Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
+        - "www.${DomainName}"
+        - DomainName: !Ref PublicDnsNameParam
       ResourceRecords:
-      - !GetAtt PrivateVpcWwwDomainWebServerElbv2.DNSName
+      - !GetAtt PublicVpcWwwDomainWebServerElbv2.DNSName
       TTL: 300
       Type: "CNAME"
 
-  PrivateVpcWebServer8081DnsRecord:
+  WebServerPrivateDnsRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneId : 
-        Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsZoneId"
+      HostedZoneId: !Ref PublicDnsHostedZoneIdParam
       Name:
         Fn::Sub:
-        - "web8081.${DomainName}"
-        - DomainName:
-            Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
+        - "internal.${DomainName}"
+        - DomainName: !Ref PublicDnsNameParam
       ResourceRecords:
-      - !GetAtt PrivateVpcInternalDomainWebServerElbv2.DNSName
+      - !GetAtt PublicVpcWwwDomainWebServerElbv2.DNSName
       TTL: 300
       Type: "CNAME"
-
-#######################################################################################################################
-###                                                                                                                 ###
-###                                         WEB SERVER PUBLIC LOAD BALANCER                                         ###
-###                                                                                                                 ###
-#######################################################################################################################
-
-  # TrustedInternetHostsPrefixList:
-  #   Type: AWS::EC2::PrefixList
-  #   Properties: 
-  #     AddressFamily: "IPv4"
-  #     Entries: 
-  #       - Cidr: !Ref FirstTrustedInternetCiderParam
-  #         Description: "A IP address or network from the Internet we trust"
-  #     MaxEntries: 10
-  #     PrefixListName: "TrustedInternetHostsPrefixList"
-
-  # PublicVpcWebServer8080Elbv2TargetGroup:
-  #   Type: AWS::ElasticLoadBalancingV2::TargetGroup
-  #   Properties: 
-  #     IpAddressType: "ipv4"
-  #     Name: "PubVpcWebServer8080Elbv2TG"
-  #     Port: 8080
-  #     Protocol: "HTTP"
-  #     TargetType: "alb"
-  #     Targets:
-  #     - AvailabilityZone: "all"
-  #       Id: !Ref PrivateVpcWwwDomainWebServerElbv2
-  #       Port: 8080
-  #     UnhealthyThresholdCount: 3
-  #     VpcId:
-  #       Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
-
-  # PublicVpcWebServer8081Elbv2TargetGroup:
-  #   Type: AWS::ElasticLoadBalancingV2::TargetGroup
-  #   Properties: 
-  #     IpAddressType: "ipv4"
-  #     Name: "PubVpcWebServer8081Elbv2TG"
-  #     Port: 8081
-  #     Protocol: "HTTP"
-  #     TargetType: "alb"
-  #     Targets:
-  #     - AvailabilityZone: "all"
-  #       Id: !Ref PrivateVpcInternalDomainWebServerElbv2
-  #       Port: 8081
-  #     UnhealthyThresholdCount: 3
-  #     VpcId:
-  #       Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
-
-  ### LEAVE THIS OUT WHEN USING NLB...
-  # PublicVpcWebServerElbv2SecurityGroup:
-  #   Type: AWS::EC2::SecurityGroup
-  #   Properties:
-  #     GroupName: "PubVpcWebServerElbv2SG"
-  #     GroupDescription: "Enable Web Server access on the inbound port for ELB"
-  #     VpcId:
-  #       Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
-  #     SecurityGroupEgress:
-  #     - DestinationSecurityGroupId: !Ref PrivateVpcWebServerElbv2SecurityGroup
-  #       IpProtocol: tcp
-  #       FromPort: 8080
-  #       ToPort: 8090
-  #     SecurityGroupIngress:
-  #     - IpProtocol: tcp
-  #       FromPort: 443
-  #       ToPort: 443
-  #       SourcePrefixListId: !Ref TrustedInternetHostsPrefixList
-  #     - IpProtocol: tcp
-  #       FromPort: 8443
-  #       ToPort: 8443
-  #       SourcePrefixListId: !Ref TrustedInternetHostsPrefixList
-  #     Tags:
-  #       - Key: Name
-  #         Value: PubVpcWebServerElbv2SG
-
-  # PublicVpcWwwDomainWebServerElbv2:
-  #   Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-  #   Properties: 
-  #     IpAddressType: "ipv4"
-  #     Name: "PubVpcWwwDomWebServerElbv2"
-  #     SubnetMappings: 
-  #     - SubnetId:
-  #         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
-  #     - SubnetId:
-  #         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
-  #     - SubnetId:
-  #         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
-  #     # SecurityGroups: 
-  #     # - !Ref PublicVpcWebServerElbv2SecurityGroup
-  #     Type: "network"
-
-
-  # PublicVpcInternalDomainWebServerElbv2:
-  #   Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-  #   Properties: 
-  #     IpAddressType: "ipv4"
-  #     Name: "PubVpcInternalDomWebServerElbv2"
-  #     SubnetMappings: 
-  #     - SubnetId:
-  #         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
-  #     - SubnetId:
-  #         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
-  #     - SubnetId:
-  #         Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
-  #     # SecurityGroups: 
-  #     # - !Ref PublicVpcWebServerElbv2SecurityGroup
-  #     Type: "network"
-  
-  # WebServerAcmCertificate:
-  #   Type: AWS::CertificateManager::Certificate
-  #   Properties: 
-  #     DomainName: 
-  #       Fn::Sub:
-  #       - "*.${DomainName}"
-  #       - DomainName: !Ref PublicDnsNameParam
-  #     DomainValidationOptions: 
-  #     - DomainName: !Ref PublicDnsNameParam
-  #       HostedZoneId: !Ref PublicDnsHostedZoneIdParam
-  #     ValidationMethod: "DNS"
-
-
-  # PublicVpcWebServer8080Elbv2Listener:
-  #   Type: AWS::ElasticLoadBalancingV2::Listener
-  #   Properties: 
-  #     Certificates:
-  #     - CertificateArn: !Ref WebServerAcmCertificate
-  #     DefaultActions: 
-  #     - Type: "forward"
-  #       TargetGroupArn: !Ref PublicVpcWebServer8080Elbv2TargetGroup
-  #     LoadBalancerArn: !Ref PublicVpcWwwDomainWebServerElbv2
-  #     Port: 443
-  #     Protocol: "HTTPS"
-  #     SslPolicy: "ELBSecurityPolicy-2016-08"
-
-  # PublicVpcWebServer8081Elbv2Listener:
-  #   Type: AWS::ElasticLoadBalancingV2::Listener
-  #   Properties: 
-  #     Certificates:
-  #     - CertificateArn: !Ref WebServerAcmCertificate
-  #     DefaultActions: 
-  #     - Type: "forward"
-  #       TargetGroupArn: !Ref PublicVpcWebServer8081Elbv2TargetGroup
-  #     LoadBalancerArn: !Ref PublicVpcInternalDomainWebServerElbv2
-  #     Port: 8443
-  #     Protocol: "HTTPS"
-  #     SslPolicy: "ELBSecurityPolicy-2016-08"
-
-  # WebServerPublicDnsRecord:
-  #   Type: AWS::Route53::RecordSet
-  #   Properties:
-  #     HostedZoneId: !Ref PublicDnsHostedZoneIdParam
-  #     Name:
-  #       Fn::Sub:
-  #       - "www.${DomainName}"
-  #       - DomainName: !Ref PublicDnsNameParam
-  #     ResourceRecords:
-  #     - !GetAtt PublicVpcWwwDomainWebServerElbv2.DNSName
-  #     TTL: 300
-  #     Type: "CNAME"
-
-  # WebServerPrivateDnsRecord:
-  #   Type: AWS::Route53::RecordSet
-  #   Properties:
-  #     HostedZoneId: !Ref PublicDnsHostedZoneIdParam
-  #     Name:
-  #       Fn::Sub:
-  #       - "internal.${DomainName}"
-  #       - DomainName: !Ref PublicDnsNameParam
-  #     ResourceRecords:
-  #     - !GetAtt PublicVpcInternalDomainWebServerElbv2.DNSName
-  #     TTL: 300
-  #     Type: "CNAME"
   
 
 #######################################################################################################################
