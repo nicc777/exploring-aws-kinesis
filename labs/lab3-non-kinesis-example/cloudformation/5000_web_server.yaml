@@ -307,6 +307,13 @@ Resources:
   PublicVpcWebServer8080Elbv2TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 60
+      HealthCheckPath: "/index.html"
+      HealthCheckPort: "traffic-port"
+      HealthCheckProtocol: "HTTP"
+      HealthCheckTimeoutSeconds: 30
+      HealthyThresholdCount: 5
       IpAddressType: "ipv4"
       Name: "PubVpcWebServer8080Elbv2TG"
       Port: 8080
@@ -319,6 +326,13 @@ Resources:
   PublicVpcWebServer8081Elbv2TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 60
+      HealthCheckPath: "/index.html"
+      HealthCheckPort: "traffic-port"
+      HealthCheckProtocol: "HTTP"
+      HealthCheckTimeoutSeconds: 30
+      HealthyThresholdCount: 5
       IpAddressType: "ipv4"
       Name: "PubVpcWebServer8081Elbv2TG"
       Port: 8081
