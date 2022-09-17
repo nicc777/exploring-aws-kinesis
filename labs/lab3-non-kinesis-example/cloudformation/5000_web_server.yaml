@@ -357,7 +357,7 @@ Resources:
       GroupName: "PrivVpcWebServerElbv2SG"
       GroupDescription: "Enable Web Server access on the inbound port for ELB"
       VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
       SecurityGroupEgress:
       - DestinationSecurityGroupId: !Ref WebServerSecurityGroup
         IpProtocol: tcp
@@ -435,6 +435,17 @@ Resources:
       Port: 8443
       Protocol: "HTTPS"
       SslPolicy: "ELBSecurityPolicy-2016-08"
+
+  # WwwServerListenerRule:
+  #   Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  #   Properties: 
+  #     Actions: 
+  #       - Action
+  #     Conditions: 
+  #       - RuleCondition
+  #     ListenerArn: String
+  #     Priority: Integer
+
 
   WebServerPublicDnsRecord:
     Type: AWS::Route53::RecordSet
