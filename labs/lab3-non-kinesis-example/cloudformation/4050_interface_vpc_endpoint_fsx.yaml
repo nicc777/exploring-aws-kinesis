@@ -1,0 +1,139 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This is a base stack for creating one or more VPC End Points. Apply this stack for each INterface type end point 
+  required. This stack cannot be used for Gateway Endpoints.
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  VpcStackNameParam:
+    Type: String
+    Description: "The name of the VPC stack, in order to import values"
+  # VpcEndPointServiceName:
+  #   Type: String
+  #   Description: "The Interface service name. Try running something like the following to get the service name, for example for SSM: $ aws ec2 describe-vpc-endpoint-services --output json | jq \".ServiceDetails[].ServiceName\" | grep ssm"
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                               COMMON EC2 RESOURCES                                              ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  VpcEndPointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: "VPC End Point Security Group"
+      GroupName: 
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - 'VpcEndPointSecurityGroup'
+      VpcId: 
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
+
+  VpcEndPointIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      Description: "Allow port 443/tcp (HTTPS) from trusted networks (Prefix List)"
+      FromPort: 443
+      ToPort: 443
+      GroupId: !Ref VpcEndPointSecurityGroup
+      IpProtocol: tcp
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
+
+  StaticWebRootFsxFilesystemNfs2049TcpIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
+      Description: "Allow port 2049/tcp (NFS)"
+      FromPort: 2049
+      ToPort: 2049
+      GroupId: !Ref VpcEndPointSecurityGroup
+      IpProtocol: tcp
+
+  StaticWebRootFsxFilesystemNfs111TcpIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
+      Description: "Allow port 111/tcp (NFS RPC)"
+      FromPort: 111
+      ToPort: 111
+      GroupId: !Ref VpcEndPointSecurityGroup
+      IpProtocol: tcp
+
+  StaticWebRootFsxFilesystemNfs2049bTcpIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
+      Description: "Allow port 2049/tcp (NFS)"
+      FromPort: 2049
+      ToPort: 2049
+      GroupId: !Ref VpcEndPointSecurityGroup
+      IpProtocol: tcp
+
+  StaticWebRootFsxFilesystemNfs111bTcpIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
+      Description: "Allow port 111/udp (NFS RPC)"
+      FromPort: 111
+      ToPort: 111
+      GroupId: !Ref VpcEndPointSecurityGroup
+      IpProtocol: udp
+
+  StaticWebRootFsxFilesystemNfs2049UdpIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-InterVpcHostsPrefixListId"
+      Description: "Allow port 2049/udp (NFS)"
+      FromPort: 2049
+      ToPort: 2049
+      GroupId: !Ref VpcEndPointSecurityGroup
+      IpProtocol: udp
+
+  VpcEndPointAllEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties: 
+      Description: "Allow all outgoing traffic"
+      GroupId: !Ref VpcEndPointSecurityGroup
+      IpProtocol: -1
+      CidrIp: 0.0.0.0/0
+
+  VpcEndPoint1:
+    Type: AWS::EC2::VPCEndpoint
+    Properties: 
+      # PublicDnsEnabled: true
+      SecurityGroupIds: 
+        - !Ref VpcEndPointSecurityGroup
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.fsx"
+      SubnetIds: 
+        # - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
+        # - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
+        - Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
+      VpcEndpointType: "Interface"
+      VpcId:
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
+

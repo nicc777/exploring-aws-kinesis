@@ -44,8 +44,8 @@ Resources:
   StaticWebRootFsxFilesystemNfs2049TcpIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties: 
-      CidrIp:
-        Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackName}-InterVpcHostsPrefixListId"
       Description: "Allow port 2049/tcp (NFS)"
       FromPort: 2049
       ToPort: 2049
@@ -55,30 +55,8 @@ Resources:
   StaticWebRootFsxFilesystemNfs111TcpIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties: 
-      CidrIp:
-        Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
-      Description: "Allow port 111/tcp (NFS RPC)"
-      FromPort: 111
-      ToPort: 111
-      GroupId: !Ref StaticWebRootFsxFilesystemSecurityGroup
-      IpProtocol: tcp
-
-  StaticWebRootFsxFilesystemNfs2049bTcpIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties: 
-      CidrIp:
-        Fn::ImportValue: !Sub "${VpcStackName}-PublicVpcCidrBlock"
-      Description: "Allow port 2049/tcp (NFS)"
-      FromPort: 2049
-      ToPort: 2049
-      GroupId: !Ref StaticWebRootFsxFilesystemSecurityGroup
-      IpProtocol: tcp
-
-  StaticWebRootFsxFilesystemNfs111bTcpIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties: 
-      CidrIp:
-        Fn::ImportValue: !Sub "${VpcStackName}-PublicVpcCidrBlock"
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackName}-InterVpcHostsPrefixListId"
       Description: "Allow port 111/tcp (NFS RPC)"
       FromPort: 111
       ToPort: 111
@@ -88,8 +66,8 @@ Resources:
   StaticWebRootFsxFilesystemNfs2049UdpIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties: 
-      CidrIp:
-        Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackName}-InterVpcHostsPrefixListId"
       Description: "Allow port 2049/udp (NFS)"
       FromPort: 2049
       ToPort: 2049
@@ -99,35 +77,14 @@ Resources:
   StaticWebRootFsxFilesystemNfs111UdpIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties: 
-      CidrIp:
-        Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
+      SourcePrefixListId:
+        Fn::ImportValue: !Sub "${VpcStackName}-InterVpcHostsPrefixListId"
       Description: "Allow port 111/udp (NFS RPC)"
       FromPort: 111
       ToPort: 111
       GroupId: !Ref StaticWebRootFsxFilesystemSecurityGroup
       IpProtocol: udp
 
-  StaticWebRootFsxFilesystemNfs2049bUdpIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties: 
-      CidrIp:
-        Fn::ImportValue: !Sub "${VpcStackName}-PublicVpcCidrBlock"
-      Description: "Allow port 2049/udp (NFS)"
-      FromPort: 2049
-      ToPort: 2049
-      GroupId: !Ref StaticWebRootFsxFilesystemSecurityGroup
-      IpProtocol: udp
-
-  StaticWebRootFsxFilesystemNfs111bUdpIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties: 
-      CidrIp:
-        Fn::ImportValue: !Sub "${VpcStackName}-PublicVpcCidrBlock"
-      Description: "Allow port 111/udp (NFS RPC)"
-      FromPort: 111
-      ToPort: 111
-      GroupId: !Ref StaticWebRootFsxFilesystemSecurityGroup
-      IpProtocol: udp
 
   AllEgress:
     Type: AWS::EC2::SecurityGroupEgress
