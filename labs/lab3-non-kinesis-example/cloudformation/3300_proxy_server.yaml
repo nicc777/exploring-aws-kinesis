@@ -28,6 +28,12 @@ Parameters:
     Type: String
     Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Public VPC"
     Default: "0.0.0.0/0"
+  PublicDnsHostedZoneIdParam:
+    Type: String
+    Description: "The Hosted Zone ID (Route 53) of the public DNS zone"
+  PublicDnsNameParam:
+    Type: String
+    Description: "The domain name of the public DNS zone, for example: example.tld"
 
 # Rules:
 #   set of rules
@@ -334,7 +340,7 @@ Resources:
       Port: 8080
       Protocol: "TCP"
 
-  ProxyServerDnsRecord:
+  ProxyServerPrivateDnsRecord:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId : 
@@ -344,6 +350,19 @@ Resources:
         - "proxy.${DomainName}"
         - DomainName:
             Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
+      ResourceRecords:
+      - !GetAtt ProxyServerElbv2.DNSName
+      TTL: 300
+      Type: "CNAME"
+
+  ProxyServerPublicInternalDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref PublicDnsHostedZoneIdParam
+      Name:
+        Fn::Sub:
+        - "proxy.${DomainName}"
+        - DomainName: !Ref PublicDnsNameParam
       ResourceRecords:
       - !GetAtt ProxyServerElbv2.DNSName
       TTL: 300

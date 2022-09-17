@@ -277,17 +277,16 @@ Resources:
               chkconfig docker on
 
               # PUBLIC SITE
-              docker run -it --rm -d -p 8080:80 --name web -v $DEPLOYMENT_TARGET_DIR/www-static:/usr/share/nginx/html nginx
+              docker run -it --rm -d -p 8080:80 --name web-public -v $DEPLOYMENT_TARGET_DIR/www-static:/usr/share/nginx/html nginx
 
               # PRIVATE SITE
-              docker run -it --rm -d -p 8081:80 --name web -v $DEPLOYMENT_TARGET_DIR/intranet-static:/usr/share/nginx/html nginx
+              docker run -it --rm -d -p 8081:80 --name web-internal -v $DEPLOYMENT_TARGET_DIR/intranet-static:/usr/share/nginx/html nginx
 
               --==BOUNDARY==--
             - ProxyServer:
                 Fn::Sub:
                 - "http://proxy.${DomainName}:8080"
-                - DomainName:
-                    Fn::ImportValue: !Sub "${DnsStackNameParam}-PrivateDnsDomain"
+                - DomainName: !Ref PublicDnsNameParam
               OpenZfsDnsName:
                 Fn::ImportValue: !Sub "${FsxStackNameParam}-StaticWebRootFsxFilesystemDNSName"
       TagSpecifications: 
@@ -336,7 +335,7 @@ Resources:
       LaunchTemplate: 
         LaunchTemplateId: !Ref WebServerInstanceHostLaunchTemplate
         Version: !GetAtt WebServerInstanceHostLaunchTemplate.LatestVersionNumber
-      MaxSize: "1"
+      MaxSize: "4"
       MinSize: "1"
       NewInstancesProtectedFromScaleIn: false
       VPCZoneIdentifier: 
@@ -348,7 +347,7 @@ Resources:
       - !Ref PublicVpcWebServer8081Elbv2TargetGroup
       Tags: 
       - Key: "Name"
-        Value: "WebAsg"
+        Value: "WebServerNode"
         PropagateAtLaunch: true
 
   PublicVpcWebServerElbv2SecurityGroup:
