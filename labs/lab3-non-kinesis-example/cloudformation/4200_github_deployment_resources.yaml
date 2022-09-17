@@ -271,11 +271,11 @@ Resources:
           DEBUG: "1"
           LAUNCH_TEMPLATE_ID: !Ref GitHubSyncServerInstanceHostLaunchTemplate
           SUBNET1:
-            Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet1Id"
+            Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet1Id"
           SUBNET2:
-            Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet2Id"
+            Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet2Id"
           SUBNET3:
-            Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcSubnet3Id"
+            Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcSubnet3Id"
           SECURITY_GROUP_ID: !Ref GitHubSyncServerSecurityGroup
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
@@ -388,7 +388,7 @@ Resources:
         - - Ref: AWS::StackName
           - 'InstanceSecurityGroup'
       VpcId:
-        Fn::ImportValue: !Sub "${VpcStackNameParam}-PrivateVpcId"
+        Fn::ImportValue: !Sub "${VpcStackNameParam}-PublicVpcId"
 
   AllEgress:
     Type: AWS::EC2::SecurityGroupEgress

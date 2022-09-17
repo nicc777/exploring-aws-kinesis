@@ -4,7 +4,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: >
   This stack defines a Network Filesystem (NFS Service) exposed by AWS FSX. The filesystem will host, among other
   things, static web artifacts for use by EC2 web server cluster. Each EC2 instance in the cluster will mount the
-  static content volume as READ ONLY. The NFS mount can only be done from hosts in the Private VPC.
+  static content volume as READ ONLY. The NFS mount can only be done from hosts in the Public VPC.
 
 # Metadata:
 #   template metadata
@@ -39,7 +39,7 @@ Resources:
         - - !Ref AWS::StackName
           - "StaticWebRootFsxFilesystemSecurityGroup"
       VpcId: 
-        Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcId"
+        Fn::ImportValue: !Sub "${VpcStackName}-PublicVpcId"
 
   StaticWebRootFsxFilesystemNfs2049TcpIngress:
     Type: AWS::EC2::SecurityGroupIngress
@@ -114,7 +114,7 @@ Resources:
           NfsExports: 
           - ClientConfigurations: 
             - Clients: 
-                Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcCidrBlock"
+                Fn::ImportValue: !Sub "${VpcStackName}-PublicVpcCidrBlock"
               Options: 
               - rw
               - crossmnt
@@ -135,7 +135,7 @@ Resources:
       - !Ref StaticWebRootFsxFilesystemSecurityGroup
       StorageCapacity: 64
       SubnetIds: 
-      - Fn::ImportValue: !Sub "${VpcStackName}-PrivateVpcSubnet1Id"
+      - Fn::ImportValue: !Sub "${VpcStackName}-PublicVpcSubnet1Id"
       Tags: 
       - Key: "ContainsPersonalInformation"
         Value: "FALSE"
