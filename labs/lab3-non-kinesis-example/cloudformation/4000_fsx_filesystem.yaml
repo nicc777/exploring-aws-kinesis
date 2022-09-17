@@ -112,14 +112,7 @@ Resources:
           CopyTagsToSnapshots: true
           DataCompressionType: "ZSTD"
           NfsExports: 
-          - ClientConfigurations: 
-            - Clients: 
-                Fn::ImportValue: !Sub "${VpcStackName}-PublicVpcCidrBlock"
-              Options: 
-              - rw
-              - crossmnt
-              - sync
-              - root_squash
+          - ClientConfigurations:             
             - Clients: 
                 Fn::ImportValue: !Sub "${VpcStackName}-PublicVpcCidrBlock"
               Options: 
