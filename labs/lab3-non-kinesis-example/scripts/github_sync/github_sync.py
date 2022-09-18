@@ -11,6 +11,7 @@ import requests
 import random
 import string
 import tarfile
+from os.path import exists
 
 
 logger = logging.getLogger()
@@ -164,8 +165,12 @@ def rm_file(file: str):
 
 def append_line_to_file(file: str, line: str):
     try:
-        with open(file, 'a') as f:
-            f.write('{}\n'.format(line))
+        if exists(file):
+            with open(file, 'a') as f:
+                f.write('{}\n'.format(line))
+        else:
+            with open(file, 'w') as f:
+                f.write('{}\n'.format(line))
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
