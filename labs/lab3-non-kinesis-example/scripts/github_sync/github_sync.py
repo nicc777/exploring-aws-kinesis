@@ -235,7 +235,9 @@ def process_deployment_scripts(root_dir: str):
         mdep = '/tmp/deployments.sh'
         rm_file(file=mdep)
         append_line_to_file(file=mdep, line='#!/bin/sh')
-        append_line_to_file(file=mdep, line='export $(grep -v \'^#\' /etc/environment | xargs -d \'\n\')')
+        append_line_to_file(file=mdep, line='export $(grep -v \'^#\' /etc/environment | xargs -d \'\\n\')')
+        append_line_to_file(file=mdep, line='echo "====================================================" >> /data/logs/deployment_shell_output.log')
+        append_line_to_file(file=mdep, line='date >> /data/logs/deployment_shell_output.log')
         for dirpath, dirnames, filenames in os.walk(root_dir):
             logger.info('Looking for deployment file in directory "{}"'.format(dirpath))
             for file in filenames:
@@ -244,7 +246,8 @@ def process_deployment_scripts(root_dir: str):
                     full_file = '{}{}{}'.format(dirpath, os.sep, file)
                     logger.info('   Adding deployment from file "{}"'.format(full_file))
                     append_line_to_file(file=mdep, line='cd {}'.format(dirpath))
-                    append_line_to_file(file=mdep, line='sh {}'.format(full_file))
+                    append_line_to_file(file=mdep, line='sh {} >> /data/logs/deployment_shell_output.log'.format(full_file))
+        append_line_to_file(file=mdep, line='echo "----------------------------------------------------" >> /data/logs/deployment_shell_output.log')
         os.chmod(mdep, 0o700)
         exit_status = os.system(mdep)
         logger.info('Master deployment status: {}'.format(exit_status))
