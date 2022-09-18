@@ -262,9 +262,15 @@ Resources:
               mkdir /data/github
               mkdir /data/logs
               mkdir /data/deployments
+              mkdir /data/deployments/www-static
+              mkdir /data/deployments/intranet-static
+              chown ec-user.ec2-user /data/deployments
+              chown ec-user.ec2-user /data/deployments/www-static
+              chown ec-user.ec2-user /data/deployments/intranet-static
               chmod 777 /data/github
               chmod 777 /data/logs
               chmod 777 /data/deployments
+              chmod 777 /data/deployments/*
 
               echo "GITHUB_WORKDIR=/data/github" >> /etc/environment
               echo "DEPLOYMENT_TARGET_DIR=/data/deployments" >> /etc/environment
