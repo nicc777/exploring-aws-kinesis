@@ -483,6 +483,7 @@ Resources:
 
               mkdir /home/ec2-user/script
               chown ec2-user:ec2-user /home/ec2-user/script
+              chown ec2-user:ec2-user /data/deployments
 
               REQUIREMENTS_FILE=${RequirementsFile}
               SCRIPT_FILE=${ScriptFile}
