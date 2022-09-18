@@ -248,7 +248,7 @@ def process_deployment_scripts(root_dir: str):
         os.chmod(mdep, 0o700)
         exit_status = os.system(mdep)
         logger.info('Master deployment status: {}'.format(exit_status))
-        # rm_file(file=mdep)
+        rm_file(file=mdep)
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
