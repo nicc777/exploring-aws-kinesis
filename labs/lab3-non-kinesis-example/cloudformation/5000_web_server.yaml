@@ -471,7 +471,7 @@ Resources:
             - "www.${DomainName}"
             - DomainName: !Ref PublicDnsNameParam
       ListenerArn: !Ref PublicVpcWebServer8081Elbv2Listener
-      Priority: 100
+      Priority: 150
 
   PublicVpcWebServer8081Elbv2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
