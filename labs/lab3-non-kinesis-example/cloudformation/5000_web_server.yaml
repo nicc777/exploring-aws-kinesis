@@ -396,6 +396,10 @@ Resources:
         FromPort: 8443
         ToPort: 8443
         CidrIp: !Ref FirstTrustedInternetCiderParam
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: !Ref FirstTrustedInternetCiderParam
       Tags:
         - Key: Name
           Value: PubVpcWebServerElbv2SG
