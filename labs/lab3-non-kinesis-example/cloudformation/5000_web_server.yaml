@@ -470,7 +470,7 @@ Resources:
           - Fn::Sub:
             - "www.${DomainName}"
             - DomainName: !Ref PublicDnsNameParam
-      ListenerArn: !Ref PublicVpcWebServer8081Elbv2Listener
+      ListenerArn: !Ref PublicVpcWebServer8080Elbv2Listener
       Priority: 150
 
   PublicVpcWebServer8081Elbv2Listener:
