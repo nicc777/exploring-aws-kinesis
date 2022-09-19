@@ -451,12 +451,40 @@ Resources:
       Certificates:
       - CertificateArn: !Ref WebServerAcmCertificate
       DefaultActions: 
-      - Type: "forward"
-        TargetGroupArn: !Ref PublicVpcWebServer8081Elbv2TargetGroup
+      - Type: "redirect"
+        RedirectConfig: 
+          Host: 
+            Fn::Sub:
+            - "www.${DomainName}"
+            - DomainName: !Ref PublicDnsNameParam
+          Path: "/error.html"
+          Port: "443"
+          Protocol: "HTTPS"
+          Query: "message=Host+header+mismatched"
+          StatusCode: "HTTP_302"
       LoadBalancerArn: !Ref PublicVpcWwwDomainWebServerElbv2
       Port: 8443
       Protocol: "HTTPS"
       SslPolicy: "ELBSecurityPolicy-2016-08"
+      
+  InternalServerHostMatchListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties: 
+      Actions: 
+      - Order: 1
+        ForwardConfig:
+          TargetGroups: 
+          - TargetGroupArn: !Ref PublicVpcWebServer8081Elbv2TargetGroup
+        Type: "forward"
+      Conditions: 
+      - Field: "host-header"
+        HostHeaderConfig: 
+          Values: 
+          - Fn::Sub:
+            - "internal.${DomainName}"
+            - DomainName: !Ref PublicDnsNameParam
+      ListenerArn: !Ref PublicVpcWebServer8081Elbv2Listener
+      Priority: 100
 
   PublicVpcWebServer80Elbv2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
