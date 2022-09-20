@@ -63,6 +63,7 @@ When running commands, the following environment variables are assumed to be set
 | `export GITHUB_SYNC_STACK_NAME="..."`       | The CloudFormation stack name for deploying the GitHub Sync Resources                 |
 | `export SSM_VPC_ENDPOINT_STACK_NAME="..."`  | The CloudFormation stack name for deploying The SSM VPC End Point resource            |
 | `export WEB_SERVER_STACK_NAME="..."`        | The CloudFormation stack name for deploying The Web Server and API Gateway Resources  |
+| `export COGNITO_STACK_NAME="..."`           | The CloudFormation stack name for deploying The employee Cognito Pool                 |
 | `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                                |
 | `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                  |
 | `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                    |
@@ -448,7 +449,7 @@ export TRUSTED_IP=$(curl http://checkip.amazonaws.com/)
 
 aws cloudformation deploy \
     --stack-name $WEB_SERVER_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/5000_web_server.yaml \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5100_web_server.yaml \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
         DnsStackNameParam="$DNS_STACK_NAME" \
         FirstTrustedInternetCiderParam="$TRUSTED_IP" \
