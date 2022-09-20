@@ -44,6 +44,7 @@ Resources:
       - implicit
       AllowedOAuthFlowsUserPoolClient: True
       AllowedOAuthScopes: 
+      - aws.cognito.signin.user.admin
       - email
       - openid
       - profile
