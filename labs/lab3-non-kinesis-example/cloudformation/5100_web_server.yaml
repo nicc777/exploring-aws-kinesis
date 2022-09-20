@@ -420,6 +420,7 @@ Resources:
       - !Ref PublicVpcWebServerElbv2SecurityGroup
       Type: "application"
 
+  # TODO In future labs, this must be in it's own template in order to create a Cognito user pool with a custom domain
   WebServerAcmCertificate:
     Type: AWS::CertificateManager::Certificate
     Properties: 
