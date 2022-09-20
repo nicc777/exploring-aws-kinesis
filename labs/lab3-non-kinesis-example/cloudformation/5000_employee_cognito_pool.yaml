@@ -21,7 +21,7 @@ Resources:
       AdminCreateUserConfig: 
         AllowAdminCreateUserOnly: true
         InviteMessageTemplate: 
-          EmailMessage: "Verification code: {####} | Temporary Password: {####}"
+          EmailMessage: "Username: {username} | Verification code: {####} | Temporary Password: {####}"
           EmailSubject: "Employee Account Invitation"
         UnusedAccountValidityDays: 3
       MfaConfiguration: "OFF" # Note: for real organizations, this will probably be on
