@@ -91,18 +91,17 @@ Resources:
   CognitoAuthorizerUserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties: 
-      Domain: 
-        Fn::Sub:
-        - "staff-auth.${DomainName}"
-        - DomainName: !Ref PublicDnsNameParam
+      # CustomDomainConfig: 
+      #   CertificateArn: String
+      Domain: "staff-auth"
       UserPoolId: !Ref CognitoAuthorizerUserPool
 
 Outputs:
 
   HostedUi:
     Description: Hosted UI
-    # Value: !Sub "https://${CognitoAuthorizerUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/login?client_id=${CognitoAuthorizerUserPoolClient}&response_type=token&scope=email+openid+profile&redirect_uri=${CallbackUrl}"
-    Value: 
-      Fn::Sub:
-      - "https://staff-auth.${DomainName}/login?client_id=${CognitoAuthorizerUserPoolClient}&response_type=token&scope=email+openid+profile&redirect_uri=${CallbackUrl}"
-      - DomainName: !Ref PublicDnsNameParam
+    Value: !Sub "https://${CognitoAuthorizerUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/login?client_id=${CognitoAuthorizerUserPoolClient}&response_type=token&scope=email+openid+profile&redirect_uri=${CallbackUrl}"
+    # Value: 
+    #   Fn::Sub:
+    #   - "https://staff-auth.${DomainName}/login?client_id=${CognitoAuthorizerUserPoolClient}&response_type=token&scope=email+openid+profile&redirect_uri=${CallbackUrl}"
+    #   - DomainName: !Ref PublicDnsNameParam
