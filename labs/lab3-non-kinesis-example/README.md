@@ -70,6 +70,7 @@ When running commands, the following environment variables are assumed to be set
 | `export GITHUB_AUTHORIZED_SENDERS="..."`    | CSV List of supported sender login values                                             |
 | `export ROUTE53_PUBLIC_ZONEID="..."`        | The Route 53 Hosted Zone ID of the Public DNS Domain                                  |
 | `export ROUTE53_PUBLIC_DNSNAME="..."`       | The Route 53 Hosted Public DNS Domain Name                                            |
+| `export EMPLOYEE_1_EMAIL="..."`             | A valid email address of a dummy employee (expect actual e-mails to be sent here)     |
 
 Some of these variables, like 
 
@@ -442,6 +443,14 @@ aws cloudformation deploy \
         SupportedRepositoriesParam=$SUPPORTED_REPOSITORIES \
         GitHubAuthorizedSendersParam=$GITHUB_AUTHORIZED_SENDERS \
     --capabilities CAPABILITY_NAMED_IAM
+
+
+aws cloudformation deploy \
+    --stack-name $COGNITO_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5000_employee_cognito_pool.yaml \
+    --parameter-overrides CallbackUrl="https://internal.${ROUTE53_PUBLIC_DNSNAME}/callback.html" \
+        PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
+        Email="$EMPLOYEE_1_EMAIL"
 
 
 # WEB_SERVER_STACK_NAME
