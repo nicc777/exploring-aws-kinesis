@@ -370,6 +370,10 @@ Resources:
           - "sqs:GetQueueAttributes"
           - "sqs:ChangeMessageVisibility"
           Resource: !GetAtt GitHubSyncRequestQueue.Arn
+        - Effect: "Allow"
+          Action:
+          - "cloudformation:ListExports"
+          Resource: "*"
       PolicyName: "GitHubSyncServerSsmPolicy"
       Roles:
       - !Ref GitHubSyncServerRootRole
