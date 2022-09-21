@@ -49,19 +49,19 @@ Resources:
       - profile
       CallbackURLs: 
       - Fn::Sub:
-        - "https://internal.${DomainName}/callback.html"
+        - "https://internal.${DomainName}:8443/callback.html"
         - DomainName: !Ref PublicDnsNameParam
       - "http://localhost/callback.html"
       - "http://localhost:9000/callback.html"
       - Fn::Sub:
-        - "https://internal.${DomainName}/loggedout.html"
+        - "https://internal.${DomainName}:8443/loggedout.html"
         - DomainName: !Ref PublicDnsNameParam
       - "http://localhost/loggedout.html"
       - "http://localhost:9000/loggedout.html"
       ClientName: employee-cognito-client
       LogoutURLs:
       - Fn::Sub:
-        - "https://internal.${DomainName}/loggedout.html"
+        - "https://internal.${DomainName}:8443/loggedout.html"
         - DomainName: !Ref PublicDnsNameParam
       - "http://localhost/loggedout.html"
       - "http://localhost:9000/loggedout.html"
