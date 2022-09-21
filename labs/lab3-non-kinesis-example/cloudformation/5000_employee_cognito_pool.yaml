@@ -105,3 +105,17 @@ Outputs:
     #   Fn::Sub:
     #   - "https://staff-auth.${DomainName}/login?client_id=${CognitoAuthorizerUserPoolClient}&response_type=token&scope=email+openid+profile&redirect_uri=${CallbackUrl}"
     #   - DomainName: !Ref PublicDnsNameParam
+    Export:
+      Name: !Sub "${AWS::StackName}-CognitoEmployeeHostedUi"
+
+  CognitoAuthorizerUserPoolId:
+    Description: "CognitoAuthorizerUserPool ID"
+    Value: !Ref CognitoAuthorizerUserPool
+    Export:
+      Name: !Sub "${AWS::StackName}-CognitoEmployeeAuthorizerUserPoolId"
+
+  CognitoAuthorizerUserPoolClientId:
+    Description: "CognitoAuthorizerUserPoolClientId ID"
+    Value: !Ref CognitoAuthorizerUserPoolClient
+    Export:
+      Name: !Sub "${AWS::StackName}-CognitoEmployeeAuthorizerUserPoolClientId"
