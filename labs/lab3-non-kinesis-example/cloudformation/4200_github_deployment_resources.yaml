@@ -471,7 +471,11 @@ Resources:
 
               source /tmp/proxy
 
-              yum install -y git nfs-utils nfs4-acl-tools nfs-common python3 python3-pip python3-setuptools
+              amazon-linux-extras install epel -y
+              sleep 30
+              yum update -y
+              sleep 30
+              yum install -y git nfs-utils nfs4-acl-tools nfs-common python3 python3-pip python3-setuptools jq
 
               mkdir /data
               mount -t nfs -o nfsvers=4.1 ${OpenZfsDnsName}:/fsx/ /data
