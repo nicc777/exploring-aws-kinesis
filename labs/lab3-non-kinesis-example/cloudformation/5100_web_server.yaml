@@ -383,10 +383,17 @@ Resources:
         IpProtocol: tcp
         FromPort: 8080
         ToPort: 8080
+        Description: "Web Server Access - Public Site"
       - DestinationSecurityGroupId: !Ref WebServerSecurityGroup
         IpProtocol: tcp
         FromPort: 8081
         ToPort: 8081
+        Description: "Web Server Access - Internal/Intranet Site"
+      - CidrIp: "0.0.0.0/0"
+        IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        Description: "Required for ALB to reach Cognito End-Points"
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: 443
