@@ -465,6 +465,7 @@ aws cloudformation deploy \
         FsxStackNameParam="$NFS_STACK_NAME" \
         PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
         PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
+        CognitoStackNameParam="$COGNITO_STACK_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 

@@ -144,15 +144,33 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-CognitoEmployeeAuthorizerUserPoolId"
 
+  CognitoAuthorizerUserPoolArn:
+    Description: "CognitoAuthorizerUserPool ARN"
+    Value: !GetAtt  CognitoAuthorizerUserPool.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-CognitoAuthorizerUserPoolArn"
+
   CognitoAuthorizerUserPoolClientId:
     Description: "CognitoAuthorizerUserPoolClientId ID"
     Value: !Ref CognitoAuthorizerUserPoolClient
     Export:
       Name: !Sub "${AWS::StackName}-CognitoEmployeeAuthorizerUserPoolClientId"
 
+  CognitoAlbUserPoolClientId:
+    Description: "CognitoAlbUserPoolClient ID"
+    Value: !Ref CognitoAlbUserPoolClient
+    Export:
+      Name: !Sub "${AWS::StackName}-CognitoAlbUserPoolClientId"
+
   CognitoAuthorizerUserPoolProviderUrl:
     Description: "CognitoAuthorizerUserPool ID"
     Value: !GetAtt  CognitoAuthorizerUserPool.ProviderURL
     Export:
       Name: !Sub "${AWS::StackName}-CognitoAuthorizerUserPoolProviderUrl"
+
+  CognitoAuthorizerUserPoolDomain:
+    Description: "CognitoAuthorizerUserPoolDomain"
+    Value: !Ref CognitoAuthorizerUserPoolDomain
+    Export:
+      Name: !Sub "${AWS::StackName}-CognitoAuthorizerUserPoolDomain"
 

@@ -36,6 +36,9 @@ Parameters:
   PublicDnsNameParam:
     Type: String
     Description: "The domain name of the public DNS zone, for example: example.tld"
+  CognitoStackNameParam:
+    Type: String
+    Description: "The stack name of the Cognito User Pool"
 
 # Rules:
 #   set of rules
@@ -502,7 +505,39 @@ Resources:
       Port: 8443
       Protocol: "HTTPS"
       SslPolicy: "ELBSecurityPolicy-2016-08"
-      
+
+  InternalServerAuthListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties: 
+      Actions: 
+      - Order: 1
+        Type: "authenticate-cognito"
+        AuthenticateCognitoConfig: 
+          AuthenticationRequestExtraParams: 
+            display : "page"
+            prompt : "login"
+          OnUnauthenticatedRequest: "authenticate"
+          Scope: "openid"
+          SessionTimeout: 900
+          UserPoolArn: 
+            Fn::ImportValue: !Sub "${CognitoStackNameParam}-CognitoAuthorizerUserPoolArn"
+          UserPoolClientId:
+            Fn::ImportValue: !Sub "${CognitoStackNameParam}-CognitoAlbUserPoolClientId"
+          UserPoolDomain:
+            Fn::ImportValue: !Sub "${CognitoStackNameParam}-CognitoAuthorizerUserPoolDomain"
+      - Order: 2
+        ForwardConfig:
+          TargetGroups: 
+          - TargetGroupArn: !Ref PublicVpcWebServer8081Elbv2TargetGroup
+        Type: "forward"
+      Conditions: 
+      - Field: "path-pattern"
+        PathPatternConfig: 
+          Values: 
+          - "/access-card-app/*"
+      ListenerArn: !Ref PublicVpcWebServer8081Elbv2Listener
+      Priority: 100
+
   InternalServerHostMatchListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties: 
@@ -520,7 +555,7 @@ Resources:
             - "internal.${DomainName}"
             - DomainName: !Ref PublicDnsNameParam
       ListenerArn: !Ref PublicVpcWebServer8081Elbv2Listener
-      Priority: 100
+      Priority: 110
 
   PublicVpcWebServer80Elbv2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
