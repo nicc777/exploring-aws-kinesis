@@ -531,6 +531,12 @@ Resources:
           - TargetGroupArn: !Ref PublicVpcWebServer8081Elbv2TargetGroup
         Type: "forward"
       Conditions: 
+      - Field: "host-header"
+        HostHeaderConfig: 
+          Values: 
+          - Fn::Sub:
+            - "internal.${DomainName}"
+            - DomainName: !Ref PublicDnsNameParam
       - Field: "path-pattern"
         PathPatternConfig: 
           Values: 
