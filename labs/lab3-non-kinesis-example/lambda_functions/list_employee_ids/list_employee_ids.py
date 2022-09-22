@@ -123,6 +123,7 @@ def decode_data(event, body: str):
 
 def dynamodb_data_formatting(
     data: list,
+    last_evaluation_key: dict=dict(),
     logger=get_logger()
 )->dict:
     debug_log(message='data={}', variable_as_list=[data,], logger=logger)
@@ -145,6 +146,7 @@ def dynamodb_data_formatting(
     result['Message'] = 'Functionality Not Yet Implemented'
     try:
         for record in data:
+            debug_log(message='   Evaluating record: {}', variable_as_list=[record,], logger=logger)
             final_record  = dict()
             for field_name, field_value in record.items():
                 if field_name not in EXCLUDE_FIELDS:
@@ -153,12 +155,15 @@ def dynamodb_data_formatting(
                         final_field_name = RECORD_NAME_MAP[field_name]
                         final_record[final_field_name] = field_value
             result['Employees'].append(final_record)
+        result['LastEvaluatedKey'] = last_evaluation_key
+        qty = len(result['Employees'])
+        result['RecordCount'] = qty
+        result['QueryStatus'] = 'Ok'
+        result['Message'] = '{} Records Included'.format(qty)
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
         result['QueryStatus'] = 'ERROR'
-        result['Message'] = 'Processing Error'
-    qty = len(result['Employees'])
-    result['RecordCount'] = qty
+        result['Message'] = 'Processing Error'    
     debug_log(message='result={}', variable_as_list=[result,], logger=logger)
     return result
 
@@ -175,8 +180,9 @@ def query_employees(
     start_key: dict=dict(),
     boto3_clazz=boto3,
     logger=get_logger()
-)->dict:
+)->tuple:
     result = list()
+    final_result = list()
     if max_items > 100:
         logger.warning('max_items was {} which is more than the absolute max. of 100.'.format(max_items))
         max_items = 100
@@ -238,16 +244,64 @@ def query_employees(
                     for field_data_type, field_data_value in field_data.items():
                         record[field_name] = '{}'.format(field_data_value) 
                 result.append(record)
+                debug_log(message='record length now {} - Added record {}', variable_as_list=[len(result), record,], logger=logger)
         if 'LastEvaluatedKey' in response:
-            result += query_employees(
-                max_items=max_items,
-                start_key=response['LastEvaluatedKey'],
-                boto3_clazz=boto3_clazz,
-                logger=logger
+            final_result = (
+                {
+                    'result': result,
+                }, 
+                response['LastEvaluatedKey']
+            )
+        else:
+            final_result = (
+                {
+                    'result': result,
+                }, 
+                dict()
             )
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-    return result
+    debug_log(message='final_result={}', variable_as_list=(final_result,), logger=logger)
+    return tuple(final_result)
+
+
+def query_employees_helper(
+    max_items: int=25,
+    boto3_clazz=boto3,
+    logger=get_logger()
+)->tuple:
+    if max_items > 100:
+        max_items = 100
+    if max_items < 10:
+        max_items = 10
+    result = list()
+    run = True
+    start_key = dict()
+    rounds = 0
+    while run:
+        query_max_items = max_items - len(result)
+        if query_max_items > 0:
+            query_result_records, new_start_key = query_employees(
+                max_items=query_max_items,
+                start_key=start_key,
+                boto3_clazz=boto3_clazz,
+                logger=logger
+            )
+            debug_log(message='query_result_records length={} new_start_key={}', variable_as_list=(len(query_result_records), new_start_key,), logger=logger)
+            result += query_result_records['result']
+            start_key = new_start_key
+            if len(result) >= max_items:
+                logger.info('Maximum records reached. Returning collected data')
+                run = False
+
+        rounds += 1
+        if rounds > 10:
+            logger.warning('Maximum Rounds Reached - breaking loop')
+            run = False
+        elif rounds > 1 and len(result) == 0:
+            logger.warning('Looping without adding records - breaking loop')
+            run = False
+    return (result, start_key)
 
 
 ###############################################################################
@@ -279,15 +333,15 @@ def handler(
     
     debug_log(message='event={}', variable_as_list=[event,], logger=logger)
     
-    dynamodb_result = query_employees(
-        max_items=10,
+    dynamodb_result, last_evaluation_key = query_employees_helper(
+        max_items=12,
         boto3_clazz=boto3_clazz,
         logger=logger
     )
     debug_log(message='dynamodb_result={}', variable_as_list=[dynamodb_result,], logger=logger)
 
 
-    query_data = dynamodb_data_formatting(data=dynamodb_result, logger=logger)
+    query_data = dynamodb_data_formatting(data=dynamodb_result, logger=logger, last_evaluation_key=last_evaluation_key)
     debug_log(message='query_data={}', variable_as_list=[query_data,], logger=logger)
     return_object['body'] = query_data
 
