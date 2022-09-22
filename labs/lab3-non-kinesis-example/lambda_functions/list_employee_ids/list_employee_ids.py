@@ -121,26 +121,11 @@ def decode_data(event, body: str):
     return body
 
 
-###############################################################################
-###                                                                         ###
-###                 A W S    A P I    I N T E G R A T I O N                 ###
-###                                                                         ###
-###############################################################################
-
-
-def query_employees(
-    max_items: int=100,
-    start_key: dict=dict(),
-    boto3_clazz=boto3,
+def dynamodb_data_formatting(
+    data: list,
     logger=get_logger()
 )->dict:
-    result = dict()
-    result['Employees'] = list()
-    result['RecordCount'] = 0
-    result['LastEvaluatedKey'] = dict()
-    result['QueryStatus'] = 'ERROR'
-    result['Message'] = 'Functionality Not Yet Implemented'
-
+    debug_log(message='data={}', variable_as_list=[data,], logger=logger)
     RECORD_NAME_MAP = {
         "subject-id": "EmployeeSystemId",
         "department": "Department",
@@ -149,15 +134,52 @@ def query_employees(
         "first-name": "EmployeeFirstName",
         "last-name": "EmployeeLastName"
     }
-
     EXCLUDE_FIELDS = (
         'subject-topic',
     )
+    result = dict()
+    result['Employees'] = list()
+    result['RecordCount'] = 0
+    result['LastEvaluatedKey'] = dict()
+    result['QueryStatus'] = 'ERROR'
+    result['Message'] = 'Functionality Not Yet Implemented'
+    try:
+        for record in data:
+            final_record  = dict()
+            for field_name, field_value in record.items():
+                if field_name not in EXCLUDE_FIELDS:
+                    final_field_name = field_name
+                    if field_name in RECORD_NAME_MAP:
+                        final_field_name = RECORD_NAME_MAP[field_name]
+                        final_record[final_field_name] = field_value
+            result['Employees'].append(final_record)
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        result['QueryStatus'] = 'ERROR'
+        result['Message'] = 'Processing Error'
+    qty = len(result['Employees'])
+    result['RecordCount'] = qty
+    debug_log(message='result={}', variable_as_list=[result,], logger=logger)
+    return result
 
+
+###############################################################################
+###                                                                         ###
+###                 A W S    A P I    I N T E G R A T I O N                 ###
+###                                                                         ###
+###############################################################################
+
+
+def query_employees(
+    max_items: int=25,
+    start_key: dict=dict(),
+    boto3_clazz=boto3,
+    logger=get_logger()
+)->dict:
+    result = list()
     if max_items > 100:
         logger.warning('max_items was {} which is more than the absolute max. of 100.'.format(max_items))
         max_items = 100
-
     try:
         client = get_client('dynamodb', boto3_clazz=boto3_clazz)
         response = dict()
@@ -185,10 +207,6 @@ def query_employees(
                 ConsistentRead=False
             )
         else:
-            start_key_data = dict()
-            for start_key_name, start_key_value in start_key.items():
-                start_key_data[start_key_name] = dict()
-                start_key_data[start_key_name]['S'] = start_key_value
             response = client.scan(
                 TableName='access-card-app',
                 AttributesToGet=[
@@ -201,7 +219,7 @@ def query_employees(
                     'last-name',
                 ],
                 Limit=max_items,
-                ExclusiveStartKey=start_key_data,
+                ExclusiveStartKey=start_key,
                 Select='SPECIFIC_ATTRIBUTES',
                 ScanFilter={
                     'subject-topic': {
@@ -217,25 +235,18 @@ def query_employees(
             for item in response['Items']:
                 record = dict()
                 for field_name, field_data in item.items():
-                    if field_name not in EXCLUDE_FIELDS:
-                        final_field_name = field_name
-                        if field_name in RECORD_NAME_MAP:
-                            final_field_name = RECORD_NAME_MAP[field_name]
-                        for field_data_type, field_data_value in field_data.items():
-                            record[final_field_name] = '{}'.format(field_data_value)
-                result['Employees'].append(record)
+                    for field_data_type, field_data_value in field_data.items():
+                        record[field_name] = '{}'.format(field_data_value) 
+                result.append(record)
         if 'LastEvaluatedKey' in response:
-            for next_key, next_data in response['LastEvaluatedKey'].items():
-                result['LastEvaluatedKey'][next_key] = '{}'.format(next_data['S'])
-        result['QueryStatus'] = 'OK'
-        result['Message'] = 'Query Executed.'
-        record_qty = len(result['Employees'])
-        result['RecordCount'] = record_qty
+            result += query_employees(
+                max_items=max_items,
+                start_key=response['LastEvaluatedKey'],
+                boto3_clazz=boto3_clazz,
+                logger=logger
+            )
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-        result['QueryStatus'] = 'ERROR'
-        result['Message'] = 'Processing Error'
-
     return result
 
 
@@ -268,11 +279,15 @@ def handler(
     
     debug_log(message='event={}', variable_as_list=[event,], logger=logger)
     
-    query_data = query_employees(
+    dynamodb_result = query_employees(
         max_items=10,
         boto3_clazz=boto3_clazz,
         logger=logger
     )
+    debug_log(message='dynamodb_result={}', variable_as_list=[dynamodb_result,], logger=logger)
+
+
+    query_data = dynamodb_data_formatting(data=dynamodb_result, logger=logger)
     debug_log(message='query_data={}', variable_as_list=[query_data,], logger=logger)
     return_object['body'] = query_data
 
@@ -308,8 +323,8 @@ if __name__ == '__main__':
     print('------------------------------------------------------------------------------------------------------------------------')
     print('{}'.format(json.dumps(result1)))
 
-    result2 = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True)
-    print('------------------------------------------------------------------------------------------------------------------------')
-    print('{}'.format(json.dumps(result2)))
+    # result2 = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True)
+    # print('------------------------------------------------------------------------------------------------------------------------')
+    # print('{}'.format(json.dumps(result2)))
 
 
