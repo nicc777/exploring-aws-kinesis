@@ -58,6 +58,29 @@ Resources:
         - DomainName: !Ref PublicDnsNameParam
       - "http://localhost/loggedout.html"
       - "http://localhost:9000/loggedout.html"
+      ClientName: employee-cognito-client
+      LogoutURLs:
+      - Fn::Sub:
+        - "https://internal.${DomainName}:8443/loggedout.html"
+        - DomainName: !Ref PublicDnsNameParam
+      - "http://localhost/loggedout.html"
+      - "http://localhost:9000/loggedout.html"
+      SupportedIdentityProviders: 
+      - COGNITO
+      UserPoolId: !Ref CognitoAuthorizerUserPool
+
+  CognitoAlbUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties: 
+      AllowedOAuthFlows: 
+      - code
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthScopes: 
+      - aws.cognito.signin.user.admin
+      - email
+      - openid
+      - profile
+      CallbackURLs: 
       - Fn::Sub:
         - "https://internal.${DomainName}:8443/oauth2/idpresponse"
         - DomainName: !Ref PublicDnsNameParam
@@ -66,13 +89,12 @@ Resources:
       - Fn::Sub:
         - "${UserPoolProviderUrl}/oauth2/idpresponse"
         - UserPoolProviderUrl: !GetAtt  CognitoAuthorizerUserPool.ProviderURL
-      ClientName: employee-cognito-client
+      ClientName: employee-alb-cognito-client
+      GenerateSecret: true
       LogoutURLs:
       - Fn::Sub:
         - "https://internal.${DomainName}:8443/loggedout.html"
         - DomainName: !Ref PublicDnsNameParam
-      - "http://localhost/loggedout.html"
-      - "http://localhost:9000/loggedout.html"
       SupportedIdentityProviders: 
       - COGNITO
       UserPoolId: !Ref CognitoAuthorizerUserPool
