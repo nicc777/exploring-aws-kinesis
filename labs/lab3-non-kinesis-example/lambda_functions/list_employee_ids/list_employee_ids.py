@@ -135,7 +135,7 @@ def query_employees(
     logger=get_logger()
 )->dict:
     result = dict()
-    result['Records'] = list()
+    result['Employees'] = list()
     result['RecordCount'] = 0
     result['LastEvaluatedKey'] = dict()
     result['QueryStatus'] = 'ERROR'
@@ -223,12 +223,14 @@ def query_employees(
                             final_field_name = RECORD_NAME_MAP[field_name]
                         for field_data_type, field_data_value in field_data.items():
                             record[final_field_name] = '{}'.format(field_data_value)
-                result['Records'].append(record)
+                result['Employees'].append(record)
         if 'LastEvaluatedKey' in response:
             for next_key, next_data in response['LastEvaluatedKey'].items():
                 result['LastEvaluatedKey'][next_key] = '{}'.format(next_data['S'])
         result['QueryStatus'] = 'OK'
         result['Message'] = 'Query Executed.'
+        record_qty = len(result['Employees'])
+        result['RecordCount'] = record_qty
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
         result['QueryStatus'] = 'ERROR'
