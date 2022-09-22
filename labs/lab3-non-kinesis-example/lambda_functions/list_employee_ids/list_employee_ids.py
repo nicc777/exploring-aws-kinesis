@@ -141,6 +141,19 @@ def query_employees(
     result['QueryStatus'] = 'ERROR'
     result['Message'] = 'Functionality Not Yet Implemented'
 
+    RECORD_NAME_MAP = {
+        "subject-id": "EmployeeSystemId",
+        "department": "Department",
+        "employee-id": "EmployeeId",
+        "employee-status": "EmployeeStatus",
+        "first-name": "EmployeeFirstName",
+        "last-name": "EmployeeLastName"
+    }
+
+    EXCLUDE_FIELDS = (
+        'subject-topic',
+    )
+
     if max_items > 100:
         logger.warning('max_items was {} which is more than the absolute max. of 100.'.format(max_items))
         max_items = 100
@@ -204,8 +217,12 @@ def query_employees(
             for item in response['Items']:
                 record = dict()
                 for field_name, field_data in item.items():
-                    for field_data_type, field_data_value in field_data.items():
-                        record[field_name] = '{}'.format(field_data_value)
+                    if field_name not in EXCLUDE_FIELDS:
+                        final_field_name = field_name
+                        if field_name in RECORD_NAME_MAP:
+                            final_field_name = RECORD_NAME_MAP[field_name]
+                        for field_data_type, field_data_value in field_data.items():
+                            record[final_field_name] = '{}'.format(field_data_value)
                 result['Records'].append(record)
         if 'LastEvaluatedKey' in response:
             for next_key, next_data in response['LastEvaluatedKey'].items():
