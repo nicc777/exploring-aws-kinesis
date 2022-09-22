@@ -58,6 +58,14 @@ Resources:
         - DomainName: !Ref PublicDnsNameParam
       - "http://localhost/loggedout.html"
       - "http://localhost:9000/loggedout.html"
+      - Fn::Sub:
+        - "https://internal.${DomainName}:8443/oauth2/idpresponse"
+        - DomainName: !Ref PublicDnsNameParam
+      - !Sub "https://${CognitoAuthorizerUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/saml2/idpresponse"
+      - !Sub "https://${CognitoAuthorizerUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/idpresponse"
+      - Fn::Sub:
+        - "${UserPoolProviderUrl}/oauth2/idpresponse"
+        - UserPoolProviderUrl: !GetAtt  CognitoAuthorizerUserPool.ProviderURL
       ClientName: employee-cognito-client
       LogoutURLs:
       - Fn::Sub:
@@ -119,3 +127,10 @@ Outputs:
     Value: !Ref CognitoAuthorizerUserPoolClient
     Export:
       Name: !Sub "${AWS::StackName}-CognitoEmployeeAuthorizerUserPoolClientId"
+
+  CognitoAuthorizerUserPoolProviderUrl:
+    Description: "CognitoAuthorizerUserPool ID"
+    Value: !GetAtt  CognitoAuthorizerUserPool.ProviderURL
+    Export:
+      Name: !Sub "${AWS::StackName}-CognitoAuthorizerUserPoolProviderUrl"
+
