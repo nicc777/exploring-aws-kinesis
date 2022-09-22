@@ -279,7 +279,7 @@ def query_employees_helper(
     start_key = dict()
     rounds = 0
     while run:
-        query_max_items = max_items - len(result)
+        query_max_items = max_items - len(result) + 1
         if query_max_items > 0:
             query_result_records, new_start_key = query_employees(
                 max_items=query_max_items,
@@ -316,7 +316,8 @@ def handler(
     context,
     logger=get_logger(level=logging.INFO),
     boto3_clazz=boto3,
-    run_from_main: bool=False
+    run_from_main: bool=False,
+    number_of_records: int=25
 ):
     result = dict()
     return_object = {
@@ -334,7 +335,7 @@ def handler(
     debug_log(message='event={}', variable_as_list=[event,], logger=logger)
     
     dynamodb_result, last_evaluation_key = query_employees_helper(
-        max_items=12,
+        max_items=number_of_records,
         boto3_clazz=boto3_clazz,
         logger=logger
     )
@@ -373,7 +374,7 @@ if __name__ == '__main__':
     else:    
         logger.setLevel(logging.INFO)
 
-    result1 = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True)
+    result1 = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True, number_of_records=5)
     print('------------------------------------------------------------------------------------------------------------------------')
     print('{}'.format(json.dumps(result1)))
 
