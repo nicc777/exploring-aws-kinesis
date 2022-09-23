@@ -10,6 +10,16 @@ import base64
 from urllib.parse import parse_qs
 
 
+DEFAULT_FIELDS_TO_RETRIEVE = [
+    'EmployeeSystemId',
+    'EmployeeId',
+    'Department',
+    'EmployeeStatus',
+    'EmployeeFirstName',
+    'EmployeeLastName',
+]
+
+
 def get_logger(level=logging.INFO):
     logger = logging.getLogger()
     for h in logger.handlers:
@@ -168,6 +178,41 @@ def dynamodb_data_formatting(
     return result
 
 
+def compile_final_attributes_to_get_list(fields_to_retrieve: list, logger=get_logger())->list:
+    ATTRIBUTE_MAP = {
+        'EmployeeSystemId': 'subject-id',
+        'EmployeeId': 'employee-id',
+        'Department': 'department',
+        'EmployeeStatus': 'employee-status',
+        'EmployeeFirstName': 'first-name',
+        'EmployeeLastName': 'last-name',
+    }
+    MINIMAL_LIST = ['employee-id', 'employee-status', 'first-name', 'last-name']
+    final_list = list()
+
+    if fields_to_retrieve is None:
+        logger.error('fields_to_retrieve was None - returning MINIMAL_LIST')
+        return MINIMAL_LIST
+    if isinstance(fields_to_retrieve, list) is False:
+        logger.error('fields_to_retrieve is not a list type - returning MINIMAL_LIST')
+        return MINIMAL_LIST
+    if len(fields_to_retrieve) == 0:
+        logger.error('fields_to_retrieve was empty - returning MINIMAL_LIST')
+        return MINIMAL_LIST
+
+    for requested_field in fields_to_retrieve:
+        if requested_field in ATTRIBUTE_MAP:
+            final_list.append(ATTRIBUTE_MAP[requested_field])
+        else:
+            logger.warning('Unrecognized field name "{}" - ignoring')
+
+    if len(final_list) == 0:
+        logger.warning('final_list was empty - returning MINIMAL_LIST')
+        return MINIMAL_LIST
+
+    return final_list
+
+
 ###############################################################################
 ###                                                                         ###
 ###                 A W S    A P I    I N T E G R A T I O N                 ###
@@ -176,6 +221,7 @@ def dynamodb_data_formatting(
 
 
 def query_employees(
+    attributes_to_get: list,
     max_items: int=25,
     start_key: dict=dict(),
     boto3_clazz=boto3,
@@ -266,6 +312,7 @@ def query_employees(
 
 
 def query_employees_helper(
+    fields_to_retrieve: list,
     max_items: int=25,
     start_key: dict=dict(),
     boto3_clazz=boto3,
@@ -278,10 +325,12 @@ def query_employees_helper(
     result = list()
     run = True
     rounds = 0
+    attributes_to_get = compile_final_attributes_to_get_list(fields_to_retrieve=fields_to_retrieve, logger=logger)
     while run:
         query_max_items = max_items - len(result) + 1
         if query_max_items > 0:
             query_result_records, new_start_key = query_employees(
+                attributes_to_get=attributes_to_get,
                 max_items=query_max_items,
                 start_key=start_key,
                 boto3_clazz=boto3_clazz,
@@ -317,7 +366,9 @@ def handler(
     logger=get_logger(level=logging.INFO),
     boto3_clazz=boto3,
     run_from_main: bool=False,
-    number_of_records: int=25
+    number_of_records: int=25,
+    fields_to_retrieve: list=DEFAULT_FIELDS_TO_RETRIEVE,
+    start_key: dict=dict() 
 ):
     result = dict()
     return_object = {
@@ -328,24 +379,18 @@ def handler(
         'body': result,
         'isBase64Encoded': False,
     }
-    fields_to_retrieve = [
-        'EmployeeSystemId',
-        'EmployeeId',
-        'Department',
-        'EmployeeStatus',
-        'EmployeeFirstName',
-        'EmployeeLastName',
-    ]
+    
     refresh_environment_cache(logger=logger)
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
         logger  = get_logger(level=logging.DEBUG)
     
     debug_log(message='event={}', variable_as_list=[event,], logger=logger)
     
-    start_key = dict() # TODO Extract the start key data from the query string
+    # TODO Extract the start key data from the query string
     # TODO override the number_of_records if it was set in the query string
     # TODO override fields_to_retrieve from query string request
     dynamodb_result, last_evaluation_key = query_employees_helper(
+        fields_to_retrieve=fields_to_retrieve,
         max_items=number_of_records,
         start_key=start_key,
         boto3_clazz=boto3_clazz,
