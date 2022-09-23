@@ -204,7 +204,7 @@ def compile_final_attributes_to_get_list(fields_to_retrieve: list, logger=get_lo
         if requested_field in ATTRIBUTE_MAP:
             final_list.append(ATTRIBUTE_MAP[requested_field])
         else:
-            logger.warning('Unrecognized field name "{}" - ignoring')
+            logger.warning('Unrecognized field name "{}" - ignoring'.format(requested_field))
 
     if len(final_list) == 0:
         logger.warning('final_list was empty - returning MINIMAL_LIST')
@@ -415,7 +415,8 @@ if __name__ == '__main__':
     else:    
         logger.setLevel(logging.INFO)
 
-    fields_to_retrieve = list()
+    # fields_to_retrieve = list()
+    fields_to_retrieve = ['EmployeeId', 'EmployeeFirstName', 'EmployeeLastName']
     start_key = dict() 
 
     result1 = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True, number_of_records=5, start_key=start_key, fields_to_retrieve=fields_to_retrieve)
