@@ -238,15 +238,7 @@ def query_employees(
         if len(start_key) == 0:
             response = client.scan(
                 TableName='access-card-app',
-                AttributesToGet=[
-                    'subject-id',
-                    'subject-topic',
-                    'department',
-                    'employee-id',
-                    'employee-status',
-                    'first-name',
-                    'last-name',
-                ],
+                AttributesToGet=attributes_to_get,
                 Limit=max_items,
                 Select='SPECIFIC_ATTRIBUTES',
                 ScanFilter={
@@ -261,15 +253,7 @@ def query_employees(
         else:
             response = client.scan(
                 TableName='access-card-app',
-                AttributesToGet=[
-                    'subject-id',
-                    'subject-topic',
-                    'department',
-                    'employee-id',
-                    'employee-status',
-                    'first-name',
-                    'last-name',
-                ],
+                AttributesToGet=attributes_to_get,
                 Limit=max_items,
                 ExclusiveStartKey=start_key,
                 Select='SPECIFIC_ATTRIBUTES',
@@ -431,7 +415,10 @@ if __name__ == '__main__':
     else:    
         logger.setLevel(logging.INFO)
 
-    result1 = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True, number_of_records=5)
+    fields_to_retrieve = list()
+    start_key = dict() 
+
+    result1 = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True, number_of_records=5, start_key=start_key, fields_to_retrieve=fields_to_retrieve)
     print('------------------------------------------------------------------------------------------------------------------------')
     print('{}'.format(json.dumps(result1)))
 
