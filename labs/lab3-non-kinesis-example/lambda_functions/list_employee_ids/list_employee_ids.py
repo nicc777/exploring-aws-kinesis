@@ -267,6 +267,7 @@ def query_employees(
 
 def query_employees_helper(
     max_items: int=25,
+    start_key: dict=dict(),
     boto3_clazz=boto3,
     logger=get_logger()
 )->tuple:
@@ -276,7 +277,6 @@ def query_employees_helper(
         max_items = 10
     result = list()
     run = True
-    start_key = dict()
     rounds = 0
     while run:
         query_max_items = max_items - len(result) + 1
@@ -328,14 +328,26 @@ def handler(
         'body': result,
         'isBase64Encoded': False,
     }
+    fields_to_retrieve = [
+        'EmployeeSystemId',
+        'EmployeeId',
+        'Department',
+        'EmployeeStatus',
+        'EmployeeFirstName',
+        'EmployeeLastName',
+    ]
     refresh_environment_cache(logger=logger)
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
         logger  = get_logger(level=logging.DEBUG)
     
     debug_log(message='event={}', variable_as_list=[event,], logger=logger)
     
+    start_key = dict() # TODO Extract the start key data from the query string
+    # TODO override the number_of_records if it was set in the query string
+    # TODO override fields_to_retrieve from query string request
     dynamodb_result, last_evaluation_key = query_employees_helper(
         max_items=number_of_records,
+        start_key=start_key,
         boto3_clazz=boto3_clazz,
         logger=logger
     )
