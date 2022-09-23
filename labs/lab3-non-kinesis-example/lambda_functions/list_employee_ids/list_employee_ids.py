@@ -232,10 +232,23 @@ def query_employees(
     if max_items > 100:
         logger.warning('max_items was {} which is more than the absolute max. of 100.'.format(max_items))
         max_items = 100
+    final_start_key = dict()
+    if start_key is not None:
+        if isinstance(start_key, dict):
+            for k,v in start_key.items():
+                if k.startswith('employee#profile#'):
+                    final_start_key = {
+                        "subject-topic": {
+                            "S": k
+                        },
+                        "subject-id": {
+                            "S": v
+                        }
+                    }
     try:
         client = get_client('dynamodb', boto3_clazz=boto3_clazz)
         response = dict()
-        if len(start_key) == 0:
+        if len(final_start_key) == 0:
             response = client.scan(
                 TableName='access-card-app',
                 AttributesToGet=attributes_to_get,
@@ -255,7 +268,7 @@ def query_employees(
                 TableName='access-card-app',
                 AttributesToGet=attributes_to_get,
                 Limit=max_items,
-                ExclusiveStartKey=start_key,
+                ExclusiveStartKey=final_start_key,
                 Select='SPECIFIC_ATTRIBUTES',
                 ScanFilter={
                     'subject-topic': {
@@ -276,11 +289,14 @@ def query_employees(
                 result.append(record)
                 debug_log(message='record length now {} - Added record {}', variable_as_list=[len(result), record,], logger=logger)
         if 'LastEvaluatedKey' in response:
+            start_key = {
+                response['LastEvaluatedKey']['subject-topic']['S']: response['LastEvaluatedKey']['subject-id']['S'] 
+            }
             final_result = (
                 {
                     'result': result,
                 }, 
-                response['LastEvaluatedKey']
+                start_key
             )
         else:
             final_result = (
@@ -418,6 +434,7 @@ if __name__ == '__main__':
     # fields_to_retrieve = list()
     fields_to_retrieve = ['EmployeeId', 'EmployeeFirstName', 'EmployeeLastName']
     start_key = dict() 
+    # start_key = {"employee#profile#100000000189": "491fb2e94211a095bd388f9a250022d22c9f3b5adde478514cd6b5a70a63d84e-E"}
 
     result1 = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True, number_of_records=5, start_key=start_key, fields_to_retrieve=fields_to_retrieve)
     print('------------------------------------------------------------------------------------------------------------------------')
