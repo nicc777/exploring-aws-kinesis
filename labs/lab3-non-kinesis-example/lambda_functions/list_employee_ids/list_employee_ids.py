@@ -315,6 +315,7 @@ def query_employees_helper(
     fields_to_retrieve: list,
     max_items: int=25,
     start_key: dict=dict(),
+    status_filter: list=['active', 'onboarding'],
     boto3_clazz=boto3,
     logger=get_logger()
 )->tuple:
@@ -336,10 +337,22 @@ def query_employees_helper(
                 boto3_clazz=boto3_clazz,
                 logger=logger
             )
+
+            final_query_result_records = list()
+            if 'employee-status' in attributes_to_get:
+                for record in query_result_records['result']:
+                    if record['employee-status'] in status_filter:
+                        logger.info('Employee ID "{}" matched status "{}" to be included'.format(record['employee-id'], record['employee-status']))
+                        final_query_result_records.append(record)
+                    else:
+                        logger.info('EXCLUDING Employee ID "{}" with status "{}" - excluded by requested statuses'.format(record['employee-id'], record['employee-status']))
+            else:
+                final_query_result_records = query_result_records['result']
+
             debug_log(message='query_result_records length={} new_start_key={}', variable_as_list=(len(query_result_records), new_start_key,), logger=logger)
-            result += query_result_records['result']
+            result += final_query_result_records
             start_key = new_start_key
-            if len(result) >= max_items:
+            if len(final_query_result_records) >= max_items:
                 logger.info('Maximum records reached. Returning collected data')
                 run = False
 
@@ -361,7 +374,8 @@ def query_employees_helper(
 
 
 def query_string_parser(
-    event: dict, logger=get_logger()
+    event: dict,
+    logger=get_logger()
 )->dict:
     query_parameters = dict()
     query_parameters['StartKey'] = dict()
@@ -379,14 +393,6 @@ def query_string_parser(
             return query_parameters
         if len(event['queryStringParameters']) == 0:
             return query_parameters
-
-        """
-            'queryStringParameters': {
-                'qty': '12', 
-                'start_key': 'access-card#profile#100000000203,8a05af74c47bfbf5efe8737a43413bfe407db898d572095332a659800d6a5e83AC', 
-                'status': 'onboarding'
-            }
-        """
 
         # Parse the Limit
         if 'qty' in event['queryStringParameters']:
@@ -469,6 +475,7 @@ def handler(
         fields_to_retrieve=fields_to_retrieve,
         max_items=number_of_records,
         start_key=start_key,
+        status_filter=status_filter,
         boto3_clazz=boto3_clazz,
         logger=logger
     )
