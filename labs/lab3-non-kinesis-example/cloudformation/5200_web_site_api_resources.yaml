@@ -1,0 +1,242 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This template is the base template for the API Gateway basic resources. It does not include routes or integrations - 
+  each route and integration will have their own stack.
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  CorsTrustedDomainsParam:
+    Type: String
+    Description: "A CSV string with trusted domains for API calls. Example to add two sites: https://www.example.tld,http://localhost:5000"
+    Default: "http://localhost,http://localhost:9000,https://internal.sandybox.com:8443"
+  S3SourceBucketParam:
+    Type: String
+    Description: "The S3 bucket name containing the Lambda function ZIP file"
+  DynamoDbStackName:
+    Type: String
+  # DnsStackNameParam:
+  #   Type: String
+  #   Description: "The name of the DNS stack, in order to import values"
+  # FirstTrustedInternetCiderParam:
+  #   Type: String
+  #   Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Private VPC"
+  #   Default: "0.0.0.0/0"
+  # PublicDnsHostedZoneIdParam:
+  #   Type: String
+  #   Description: "The Hosted Zone ID (Route 53) of the public DNS zone"
+  # PublicDnsNameParam:
+  #   Type: String
+  #   Description: "The domain name of the public DNS zone, for example: example.tld"
+  # CognitoStackNameParam:
+  #   Type: String
+  #   Description: "The stack name of the Cognito User Pool"
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                    LAMBDA FUNCTION: Retrieve Employee Records                                   ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  EmployeeRecordsQueryLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "EmployeeRecordsQueryLambdaFunctionRoleAssumeRolePolicyDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role EmployeeRecordsQueryLambdaFunction"
+      Policies:
+      - PolicyName: EmployeeRecordsQueryLambdaFunctionPolicy01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+      - PolicyName: EmployeeRecordsQueryLambdaFunctionPolicy02
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "dynamodb:Scan"
+            Resource:
+              Fn::Sub:
+              - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
+              - TableName: 
+                  Fn::ImportValue: !Sub "${DynamoDbStackName}-AccessCardAppTableName"
+      RoleName: EmployeeRecordsQueryLambdaFunctionRole
+
+  EmployeeRecordsQueryLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref EmployeeRecordsQueryLambdaFunction
+      RetentionInDays: 7
+
+  EmployeeRecordsQueryLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Environment:
+        Variables: 
+          DEBUG: "1"
+      Code: 
+        S3Bucket: !Ref S3SourceBucketParam
+        S3Key: "list_employee_ids.zip"
+      Description: "Catch GitHub web hook calls and process request"
+      FunctionName: "EmployeeRecordsQueryLambdaFunction"
+      Handler: "list_employee_ids.handler"
+      MemorySize: 128
+      Role: !GetAtt EmployeeRecordsQueryLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 30
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                 API HTTP GATEWAY                                                ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  InternalWebAppApiGateway:
+    Type: AWS::ApiGatewayV2::Api
+    Properties: 
+      CorsConfiguration:
+        AllowCredentials: true
+        AllowHeaders: 
+        - "Content-Type"
+        - "X-Amz-Date"
+        - "Authorization"
+        - "X-Api-Key"
+        - "X-Amz-Security-Token"
+        AllowMethods: 
+        - OPTIONS
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        AllowOrigins: 
+          Fn::Split:
+          - ","
+          - !Ref CorsTrustedDomainsParam
+        ExposeHeaders: 
+        - "Date"
+        - "x-api-id"
+        MaxAge: 86400
+      Description: "An API Gateway for web applications"
+      DisableExecuteApiEndpoint: false  # For production, this will typically be disabled/true to force clients to use the custom domain
+      Name: "lab3-web-api"
+      ProtocolType: "HTTP"
+      Version: "v1"
+
+  InternalWebAppRouteTest01:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: 
+      ApiId: !Ref InternalWebAppApiGateway
+      ApiKeyRequired: false
+      OperationName: "test-public-event-operation"
+      RouteKey: "GET /access-card-app/employees"
+      Target: 
+        Fn::Join:
+        - /
+        - - integrations
+          - !Ref InternalWebAppIntegrationTest01
+
+  InternalWebAppIntegrationTest01Permission:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !GetAtt EmployeeRecordsQueryLambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn:
+        Fn::Sub:
+        -  "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGwId}/*/*/access-card-app/employees"
+        - ApiGwId: !Ref InternalWebAppApiGateway
+
+
+  InternalWebAppIntegrationTest01:  # NOTE: The maximum (and default) timeout is 30 seconds
+    Type: AWS::ApiGatewayV2::Integration
+    Properties: 
+      ApiId: !Ref InternalWebAppApiGateway
+      Description: "Lambda Integration"
+      IntegrationType: AWS_PROXY
+      IntegrationUri: 
+        Fn::Sub: 
+        - "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${functionArn}/invocations"
+        - functionArn: !GetAtt EmployeeRecordsQueryLambdaFunction.Arn
+      IntegrationMethod: POST
+      PayloadFormatVersion: '2.0'
+
+  InternalWebAppApiGatewaySandboxStageDeployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn: InternalWebAppRouteTest01
+    Properties: 
+      ApiId: !Ref InternalWebAppApiGateway
+      Description: "Sandbox Deployment"
+
+  InternalWebAppApiGatewaySandboxStageLogs:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      RetentionInDays: 90
+
+  InternalWebAppApiGatewaySandboxStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties: 
+      AccessLogSettings: 
+        DestinationArn: !GetAtt InternalWebAppApiGatewaySandboxStageLogs.Arn
+        Format: $context.stage $context.integrationErrorMessage $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId $context.extendedRequestId
+      ApiId: !Ref InternalWebAppApiGateway
+      AutoDeploy: true
+      DeploymentId: !Ref InternalWebAppApiGatewaySandboxStageDeployment
+      Description: "Testing Stage - Not for Production"
+      StageName: "sandbox"
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 10
+
+# Outputs:
+
+#   InternalWebAppApiGatewayId:
+#     Description: "InternalWebAppApiGateway ID"
+#     Value: !Ref InternalWebAppApiGateway
+#     Export:
+#       Name: !Sub "${AWS::StackName}-InternalWebAppApiGatewayId"
+
+#   InternalWebAppApiGatewayEndPoint:
+#     Description: "InternalWebAppApiGateway EndPoint"
+#     Value: !GetAtt InternalWebAppApiGateway.ApiEndpoint
+#     Export:
+#       Name: !Sub "${AWS::StackName}-InternalWebAppApiGatewayEndPoint"

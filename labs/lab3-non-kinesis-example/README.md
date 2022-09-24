@@ -64,6 +64,7 @@ When running commands, the following environment variables are assumed to be set
 | `export SSM_VPC_ENDPOINT_STACK_NAME="..."`  | The CloudFormation stack name for deploying The SSM VPC End Point resource            |
 | `export WEB_SERVER_STACK_NAME="..."`        | The CloudFormation stack name for deploying The Web Server and API Gateway Resources  |
 | `export COGNITO_STACK_NAME="..."`           | The CloudFormation stack name for deploying The employee Cognito Pool                 |
+| `export WEBAPI_STACK_NAME="..."`            | The CloudFormation stack name for deploying The Website API Resources                 |
 | `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                                |
 | `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                  |
 | `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                    |
@@ -467,6 +468,21 @@ aws cloudformation deploy \
         PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
         CognitoStackNameParam="$COGNITO_STACK_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
+
+
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip
+
+cd labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/ && zip list_employee_ids.zip list_employee_ids.py && cd $OLDPWD 
+
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip s3://$ARTIFACT_S3_BUCKET_NAME/list_employee_ids.zip
+
+aws cloudformation deploy \
+    --stack-name $WEBAPI_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5200_web_site_api_resources.yaml \
+    --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
+        DynamoDbStackName="$DYNAMODB_STACK_NAME" \
+    --capabilities CAPABILITY_NAMED_IAM
+
 ```
 
 > In EC2 instances, the FSX volume can be mounted with the command: `mkdir /data && mount -t nfs fs-abcdefghijklmnopq.fsx.eu-central-1.amazonaws.com:/fsx /data`

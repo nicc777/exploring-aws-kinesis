@@ -401,7 +401,7 @@ def handler(
 
     query_data = dynamodb_data_formatting(data=dynamodb_result, logger=logger, last_evaluation_key=last_evaluation_key)
     debug_log(message='query_data={}', variable_as_list=[query_data,], logger=logger)
-    return_object['body'] = query_data
+    return_object['body'] = json.dumps(query_data)
 
     debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
     return return_object
