@@ -319,6 +319,7 @@ def query_employees_helper(
     boto3_clazz=boto3,
     logger=get_logger()
 )->tuple:
+    start_time = get_utc_timestamp(with_decimal=False)
     if max_items > 100:
         max_items = 100
     if max_items < 10:
@@ -328,41 +329,48 @@ def query_employees_helper(
     rounds = 0
     attributes_to_get = compile_final_attributes_to_get_list(fields_to_retrieve=fields_to_retrieve, logger=logger)
     while run:
-        query_max_items = max_items - len(result) + 1
-        if query_max_items > 0:
-            query_result_records, new_start_key = query_employees(
-                attributes_to_get=attributes_to_get,
-                max_items=query_max_items,
-                start_key=start_key,
-                boto3_clazz=boto3_clazz,
-                logger=logger
-            )
+        debug_log(message='rounds={}', variable_as_list=(rounds,), logger=logger)
 
-            final_query_result_records = list()
-            if 'employee-status' in attributes_to_get:
-                for record in query_result_records['result']:
+        query_result_records, new_start_key = query_employees(
+            attributes_to_get=attributes_to_get,
+            max_items=max_items,
+            start_key=start_key,
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
+
+        debug_log(message='query_result_records={}', variable_as_list=(query_result_records,), logger=logger)
+        debug_log(message='len(query_result_records[result])={}', variable_as_list=(len(query_result_records['result']),), logger=logger)
+
+        final_query_result_records = list()
+        if 'employee-status' in attributes_to_get:
+            for record in query_result_records['result']:
+                if (len(result) + len(final_query_result_records)) < max_items:
                     if record['employee-status'] in status_filter:
                         logger.info('Employee ID "{}" matched status "{}" to be included'.format(record['employee-id'], record['employee-status']))
                         final_query_result_records.append(record)
                     else:
                         logger.info('EXCLUDING Employee ID "{}" with status "{}" - excluded by requested statuses'.format(record['employee-id'], record['employee-status']))
-            else:
-                final_query_result_records = query_result_records['result']
+        else:
+            final_query_result_records = query_result_records['result']
 
-            debug_log(message='query_result_records length={} new_start_key={}', variable_as_list=(len(query_result_records), new_start_key,), logger=logger)
-            result += final_query_result_records
-            start_key = new_start_key
-            if len(final_query_result_records) >= max_items:
-                logger.info('Maximum records reached. Returning collected data')
-                run = False
+        debug_log(message='query_result_records length={} new_start_key={}', variable_as_list=(len(query_result_records), new_start_key,), logger=logger)
+        result += final_query_result_records
+        start_key = new_start_key
+        if len(result) >= max_items:
+            logger.info('Maximum records reached. Returning collected data')
+            run = False
 
         rounds += 1
-        if rounds > 10:
-            logger.warning('Maximum Rounds Reached - breaking loop')
+        current_time = get_utc_timestamp(with_decimal=False)
+        duration = current_time - start_time
+        if duration > 20:
+            logger.warning('Maximum Query Time Reached - breaking loop. Rounds={}'.format(rounds))
             run = False
         elif rounds > 1 and len(result) == 0:
             logger.warning('Looping without adding records - breaking loop')
             run = False
+    logger.info('rounds={}'.format(rounds))
     return (result, start_key)
 
 
@@ -469,8 +477,6 @@ def handler(
     logger.info('Query Parameter: number_of_records = {}'.format(number_of_records))
     logger.info('Query Parameter: status_filter     = {}'.format(status_filter))
 
-    # TODO: Still need to implement a status filter in the query...
-    
     dynamodb_result, last_evaluation_key = query_employees_helper(
         fields_to_retrieve=fields_to_retrieve,
         max_items=number_of_records,
