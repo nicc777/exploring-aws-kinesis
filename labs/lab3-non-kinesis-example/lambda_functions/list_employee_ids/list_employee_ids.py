@@ -359,6 +359,67 @@ def query_employees_helper(
 ###                                                                         ###
 ###############################################################################
 
+
+def query_string_parser(
+    event: dict, logger=get_logger()
+)->dict:
+    query_parameters = dict()
+    query_parameters['StartKey'] = dict()
+    query_parameters['Limit'] = 25
+    query_parameters['StatusFields'] = ['active', 'onboarding',]
+
+    ALLOWED_STATUS_FIELD_VALUES = [
+        'active',
+        'onboarding'
+    ]
+
+    try:
+        debug_log(message='DEFAULT query_parameters={}', variable_as_list=(query_parameters,), logger=logger)
+        if 'queryStringParameters' not in event:
+            return query_parameters
+        if len(event['queryStringParameters']) == 0:
+            return query_parameters
+
+        """
+            'queryStringParameters': {
+                'qty': '12', 
+                'start_key': 'access-card#profile#100000000203,8a05af74c47bfbf5efe8737a43413bfe407db898d572095332a659800d6a5e83AC', 
+                'status': 'onboarding'
+            }
+        """
+
+        # Parse the Limit
+        if 'qty' in event['queryStringParameters']:
+            if int(event['queryStringParameters']['qty']) > 9:
+                query_parameters['Limit'] = int(event['queryStringParameters']['qty'])
+        if query_parameters['Limit'] > 100:
+            query_parameters['Limit'] = 100
+        logger.info('Limit={}'.format(query_parameters['Limit']))
+
+        # Parse the start key
+        if 'start_key' in event['queryStringParameters']:
+            if isinstance(event['queryStringParameters']['start_key'], str):
+                if len(event['queryStringParameters']['start_key']) > 0 and ',' in event['queryStringParameters']['start_key']:
+                    items = event['queryStringParameters']['start_key'].split(',')
+                    query_parameters['StartKey'][items[0]] = items[1]
+        logger.info('StartKey={}'.format(query_parameters['StartKey']))
+
+        # Parse Status fields
+        if 'status' in event['queryStringParameters']:
+            if isinstance(event['queryStringParameters']['status'], str):
+                if len(event['queryStringParameters']['status']) > 0:
+                    query_parameters['StatusFields'] = list()
+                    for requested_status in  event['queryStringParameters']['status'].split(','):
+                        if requested_status in ALLOWED_STATUS_FIELD_VALUES:
+                            query_parameters['StatusFields'].append(requested_status)
+        logger.info('StatusFields={}'.format(query_parameters['StatusFields']))
+
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    
+    debug_log(message='FINAL query_parameters={}', variable_as_list=(query_parameters,), logger=logger)
+    return query_parameters
+
     
 def handler(
     event,
@@ -368,7 +429,8 @@ def handler(
     run_from_main: bool=False,
     number_of_records: int=25,
     fields_to_retrieve: list=DEFAULT_FIELDS_TO_RETRIEVE,
-    start_key: dict=dict() 
+    start_key: dict=dict(),
+    status_filter: list=['active', 'onboarding']
 ):
     result = dict()
     return_object = {
@@ -385,10 +447,24 @@ def handler(
         logger  = get_logger(level=logging.DEBUG)
     
     debug_log(message='event={}', variable_as_list=[event,], logger=logger)
+    parsed_query_string_values = query_string_parser(
+        event=event,
+        logger=logger
+    )
+
+    if len(start_key) == 0 and len(parsed_query_string_values['StartKey']) > 0:
+        start_key = parsed_query_string_values['StartKey']
+    if parsed_query_string_values['Limit'] != number_of_records:
+        number_of_records = parsed_query_string_values['Limit']
+    if len(parsed_query_string_values['StatusFields']) == 1:
+        status_filter = parsed_query_string_values['StatusFields']
+
+    logger.info('Query Parameter: start_key         = {}'.format(start_key))
+    logger.info('Query Parameter: number_of_records = {}'.format(number_of_records))
+    logger.info('Query Parameter: status_filter     = {}'.format(status_filter))
+
+    # TODO: Still need to implement a status filter in the query...
     
-    # TODO Extract the start key data from the query string
-    # TODO override the number_of_records if it was set in the query string
-    # TODO override fields_to_retrieve from query string request
     dynamodb_result, last_evaluation_key = query_employees_helper(
         fields_to_retrieve=fields_to_retrieve,
         max_items=number_of_records,
@@ -436,7 +512,48 @@ if __name__ == '__main__':
     start_key = dict() 
     # start_key = {"employee#profile#100000000189": "491fb2e94211a095bd388f9a250022d22c9f3b5adde478514cd6b5a70a63d84e-E"}
 
-    result1 = handler(event={'Message': None}, context=None, logger=logger, run_from_main=True, number_of_records=5, start_key=start_key, fields_to_retrieve=fields_to_retrieve)
+    event = {
+        'version': '2.0', 
+        'routeKey': 'GET /access-card-app/employees', 
+        'rawPath': '/sandbox/access-card-app/employees', 
+        'rawQueryString': 'start_key=access-card%23profile%23100000000203,8a05af74c47bfbf5efe8737a43413bfe407db898d572095332a659800d6a5e83AC&qty=12&status=onboarding', 
+        'headers': {
+            'accept': '*/*', 
+            'content-length': '0', 
+            'host': 'aaaaaaaaaa.execute-api.eu-central-1.amazonaws.com', 
+            'user-agent': 'curl/7.81.0', 
+            'x-amzn-trace-id': 'aaaaaaaaaa', 
+            'x-forwarded-for': 'nnn.nnn.nnn.nnn', 
+            'x-forwarded-port': '443', 
+            'x-forwarded-proto': 'https'
+        }, 
+        'queryStringParameters': {
+            'qty': '12', 
+            'start_key': 'access-card#profile#100000000203,8a05af74c47bfbf5efe8737a43413bfe407db898d572095332a659800d6a5e83AC', 
+            'status': 'onboarding'
+        }, 
+        'requestContext': {
+            'accountId': '000000000000', 
+            'apiId': 'aaaaaaaaaa', 
+            'domainName': 'aaaaaaaaaa.execute-api.eu-central-1.amazonaws.com', 
+            'domainPrefix': 'aaaaaaaaaa', 
+            'http': {
+                'method': 'GET', 
+                'path': '/sandbox/access-card-app/employees', 
+                'protocol': 'HTTP/1.1', 
+                'sourceIp': 'nnn.nnn.nnn.nnn', 
+                'userAgent': 'curl/7.81.0'
+            }, 
+            'requestId': 'Y842FhTEliAEJVw=', 
+            'routeKey': 'GET /access-card-app/employees', 
+            'stage': 'sandbox', 
+            'time': '24/Sep/2022:06:20:48 +0000', 
+            'timeEpoch': 1664000448395
+        }, 
+        'isBase64Encoded': False
+    }
+
+    result1 = handler(event=event, context=None, logger=logger, run_from_main=True, number_of_records=5, start_key=start_key, fields_to_retrieve=fields_to_retrieve)
     print('------------------------------------------------------------------------------------------------------------------------')
     print('{}'.format(json.dumps(result1)))
 
@@ -444,4 +561,53 @@ if __name__ == '__main__':
     # print('------------------------------------------------------------------------------------------------------------------------')
     # print('{}'.format(json.dumps(result2)))
 
+
+    """
+        Typical query with all query parameters present:
+
+            curl https://b5w5zwr0vj.execute-api.eu-central-1.amazonaws.com/sandbox/access-card-app/employees\?start_key\=access-card#profile#100000000203,8a05af74c47bfbf5efe8737a43413bfe407db898d572095332a659800d6a5e83AC\&qty\=12\&status\=onboarding
+
+        API Gateway event payload for the above request:
+
+            {
+                "version": "2.0",
+                "routeKey": "GET /access-card-app/employees",
+                "rawPath": "/sandbox/access-card-app/employees",
+                "rawQueryString": "start_key=access-card%23profile%23100000000203,8a05af74c47bfbf5efe8737a43413bfe407db898d572095332a659800d6a5e83AC&qty=12&status=onboarding",
+                "headers": {
+                    "accept": "*/*",
+                    "content-length": "0",
+                    "host": "aaaaaaaaaa.execute-api.eu-central-1.amazonaws.com",
+                    "user-agent": "curl/7.81.0",
+                    "x-amzn-trace-id": "aaaaaaaaaa",
+                    "x-forwarded-for": "nnn.nnn.nnn.nnn",
+                    "x-forwarded-port": "443",
+                    "x-forwarded-proto": "https"
+                },
+                "queryStringParameters": {
+                    "qty": "12",
+                    "start_key": "access-card#profile#100000000203,8a05af74c47bfbf5efe8737a43413bfe407db898d572095332a659800d6a5e83AC",
+                    "status": "onboarding"
+                },
+                "requestContext": {
+                    "accountId": "000000000000",
+                    "apiId": "aaaaaaaaaa",
+                    "domainName": "aaaaaaaaaa.execute-api.eu-central-1.amazonaws.com",
+                    "domainPrefix": "aaaaaaaaaa",
+                    "http": {
+                        "method": "GET",
+                        "path": "/sandbox/access-card-app/employees",
+                        "protocol": "HTTP/1.1",
+                        "sourceIp": "nnn.nnn.nnn.nnn",
+                        "userAgent": "curl/7.81.0"
+                    },
+                    "requestId": "Y842FhTEliAEJVw=",
+                    "routeKey": "GET /access-card-app/employees",
+                    "stage": "sandbox",
+                    "time": "24/Sep/2022:06:20:48 +0000",
+                    "timeEpoch": 1664000448395
+                },
+                "isBase64Encoded": false
+            }
+    """
 
