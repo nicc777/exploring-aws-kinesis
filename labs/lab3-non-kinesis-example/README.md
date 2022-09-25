@@ -481,6 +481,8 @@ aws cloudformation deploy \
     --template-file labs/lab3-non-kinesis-example/cloudformation/5200_web_site_api_resources.yaml \
     --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
         DynamoDbStackName="$DYNAMODB_STACK_NAME" \
+        WebServerStackName="$WEB_SERVER_STACK_NAME" \
+        PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
     --capabilities CAPABILITY_NAMED_IAM
 
 ```

@@ -18,6 +18,11 @@ Parameters:
     Description: "The S3 bucket name containing the Lambda function ZIP file"
   DynamoDbStackName:
     Type: String
+  WebServerStackName:
+    Type: String
+  PublicDnsNameParam:
+    Type: String
+    Description: "The domain name of the public DNS zone, for example: example.tld"
   # DnsStackNameParam:
   #   Type: String
   #   Description: "The name of the DNS stack, in order to import values"
@@ -226,6 +231,31 @@ Resources:
       DefaultRouteSettings:
         ThrottlingBurstLimit: 10
         ThrottlingRateLimit: 10
+
+  InternalWebAppApiGatewayCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Properties: 
+      DomainName:
+        Fn::Sub:
+        - "internal-api.${DomainName}"
+        - DomainName: !Ref PublicDnsNameParam
+      DomainNameConfigurations: 
+      - CertificateArn:
+          Fn::ImportValue: !Sub "${WebServerStackName}-WebServerAcmCertificateArn"
+        SecurityPolicy: "TLS_1_2"
+
+  InternalWebAppApiGatewayCustomDomainMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Properties: 
+      ApiId: !Ref InternalWebAppApiGateway
+      # ApiMappingKey: String
+      DomainName:
+        Fn::Sub:
+        - "internal-api.${DomainName}"
+        - DomainName: !Ref PublicDnsNameParam
+      Stage: !Ref InternalWebAppApiGatewaySandboxStage
+
+
 
 # Outputs:
 

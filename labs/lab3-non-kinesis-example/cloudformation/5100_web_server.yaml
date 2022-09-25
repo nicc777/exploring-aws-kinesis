@@ -624,50 +624,13 @@ Resources:
       Type: "CNAME"
   
 
-#######################################################################################################################
-###                                                                                                                 ###
-###                                                 API HTTP GATEWAY                                                ###
-###                                                                                                                 ###
-#######################################################################################################################
+Outputs:
 
-  # PrivateEventApiGateway:
-  #   Type: AWS::ApiGatewayV2::Api
-  #   Properties: 
-  #     CorsConfiguration:
-  #       AllowCredentials: true
-  #       AllowHeaders: 
-  #       - "Content-Type"
-  #       - "X-Amz-Date"
-  #       - "Authorization"
-  #       - "X-Api-Key"
-  #       - "X-Amz-Security-Token"
-  #       AllowMethods: 
-  #       - OPTIONS
-  #       - GET
-  #       - POST
-  #       - PUT
-  #       - DELETE
-  #       AllowOrigins: 
-  #         Fn::Split:
-  #         - ","
-  #         - !Ref CorsTrustedDomainsParam
-  #       ExposeHeaders: 
-  #       - "Date"
-  #       - "x-api-id"
-  #       MaxAge: 86400
-  #     Description: "A Private API Gateway"
-  #     DisableExecuteApiEndpoint: false  # For production, this will typically be disabled/true to force clients to use the custom domain
-  #     Name: "lab3-api"
-  #     ProtocolType: "HTTP"
-  #     Version: "v1"
-
-# Outputs:
-
-#   PrivateEventApiGatewayId:
-#     Description: "PrivateEventApiGateway ID"
-#     Value: !Ref PrivateEventApiGateway
-#     Export:
-#       Name: !Sub "${AWS::StackName}-PrivateEventApiGatewayId"
+  WebServerAcmCertificateArn:
+    Description: "WebServerAcmCertificate ARN"
+    Value: !Ref WebServerAcmCertificate
+    Export:
+      Name: !Sub "${AWS::StackName}-WebServerAcmCertificateArn"
 
 #   PrivateEventApiGatewayEndPoint:
 #     Description: "PrivateEventApiGateway EndPoint"
