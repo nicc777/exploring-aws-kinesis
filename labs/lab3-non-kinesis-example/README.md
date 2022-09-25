@@ -483,6 +483,7 @@ aws cloudformation deploy \
         DynamoDbStackName="$DYNAMODB_STACK_NAME" \
         WebServerStackName="$WEB_SERVER_STACK_NAME" \
         PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
+        PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
     --capabilities CAPABILITY_NAMED_IAM
 
 ```

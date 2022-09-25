@@ -23,6 +23,9 @@ Parameters:
   PublicDnsNameParam:
     Type: String
     Description: "The domain name of the public DNS zone, for example: example.tld"
+  PublicDnsHostedZoneIdParam:
+    Type: String
+    Description: "The Hosted Zone ID (Route 53) of the public DNS zone"
   # DnsStackNameParam:
   #   Type: String
   #   Description: "The name of the DNS stack, in order to import values"
@@ -159,7 +162,7 @@ Resources:
         - "x-api-id"
         MaxAge: 86400
       Description: "An API Gateway for web applications"
-      DisableExecuteApiEndpoint: false  # For production, this will typically be disabled/true to force clients to use the custom domain
+      DisableExecuteApiEndpoint: true  # For production, this will typically be disabled/true to force clients to use the custom domain
       Name: "lab3-web-api"
       ProtocolType: "HTTP"
       Version: "v1"
@@ -254,6 +257,16 @@ Resources:
         - "internal-api.${DomainName}"
         - DomainName: !Ref PublicDnsNameParam
       Stage: !Ref InternalWebAppApiGatewaySandboxStage
+
+  WebServerPublicDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref PublicDnsHostedZoneIdParam
+      Name: !Ref InternalWebAppApiGatewayCustomDomain
+      ResourceRecords:
+      - !GetAtt InternalWebAppApiGatewayCustomDomain.RegionalDomainName
+      TTL: 300
+      Type: "CNAME"
 
 
 
