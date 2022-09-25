@@ -67,6 +67,8 @@ def get_global_environment()->dict:
     environment = dict()
     environment['GITHUB_WORKDIR'] = '/tmp'
     environment['DEPLOYMENT_TARGET_DIR'] = '/tmp'
+    environment['INTERNAL_APP_DOMAIN'] = 'example.tld'
+    environment['INTERNAL_APP_PORT'] = '8443'
     try:
         with open('/etc/environment', 'r') as f:
             for line in f:

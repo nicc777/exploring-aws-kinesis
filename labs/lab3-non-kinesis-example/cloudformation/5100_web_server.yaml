@@ -277,6 +277,7 @@ Resources:
 
               echo "GITHUB_WORKDIR=/data/github" >> /etc/environment
               echo "DEPLOYMENT_TARGET_DIR=/data/deployments" >> /etc/environment
+              echo "INTERNAL_APP_DOMAIN=${InternalAppDomain}" >> /etc/environment
 
               export GITHUB_WORKDIR=/data/github
               export DEPLOYMENT_TARGET_DIR=/data/deployments
@@ -299,6 +300,10 @@ Resources:
                 - DomainName: !Ref PublicDnsNameParam
               OpenZfsDnsName:
                 Fn::ImportValue: !Sub "${FsxStackNameParam}-StaticWebRootFsxFilesystemDNSName"
+              InternalAppDomain:
+                Fn::Sub:
+                - "internal.${DomainName}"
+                - DomainName: !Ref PublicDnsNameParam
       TagSpecifications: 
       - ResourceType: "launch-template"
         Tags: 
