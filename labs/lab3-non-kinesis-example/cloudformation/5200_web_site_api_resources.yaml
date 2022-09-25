@@ -235,7 +235,7 @@ Resources:
     Properties: 
       AccessLogSettings: 
         DestinationArn: !GetAtt InternalWebAppApiGatewaySandboxStageLogs.Arn
-        Format: $context.stage $context.integrationErrorMessage $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId $context.extendedRequestId
+        Format: $context.stage $context.integrationErrorMessage $context.authorizer.error $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId $context.extendedRequestId
       ApiId: !Ref InternalWebAppApiGateway
       AutoDeploy: true
       DeploymentId: !Ref InternalWebAppApiGatewaySandboxStageDeployment

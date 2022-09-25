@@ -14,6 +14,8 @@
 - [Infrastructure Components](#infrastructure-components)
   - [VPC and Proxy Server](#vpc-and-proxy-server)
   - [Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC](#serving-of-a-web-site-from-ec2-private-only-accessed-via-a-proxy-server-in-a-public-vpc)
+    - [Capturing Proxy Request Data to the Docker Containers](#capturing-proxy-request-data-to-the-docker-containers)
+    - [Testing the API from the command line with the JWT Access Token](#testing-the-api-from-the-command-line-with-the-jwt-access-token)
   - [Handling Updates to Static Web Pages](#handling-updates-to-static-web-pages)
     - [GitHub Web Hooks](#github-web-hooks)
     - [Managing the GitHub Sync Server](#managing-the-github-sync-server)
@@ -456,7 +458,7 @@ aws cloudformation deploy \
 
 export COGNITO_USER_POOL_ID=`aws cloudformation describe-stacks --stack-name $COGNITO_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "CognitoAuthorizerUserPoolId") | {OutputValue}' | jq -r '.OutputValue'`
 export COGNITO_ISSUER_URL=`curl https://cognito-idp.${AWS_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}/.well-known/openid-configuration | jq -r ".issuer" -`
-export COGNITO_CLIENT_ID=`aws cloudformation describe-stacks --stack-name $COGNITO_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "CognitoAuthorizerUserPoolClientId") | {OutputValue}' | jq -r '.OutputValue'`
+export COGNITO_CLIENT_ID=`aws cloudformation describe-stacks --stack-name $COGNITO_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "CognitoAlbUserPoolClientId") | {OutputValue}' | jq -r '.OutputValue'`
 
 # NOTE: The COGNITO_CLIENT_ID is also the AUDIENCE value fo the API Authorizer
 
@@ -497,6 +499,40 @@ aws cloudformation deploy \
 ```
 
 > In EC2 instances, the FSX volume can be mounted with the command: `mkdir /data && mount -t nfs fs-abcdefghijklmnopq.fsx.eu-central-1.amazonaws.com:/fsx /data`
+
+### Capturing Proxy Request Data to the Docker Containers
+
+A simple trick:
+
+```shell
+# Get a dump of data to the Internal App (Port 8081)
+tcpdump port 8081 -w /data/logs/comms_to_nginx_dump.wcap
+
+# Export temporarily AWS cred to upload to one of your available S3 buckets (the EC2 instance may not have access given the current configured role)
+export AWS_ACCESS_KEY_ID="...."
+export AWS_SECRET_ACCESS_KEY="...."
+
+# Upload to S3
+aws s3 cp /data/logs/comms_to_nginx_dump.wcap s3://wakanda-demo-logs/comms_to_nginx_dump.wcap
+```
+
+An example PCAP file is included in this repo [located here](../../labs/lab3-non-kinesis-example/tcpdump_example_of_comms_from_elb_to_ngingx_container_port8081.pcap) - you can use a UI tool like [Wireshark](https://www.wireshark.org/) to analyze the PCAP file. Wireshark is available in most Linux OS distro repositories. [More information about PCAP files](https://www.reviversoft.com/en/file-extensions/pcap)
+
+> Why this is an important trick? Well, to test with the `curl` utility, you need to know the access token. As of writing this (2022-09-25) I don't yet have another way to get the Access Token required for the API Testing. SO my workflow was basically to open a session to the EC2 instance that hosted the web servers and than run a `tcpdump` to capture the headers and then eventually open that dump in `wireshark` in order to obtain the Access Token in the request header added by the AWS ELB, called `X-Amzn-Oidc-Accesstoken`. You can [read more about this in the AWS Documentation](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html).
+
+_**Security Warning**_: The TCPDump files could contain sensitive information, so be careful of sharing it. I have included a copy here as by the time it is published the tokens will no longer be valid. Also, as I do not keep the stacks running, the end-points (URL's and pages), may in any case not be available all the time. The file included here is purely for educational purposes and it does not link to any production workload.
+
+### Testing the API from the command line with the JWT Access Token
+
+Assuming you have the value of the access token, run the following:
+
+```shell
+# Paste the value of the access token here...
+export JWT_TOKEN="..."
+
+# Query the API:
+curl -H "Authorization: ${JWT_TOKEN}" https://internal-api.your_domain.tld/access-card-app/employees
+```
 
 ## Handling Updates to Static Web Pages
 
