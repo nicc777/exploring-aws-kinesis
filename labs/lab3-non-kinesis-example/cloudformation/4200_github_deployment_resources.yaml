@@ -488,6 +488,8 @@ Resources:
 
               echo "GITHUB_WORKDIR=/data/github" >> /etc/environment
               echo "DEPLOYMENT_TARGET_DIR=/data/deployments" >> /etc/environment
+              echo "INTERNAL_APP_DOMAIN=${InternalAppDomain}" >> /etc/environment
+              echo "INTERNAL_APP_PORT=8443" >> /etc/environment
 
               mkdir /home/ec2-user/script
               chown ec2-user:ec2-user /home/ec2-user/script
@@ -510,6 +512,7 @@ Resources:
 
               [Service]
               Type=simple
+              EnvironmentFile=-/etc/environment
               ExecStart=/usr/bin/python3 /home/ec2-user/script/github_sync.py
               User=ec2-user
               WorkingDirectory=/home/ec2-user
@@ -533,6 +536,10 @@ Resources:
               RequirementsFile: !Ref PythonRequirementsFileParam
               ScriptFile: !Ref PythonScriptFile
               SqsUrl: !GetAtt GitHubSyncRequestQueue.QueueUrl
+              InternalAppDomain:
+                Fn::Sub:
+                - "internal.${DomainName}"
+                - DomainName: !Ref PublicDnsNameParam
       TagSpecifications: 
       - ResourceType: "launch-template"
         Tags: 
