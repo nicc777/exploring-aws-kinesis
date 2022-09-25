@@ -178,6 +178,10 @@ Resources:
     Properties: 
       ApiId: !Ref InternalWebAppApiGateway
       ApiKeyRequired: false
+      # AuthorizationScopes: 
+      # - String
+      AuthorizationType: "JWT"
+      AuthorizerId: !Ref InternalWebAppApiGatewayAuthorizer
       OperationName: "test-public-event-operation"
       RouteKey: "GET /access-card-app/employees"
       Target: 
