@@ -325,40 +325,40 @@ aws cloudformation deploy \
 
 # The following three VPC Endpoint stacks creates the end points required for SSM Console Access to running instances in the Private VPC
 
-aws cloudformation deploy \
-    --stack-name SsmVpcEndPointStack \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
-    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
-        VpcEndPointServiceName="com.amazonaws.eu-central-1.ssm"
+# aws cloudformation deploy \
+#     --stack-name SsmVpcEndPointStack \
+#     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
+#     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
+#         VpcEndPointServiceName="com.amazonaws.eu-central-1.ssm"
 
-aws cloudformation deploy \
-    --stack-name SsmMessagesVpcEndPointStack \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
-    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
-        VpcEndPointServiceName="com.amazonaws.eu-central-1.ssmmessages"
+# aws cloudformation deploy \
+#     --stack-name SsmMessagesVpcEndPointStack \
+#     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
+#     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
+#         VpcEndPointServiceName="com.amazonaws.eu-central-1.ssmmessages"
 
-aws cloudformation deploy \
-    --stack-name KmsVpcEndPointStack \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
-    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
-        VpcEndPointServiceName="com.amazonaws.eu-central-1.kms"
+# aws cloudformation deploy \
+#     --stack-name KmsVpcEndPointStack \
+#     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
+#     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
+#         VpcEndPointServiceName="com.amazonaws.eu-central-1.kms"
 
-aws cloudformation deploy \
-    --stack-name SqsVpcEndPointStack \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
-    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
-        VpcEndPointServiceName="com.amazonaws.eu-central-1.sqs"
+# aws cloudformation deploy \
+#     --stack-name SqsVpcEndPointStack \
+#     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
+#     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
+#         VpcEndPointServiceName="com.amazonaws.eu-central-1.sqs"
 
-aws cloudformation deploy \
-    --stack-name Ec2VpcEndPointStack \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
-    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
-        VpcEndPointServiceName="com.amazonaws.eu-central-1.ec2"
+# aws cloudformation deploy \
+#     --stack-name Ec2VpcEndPointStack \
+#     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
+#     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
+#         VpcEndPointServiceName="com.amazonaws.eu-central-1.ec2"
 
-aws cloudformation deploy \
-    --stack-name S3GatewayVpcEndPointStack \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/3250_s3_gateway_vpc_endpoint_stack.yaml \
-    --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" 
+# aws cloudformation deploy \
+#     --stack-name S3GatewayVpcEndPointStack \
+#     --template-file labs/lab3-non-kinesis-example/cloudformation/3250_s3_gateway_vpc_endpoint_stack.yaml \
+#     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" 
 
 aws cloudformation deploy \
     --stack-name $PROXY_STACK_NAME \
