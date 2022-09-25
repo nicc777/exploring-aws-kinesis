@@ -489,6 +489,7 @@ Resources:
               echo "GITHUB_WORKDIR=/data/github" >> /etc/environment
               echo "DEPLOYMENT_TARGET_DIR=/data/deployments" >> /etc/environment
               echo "INTERNAL_APP_DOMAIN=${InternalAppDomain}" >> /etc/environment
+              echo "INTERNAL_APP_PORT=8443" >> /etc/environment
 
               mkdir /home/ec2-user/script
               chown ec2-user:ec2-user /home/ec2-user/script
