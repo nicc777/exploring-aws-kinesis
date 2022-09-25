@@ -26,6 +26,12 @@ Parameters:
   PublicDnsHostedZoneIdParam:
     Type: String
     Description: "The Hosted Zone ID (Route 53) of the public DNS zone"
+  CognitoStackNameParam:
+    Type: String
+    Description: "The stack name of the Cognito User Pool"
+  CognitoIssuerUrlParam:
+    Type: String
+    Description: "The Issuer URL from https://cognito-idp.[region].amazonaws.com/[userPoolId]/.well-known/openid-configuration (refer to the issuer claim)"
   # DnsStackNameParam:
   #   Type: String
   #   Description: "The name of the DNS stack, in order to import values"
@@ -268,7 +274,18 @@ Resources:
       TTL: 300
       Type: "CNAME"
 
-
+  InternalWebAppApiGatewayAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties: 
+      ApiId: !Ref InternalWebAppApiGateway
+      AuthorizerType: "JWT"
+      IdentitySource: 
+      - "$request.header.Authorization"
+      JwtConfiguration: 
+        Audience: 
+        - Fn::ImportValue: !Sub "${CognitoStackNameParam}-CognitoEmployeeAuthorizerUserPoolClientId"
+        Issuer: !Ref CognitoIssuerUrlParam
+      Name: "internal-auth"
 
 # Outputs:
 
