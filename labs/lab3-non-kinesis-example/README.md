@@ -407,7 +407,7 @@ aws cloudformation deploy \
 export GITHUB_KEY=`cat ~/.ssh/github_key.pem`
 
 # Get the newly created secret ARN
-export GITHUB_SECRET_ID=`aws cloudformation describe-stacks --stack-name $GITHUB_SECRET_STACK_NAME | jq ".Stacks[0].Outputs[0].OutputValue" | awk -F\" '{print $2}'`
+export GITHUB_SECRET_ID=`aws cloudformation describe-stacks --stack-name $GITHUB_SECRET_STACK_NAME | jq -r ".Stacks[0].Outputs[0].OutputValue"`
 
 # Load the SSH key data into the secret
 aws secretsmanager put-secret-value --secret-id $GITHUB_SECRET_ID --secret-string "$GITHUB_KEY"
@@ -453,6 +453,12 @@ aws cloudformation deploy \
         PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
         Email="$EMPLOYEE_1_EMAIL"
 
+
+export COGNITO_USER_POOL_ID=`aws cloudformation describe-stacks --stack-name $COGNITO_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "CognitoAuthorizerUserPoolId") | {OutputValue}' | jq -r '.OutputValue'`
+export COGNITO_ISSUER_URL=`curl https://cognito-idp.${AWS_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}/.well-known/openid-configuration | jq -r ".issuer" -`
+export COGNITO_CLIENT_ID=`aws cloudformation describe-stacks --stack-name $COGNITO_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "CognitoAuthorizerUserPoolClientId") | {OutputValue}' | jq -r '.OutputValue'`
+
+# NOTE: The COGNITO_CLIENT_ID is also the AUDIENCE value fo the API Authorizer
 
 # WEB_SERVER_STACK_NAME
 export TRUSTED_IP=$(curl http://checkip.amazonaws.com/)
