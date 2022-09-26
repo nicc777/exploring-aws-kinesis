@@ -119,6 +119,15 @@ Resources:
       Runtime: "python3.8"
       Timeout: 30
 
+  AccessTokenReqLambdaFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt 
+      - AccessTokenReqLambdaFunction
+      - Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: elasticloadbalancing.amazonaws.com
+
 #######################################################################################################################
 ###                                                                                                                 ###
 ###                                               COMMON EC2 RESOURCES                                              ###
@@ -383,6 +392,15 @@ Resources:
 #######################################################################################################################
 
 
+  AccessTokenReqLambdaFunctionTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckEnabled: false
+      Name: AccessTokenReqLambdaFunctionTargetGroup
+      TargetType: lambda
+      Targets:
+      - Id: !GetAtt AccessTokenReqLambdaFunction.Arn
+
   PublicVpcWebServer8080Elbv2TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
@@ -575,6 +593,44 @@ Resources:
       Port: 8443
       Protocol: "HTTPS"
       SslPolicy: "ELBSecurityPolicy-2016-08"
+
+  InternalServerAccessTokenReqListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties: 
+      Actions: 
+      - Order: 1
+        Type: "authenticate-cognito"
+        AuthenticateCognitoConfig: 
+          AuthenticationRequestExtraParams: 
+            display : "page"
+            prompt : "login"
+          OnUnauthenticatedRequest: "authenticate"
+          Scope: "openid"
+          SessionTimeout: 900
+          UserPoolArn: 
+            Fn::ImportValue: !Sub "${CognitoStackNameParam}-CognitoAuthorizerUserPoolArn"
+          UserPoolClientId:
+            Fn::ImportValue: !Sub "${CognitoStackNameParam}-CognitoAlbUserPoolClientId"
+          UserPoolDomain:
+            Fn::ImportValue: !Sub "${CognitoStackNameParam}-CognitoAuthorizerUserPoolDomain"
+      - Order: 2
+        ForwardConfig:
+          TargetGroups: 
+          - TargetGroupArn: !Ref AccessTokenReqLambdaFunctionTargetGroup
+        Type: "forward"
+      Conditions: 
+      - Field: "host-header"
+        HostHeaderConfig: 
+          Values: 
+          - Fn::Sub:
+            - "internal.${DomainName}"
+            - DomainName: !Ref PublicDnsNameParam
+      - Field: "path-pattern"
+        PathPatternConfig: 
+          Values: 
+          - "/access-token-request"
+      ListenerArn: !Ref PublicVpcWebServer8081Elbv2Listener
+      Priority: 90
 
   InternalServerAuthListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
