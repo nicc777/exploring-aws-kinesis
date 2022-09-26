@@ -432,6 +432,12 @@ cd labs/lab3-non-kinesis-example/lambda_functions/github_syncserver_starter_lamb
 
 aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/github_syncserver_starter_lambda/github_syncserver_starter_lambda.zip s3://$ARTIFACT_S3_BUCKET_NAME/github_syncserver_starter_lambda.zip
 
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/access_token_requestor/access_token_requestor.zip
+
+cd labs/lab3-non-kinesis-example/lambda_functions/access_token_requestor/ && zip access_token_requestor.zip access_token_requestor.py && cd $OLDPWD 
+
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/access_token_requestor/access_token_requestor.zip s3://$ARTIFACT_S3_BUCKET_NAME/access_token_requestor.zip
+
 aws cloudformation deploy \
     --stack-name $GITHUB_SYNC_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/4200_github_deployment_resources.yaml \
@@ -475,6 +481,7 @@ aws cloudformation deploy \
         PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
         PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
         CognitoStackNameParam="$COGNITO_STACK_NAME" \
+        S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 
 
