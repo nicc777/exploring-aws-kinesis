@@ -39,6 +39,9 @@ Parameters:
   CognitoStackNameParam:
     Type: String
     Description: "The stack name of the Cognito User Pool"
+  S3SourceBucketParam:
+    Type: String
+    Description: "The S3 bucket name containing the Lambda function ZIP file"
 
 # Rules:
 #   set of rules
@@ -53,6 +56,68 @@ Parameters:
 #   set of transforms
 
 Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                  Lambda Function To Echo Back Access Token Data                                 ###
+###                                                                                                                 ###
+####################################################################################################################### 
+
+
+  AccessTokenReqLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "GitHubSyncServerStarterFunctionRoleAssumeRolePolicyDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role for AccessTokenReqLambdaFunction"
+      Policies:
+      - PolicyName: AccessTokenReqLambdaFunctionPolicy01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+      RoleName: AccessTokenReqLambdaFunctionRole
+
+  AccessTokenReqLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref AccessTokenReqLambdaFunction
+      RetentionInDays: 7
+
+  AccessTokenReqLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Environment:
+        Variables: 
+          DEBUG: "1"
+      Code: 
+        S3Bucket: !Ref S3SourceBucketParam
+        S3Key: "access_token_requestor.zip"
+      Description: "Echo Back the Access Token Data to the Requesting Web Application"
+      FunctionName: "AccessTokenReqLambdaFunction"
+      Handler: "access_token_requestor.handler"
+      MemorySize: 128
+      Role: !GetAtt AccessTokenReqLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 30
 
 #######################################################################################################################
 ###                                                                                                                 ###
