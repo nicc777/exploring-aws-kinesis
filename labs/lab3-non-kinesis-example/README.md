@@ -481,6 +481,7 @@ aws cloudformation deploy \
         PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
         PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
         CognitoStackNameParam="$COGNITO_STACK_NAME" \
+        S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 
 
