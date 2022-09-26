@@ -104,6 +104,33 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 
 ###############################################################################
 ###                                                                         ###
+###        E V E N T    P A R S I N G    A N D    V A L I D A T I O N       ###
+###                                                                         ###
+###############################################################################
+
+
+def event_parsing(event: dict, logger=get_logger())->dict:
+    result = dict()
+    result['AccessTokenData'] = None
+    result['OidcIdentity'] = None
+    result['OidcData'] = None
+    try:
+        if 'headers' in event:
+            for header_name, header_value in event['headers'].items():
+                if header_name.lower() == 'x-amzn-oidc-accesstoken':
+                    result['AccessTokenData'] = header_value
+                if header_name.lower() == 'x-amzn-oidc-identity':
+                    result['OidcIdentity'] = header_value
+                if header_name.lower() == 'x-amzn-oidc-data':
+                    result['OidcData'] = header_value
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log(message='result={}', variable_as_list=[result,], logger=logger)
+    return result
+
+
+###############################################################################
+###                                                                         ###
 ###                         M A I N    H A N D L E R                        ###
 ###                                                                         ###
 ###############################################################################
@@ -121,6 +148,7 @@ def handler(
         logger  = get_logger(level=logging.DEBUG)
     
     debug_log('event={}', variable_as_list=[event], logger=logger)
+    extracted_token_data = event_parsing(event=event, logger=logger)
     
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
 
