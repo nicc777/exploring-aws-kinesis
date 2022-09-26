@@ -143,14 +143,26 @@ def handler(
     boto3_clazz=boto3,
     run_from_main: bool=False
 ):
+    result = dict()
+    return_object = {
+        'statusCode': 200,
+        'headers': {
+            'content-type': 'application/json',
+        },
+        'body': result,
+        'isBase64Encoded': False,
+    }
+
     refresh_environment_cache(logger=logger)
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
         logger  = get_logger(level=logging.DEBUG)
     
     debug_log('event={}', variable_as_list=[event], logger=logger)
     extracted_token_data = event_parsing(event=event, logger=logger)
+
+    return_object['body'] = json.dumps(extracted_token_data)
     
-    return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
+    return return_object
 
 
 ###############################################################################
@@ -176,4 +188,7 @@ if __name__ == '__main__':
         logger.setLevel(logging.DEBUG)
     else:    
         logger.setLevel(logging.INFO)
-    handler(event={}, context=None, logger=logger, run_from_main=True)
+    result = handler(event={}, context=None, logger=logger, run_from_main=True)
+
+    print('-'*80)
+    print(result)
