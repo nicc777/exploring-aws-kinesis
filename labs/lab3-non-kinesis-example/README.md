@@ -509,25 +509,51 @@ aws cloudformation deploy \
 
 ### Capturing Proxy Request Data to the Docker Containers
 
-A simple trick:
+I previously used a hacky way to obtain the Access Token, but now I have decided to deploy a Lambda function as part of the INternal site's ELB target groups that will receive the access token and echo that back.
 
-```shell
-# Get a dump of data to the Internal App (Port 8081)
-tcpdump port 8081 -w /data/logs/comms_to_nginx_dump.wcap
+Assuming the website domain is `example.tld`, then the URL of this Lambda function will be `https://internal.example.tld:8443/access-token-request`
 
-# Export temporarily AWS cred to upload to one of your available S3 buckets (the EC2 instance may not have access given the current configured role)
-export AWS_ACCESS_KEY_ID="...."
-export AWS_SECRET_ACCESS_KEY="...."
+Below is an example payload:
 
-# Upload to S3
-aws s3 cp /data/logs/comms_to_nginx_dump.wcap s3://wakanda-demo-logs/comms_to_nginx_dump.wcap
+```json
+{
+    "AccessTokenData": "...",
+    "OidcIdentity": "... #Not a JWT - just a unique ID string",
+    "OidcData": "..."
+}
 ```
 
-An example PCAP file is included in this repo [located here](../../labs/lab3-non-kinesis-example/tcpdump_example_of_comms_from_elb_to_ngingx_container_port8081.pcap) - you can use a UI tool like [Wireshark](https://www.wireshark.org/) to analyze the PCAP file. Wireshark is available in most Linux OS distro repositories. [More information about PCAP files](https://www.reviversoft.com/en/file-extensions/pcap)
+The access token payload section has the following structure:
 
-> Why this is an important trick? Well, to test with the `curl` utility, you need to know the access token. As of writing this (2022-09-25) I don't yet have another way to get the Access Token required for the API Testing. SO my workflow was basically to open a session to the EC2 instance that hosted the web servers and than run a `tcpdump` to capture the headers and then eventually open that dump in `wireshark` in order to obtain the Access Token in the request header added by the AWS ELB, called `X-Amzn-Oidc-Accesstoken`. You can [read more about this in the AWS Documentation](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html).
+```json
+{
+  "sub": "... #same value as the 'OidcIdentity' field",
+  "iss": "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_aaaaaaaaa",
+  "version": 2,
+  "client_id": "...",
+  "origin_jti": "...",
+  "event_id": "...",
+  "token_use": "access",
+  "scope": "openid",
+  "auth_time": 1664248370,
+  "exp": 1664251970,
+  "iat": 1664248370,
+  "jti": "...",
+  "username": "email-address@example.tld"
+}
+```
 
-_**Security Warning**_: The TCPDump files could contain sensitive information, so be careful of sharing it. I have included a copy here as by the time it is published the tokens will no longer be valid. Also, as I do not keep the stacks running, the end-points (URL's and pages), may in any case not be available all the time. The file included here is purely for educational purposes and it does not link to any production workload.
+The `OidcData` JWT token has the following payload structure:
+
+```json
+{
+  "sub": ".. #same value as the 'OidcIdentity' field",
+  "email": "email-address@example.tld",
+  "username": "email-address@example.tld",
+  "exp": 1664248564,
+  "iss": "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_aaaaaaaaa"
+}
+```
 
 ### Testing the API from the command line with the JWT Access Token
 

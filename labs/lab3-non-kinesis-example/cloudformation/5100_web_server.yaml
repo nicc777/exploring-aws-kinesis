@@ -396,7 +396,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       HealthCheckEnabled: false
-      Name: AccessTokenReqLambdaFunctionTargetGroup
+      Name: AccessTokenReqLambdaFunctionTG
       TargetType: lambda
       Targets:
       - Id: !GetAtt AccessTokenReqLambdaFunction.Arn
