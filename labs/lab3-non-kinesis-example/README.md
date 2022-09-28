@@ -110,6 +110,8 @@ I will therefore now see how I split up my infrastructure into more logic parts.
 
 ## DynamoDB Design
 
+> _**Note**_: As of 2022-09-28 I started to refactor the DynamoDB design as I realized I was still thinking in terms of RDBMS when I did the initial design. The data itself will obviously not change, but I am going to have to rethink the current implementation in order to facilitate the concept of `joins` ([a RDBMS definition](https://en.wikipedia.org/wiki/Join_(SQL))). I am going to base the new approach on [this article](https://dynobase.dev/dynamodb-joins/), especially in view of the phase where I am now where I need to create a Lambda function for the web site API call to view all access cards issued to employees. The query requires me to retrieve both the access card detail, the employee detail and also the linking details (like the status of the current issued card, who issued it etc.).
+
 For this exercise, all data will be gathered in 1x DynamoDB table. Even though the HR system may have their own application sets and table(s), this particular table is for associating employees with access cards as well as tracking which the access card usage status, relative to a building (when applicable).
 
 As such, I started with a composite key design with the following structure:
