@@ -255,7 +255,9 @@ def create_access_cards(qty_cards: int=300)->dict:
     return cards
 
 
-def create_employees(total_qty: int=200, active: int=100, access_card: dict=create_access_cards())->dict:
+def create_employees(total_qty: int=200, active: int=100, access_cards: dict=copy.deepcopy(create_access_cards()))->dict:
+    now = get_utc_timestamp(with_decimal=False)
+    card_pool_idx = list(access_cards.keys())
     employees = dict()
     idx = 0
     while idx < total_qty:
@@ -268,8 +270,16 @@ def create_employees(total_qty: int=200, active: int=100, access_card: dict=crea
         employees[employee_id_to_str]['PersonDepartment'] = 'DepartmentA'
         employees[employee_id_to_str]['PersonStatus'] = 'onboarding'
         if len(employees) < active:
+            selected_card_idx = random.choice(card_pool_idx)
+            card_pool_idx.remove(selected_card_idx)
+            access_cards[card_pool_idx]['CardIssuedTimestamp'] = now
+            access_cards[card_pool_idx]['CardIssuedTo'] = employee_id_to_str
             employees[employee_id_to_str]['PersonStatus'] = 'active'
-            
+            employees[employee_id_to_str]['CardIssuedTimestamp'] = now
+            employees[employee_id_to_str]['CardRevokedTimestamp'] = 0
+            employees[employee_id_to_str]['CardStatus'] = 'issued'
+            employees[employee_id_to_str]['CardIssuedBy'] = 'SYSTEM'
+            employees[employee_id_to_str]['CardIdx'] = selected_card_idx
     return employees
 
 

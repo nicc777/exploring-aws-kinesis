@@ -141,7 +141,7 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                       |
 |                         |                                                        |                                                                |
 |                         | PERSON#ACCESS_CARD#SCANNED#<<timestamp>>               |                                                                |
-|                         |    Note: This is a history record item as well         | OBJECT:                                                        |
+|                         |    Note: This is a history record item as well         | OBJECT named ScanRecord:                                       |
 |                         |                                                        |    - ScannedOutTimestamp (0=still scanned in)                  |
 |                         |                                                        |    - ScannedInEmployeeId (<<employee ID>>)                     |
 |                         |                                                        |    - ScannedBuildingIdx (<<building ID>>)                      |
