@@ -255,9 +255,10 @@ def create_access_cards(qty_cards: int=300)->dict:
     return cards
 
 
-def create_employees(total_qty: int=200, active: int=100, access_cards: dict=copy.deepcopy(create_access_cards()))->dict:
+def create_employees(total_qty: int=200, active: int=100, access_cards: dict=copy.deepcopy(create_access_cards()))->tuple:
     now = get_utc_timestamp(with_decimal=False)
     card_pool_idx = list(access_cards.keys())
+    # print('card_pool_idx={}'.format(card_pool_idx))
     employees = dict()
     idx = 0
     while idx < total_qty:
@@ -272,15 +273,15 @@ def create_employees(total_qty: int=200, active: int=100, access_cards: dict=cop
         if len(employees) < active:
             selected_card_idx = random.choice(card_pool_idx)
             card_pool_idx.remove(selected_card_idx)
-            access_cards[card_pool_idx]['CardIssuedTimestamp'] = now
-            access_cards[card_pool_idx]['CardIssuedTo'] = employee_id_to_str
+            access_cards[selected_card_idx]['CardIssuedTimestamp'] = now
+            access_cards[selected_card_idx]['CardIssuedTo'] = employee_id_to_str
             employees[employee_id_to_str]['PersonStatus'] = 'active'
             employees[employee_id_to_str]['CardIssuedTimestamp'] = now
             employees[employee_id_to_str]['CardRevokedTimestamp'] = 0
             employees[employee_id_to_str]['CardStatus'] = 'issued'
             employees[employee_id_to_str]['CardIssuedBy'] = 'SYSTEM'
             employees[employee_id_to_str]['CardIdx'] = selected_card_idx
-    return employees
+    return (employees, access_cards,)
 
 
 
@@ -293,4 +294,10 @@ if __name__ == '__main__':
     # employees = {**employees, **create_employees_to_be_onboarded(qty=qty_employees_to_be_onboarded)}
     # create_access_cards(qty=qty_access_cards_to_provision)    # Ensure we create a little more than what is required...
     # randomly_issue_first_100_cards_to_first_100_employees()
-    employees = create_employees()
+    
+    access_cards = create_access_cards(qty_cards=200)
+    employees, access_cards = create_employees(total_qty=200, active=100, access_cards=copy.deepcopy(access_cards))   
+    print('='*80)
+    print(json.dumps(access_cards))
+    print('-'*80)
+    print(json.dumps(employees))
