@@ -127,7 +127,7 @@ As such, I started with a composite key design with the following structure:
 | EMP#<<employee ID>>     | PERSON#PERSONAL_DATA                                   | - PersonName                                                   |
 |                         |                                                        | - PersonSurname                                                |
 |                         |                                                        | - PersonDepartment                                             |
-|                         |                                                        | - PersonStatus                                                 |
+|                         |                                                        | - PersonStatus (onboarding|active|inactive)                    |
 |                         |                                                        |                                                                |
 |                         | PERSON#ACCESS_CARD#<<CardIdx>>                         | - CardIssuedTimestamp                                          |
 |                         |                                                        | - CardRevokedTimestamp                                         |
@@ -140,17 +140,20 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        | - ScannedBuildingIdx                                           |
 |                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                       |
 |                         |                                                        |                                                                |
-|                         | PERSON#ACCESS_CARD#<<CardIdx>>#<<timestamp>>           | - ScannedOutTimestamp (0=still scanned in)                     |
-|                         |    Note: This is a history record item as well         | - ScannedInEmployeeId (<<employee ID>>)                        |
-|                         |                                                        | - ScannedBuildingIdx (<<building ID>>)                         |
-|                         |                                                        | - ScannedInTimestamp (<<timestamp>>)                           |
-|                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                       |
-|                         |                                                        | - ScannedStatusComment (default="scanned normally")            |
-|                         |                                                        | - PersonName                                                   |
-|                         |                                                        | - PersonSurname                                                |
+|                         | PERSON#ACCESS_CARD#SCANNED#<<timestamp>>               |                                                                |
+|                         |    Note: This is a history record item as well         | OBJECT:                                                        |
+|                         |                                                        |    - ScannedOutTimestamp (0=still scanned in)                  |
+|                         |                                                        |    - ScannedInEmployeeId (<<employee ID>>)                     |
+|                         |                                                        |    - ScannedBuildingIdx (<<building ID>>)                      |
+|                         |                                                        |    - ScannedInTimestamp (<<timestamp>>)                        |
+|                         |                                                        |    - ScannedStatus (scanned-in|scanned-out)                    |
+|                         |                                                        |    - ScannedStatusComment (default="scanned normally")         |
+|                         |                                                        |    - PersonName                                                |
+|                         |                                                        |    - PersonSurname                                             |
 |                         |                                                        |                                                                |
-| CARD#<<Access card ID>> | ISSUED#<<timestamp>>                                   | - CardIssuedTo (<<employee ID>>)                               |
+| CARD#<<Access card ID>> | ISSUED                                                 | - CardIssuedTo (<<employee ID>>)                               |
 |                         |                                                        | - CardIssuedBy (<<employee ID>>)                               |
+|                         |                                                        | - CardIssuedTimestamp                                          |
 |                         |                                                        |                                                                |
 |                         | SCANNED#<<timestamp>>                                  | - ScannedInTimestamp (<<timestamp>>)                           |
 |                         |                                                        |                                                                |
@@ -167,7 +170,6 @@ Global Secondary Indexes:
 +---------------------------------+---------------------------------------+------------------+
 | CardIdx                         | CardIssuedTimestamp                   | CardIssuedIdx    |
 | ScannedBuildingIdx              | ScannedInEmployeeId                   | OccupancyIdx     |
-| CardIdx                         | ScannedBuildingIdx                    | CardScannedInIdx |
 +---------------------------------+---------------------------------------+------------------+
 ```
 

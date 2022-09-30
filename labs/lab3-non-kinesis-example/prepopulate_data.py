@@ -132,7 +132,7 @@ def create_employees_to_be_onboarded(qty: int=1000)->dict:
         employees[subject_id]['first-name'] = 'Firstname-{}'.format(employee_sequence)
         employees[subject_id]['last-name'] = 'Lastname-{}'.format(employee_sequence)
         employees[subject_id]['department'] = DEPARTMENTS[1]
-        employees[subject_id]['employee-status'] = 'active'
+        employees[subject_id]['employee-status'] = 'onboarding'
         time.sleep(150/1000) 
 
 
@@ -241,12 +241,46 @@ def randomly_issue_first_100_cards_to_first_100_employees():
         idx += 1
 
 
+def create_access_cards(qty_cards: int=300)->dict:
+    cards = dict()
+    idx = 0
+    while idx < qty_cards:
+        idx += 1
+        card_id_to_str = '{}'.format(idx)
+        card_id_to_str = '1{}'.format(card_id_to_str.zfill(11))
+        cards[card_id_to_str] = dict()
+        cards[card_id_to_str]['CardIssuedTimestamp'] = 0
+        cards[card_id_to_str]['CardIssuedTo'] = 'not-issued'
+        cards[card_id_to_str]['CardIssuedBy'] = 'SYSTEM'
+    return cards
+
+
+def create_employees(total_qty: int=200, active: int=100, access_card: dict=create_access_cards())->dict:
+    employees = dict()
+    idx = 0
+    while idx < total_qty:
+        idx += 1
+        employee_id_to_str = '{}'.format(idx)
+        employee_id_to_str = '1{}'.format(employee_id_to_str.zfill(11))
+        employees[employee_id_to_str] = dict()
+        employees[employee_id_to_str]['PersonName'] = 'Name{}'.format(employee_id_to_str)
+        employees[employee_id_to_str]['PersonSurname'] = 'Surname{}'.format(employee_id_to_str)
+        employees[employee_id_to_str]['PersonDepartment'] = 'DepartmentA'
+        employees[employee_id_to_str]['PersonStatus'] = 'onboarding'
+        if len(employees) < active:
+            employees[employee_id_to_str]['PersonStatus'] = 'active'
+            
+    return employees
+
+
+
 
 if __name__ == '__main__':
-    qty_employees_to_be_onboarded = 100
-    qty_access_cards_to_provision = 100 + qty_employees_to_be_onboarded + 100
-    create_departments()
-    employees = create_first_100_employees()
-    employees = {**employees, **create_employees_to_be_onboarded(qty=qty_employees_to_be_onboarded)}
-    create_access_cards(qty=qty_access_cards_to_provision)    # Ensure we create a little more than what is required...
-    randomly_issue_first_100_cards_to_first_100_employees()
+    # qty_employees_to_be_onboarded = 100
+    # qty_access_cards_to_provision = 100 + qty_employees_to_be_onboarded + 100
+    # create_departments()
+    # employees = create_first_100_employees()
+    # employees = {**employees, **create_employees_to_be_onboarded(qty=qty_employees_to_be_onboarded)}
+    # create_access_cards(qty=qty_access_cards_to_provision)    # Ensure we create a little more than what is required...
+    # randomly_issue_first_100_cards_to_first_100_employees()
+    employees = create_employees()
