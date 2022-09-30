@@ -116,6 +116,47 @@ For this exercise, all data will be gathered in 1x DynamoDB table. Even though t
 
 As such, I started with a composite key design with the following structure:
 
+```text
++--------------------------------------------------------------------------------+-----------------------------------------------+
+| Primary Key                                                                    | Attributes                                    |
++-----------------------+--------------------------------------------------------+                                               |
+| Partition Key (PK)    | Sort Key (ST)                                          |                                               |
+| Name: Employee        | Name: RecordType                                       |                                               |
++-----------------------+--------------------------------------------------------+-----------------------------------------------+
+|                       |                                                        |                                               |
+| EMP#<<employee ID>>   | PERSON#PERS_DATA                                       | - PersonName                                  |
+|                       |                                                        | - PersonSurname                               |
+|                       |                                                        | - PersonDepartment                            |
+|                       |                                                        | - PersonStatus                                |
+|                       |                                                        |                                               |
+|                       | ACCESSCARD#<<access card ID>>                          | - CardIssuedTimestamp                         |
+|                       |                                                        | - CardRevokedTimestamp                        |
+|                       |                                                        | - CardStatus                                  |
+|                       |                                                        | - CardIssuedTo (Employee ID)                  |
+|                       |                                                        | - CardIssuedBy (Employee ID)                  |
+|                       |                                                        |                                               |
+|                       | OCCUPANCY#<<building ID>>                              | - EntryCardID (access card ID used to access) |
+|                       |                                                        | - EntryStatus                                 |
+|                       |                                                        |                                               |
+|                       | OCCUPANCY#<<building ID>>#<<scanned in timestamp>>     | - ScannedOutTimestamp (0=still scanned in)    |
+|                       |    Note: This is a history record item as well         |                                               |
+|                       |                                                        |                                               |
++-----------------------+--------------------------------------------------------+-----------------------------------------------+
+```
+
+Global Secondary Indexes:
+
+```text
++-------------------------------------------------------------------------+
+| Primary Key                                                             |
++---------------------------------+---------------------------------------+
+| Partition Key (PK)              | Sort Key (ST) Attribute               |
++---------------------------------+---------------------------------------+
+| ACCESSCARD#<<access card ID>>   | - CardIssuedTimestamp                 |
+| OCCUPANCY#<<building ID>>       | - Employee (EMP#<<employee ID>>)      |
++---------------------------------+---------------------------------------+
+```
+
 ### Partition Key
 
 Key name: `subject-id`
