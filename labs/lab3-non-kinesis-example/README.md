@@ -117,44 +117,58 @@ For this exercise, all data will be gathered in 1x DynamoDB table. Even though t
 As such, I started with a composite key design with the following structure:
 
 ```text
-+--------------------------------------------------------------------------------+-----------------------------------------------+
-| Primary Key                                                                    | Attributes                                    |
-+-----------------------+--------------------------------------------------------+                                               |
-| Partition Key (PK)    | Sort Key (ST)                                          |                                               |
-| Name: Employee        | Name: RecordType                                       |                                               |
-+-----------------------+--------------------------------------------------------+-----------------------------------------------+
-|                       |                                                        |                                               |
-| EMP#<<employee ID>>   | PERSON#PERS_DATA                                       | - PersonName                                  |
-|                       |                                                        | - PersonSurname                               |
-|                       |                                                        | - PersonDepartment                            |
-|                       |                                                        | - PersonStatus                                |
-|                       |                                                        |                                               |
-|                       | ACCESSCARD#<<access card ID>>                          | - CardIssuedTimestamp                         |
-|                       |                                                        | - CardRevokedTimestamp                        |
-|                       |                                                        | - CardStatus                                  |
-|                       |                                                        | - CardIssuedTo (Employee ID)                  |
-|                       |                                                        | - CardIssuedBy (Employee ID)                  |
-|                       |                                                        |                                               |
-|                       | OCCUPANCY#<<building ID>>                              | - EntryCardID (access card ID used to access) |
-|                       |                                                        | - EntryStatus                                 |
-|                       |                                                        |                                               |
-|                       | OCCUPANCY#<<building ID>>#<<scanned in timestamp>>     | - ScannedOutTimestamp (0=still scanned in)    |
-|                       |    Note: This is a history record item as well         |                                               |
-|                       |                                                        |                                               |
-+-----------------------+--------------------------------------------------------+-----------------------------------------------+
++----------------------------------------------------------------------------------+----------------------------------------------------------------+
+| Primary Key                                                                      | Attributes                                                     |
++-------------------------+--------------------------------------------------------+                                                                |
+| Partition Key (PK)      | Sort Key (ST)                                          |                                                                |
+| Name: PK                | Name: SK                                               |                                                                |
++-------------------------+--------------------------------------------------------+----------------------------------------------------------------+
+|                         |                                                        |                                                                |
+| EMP#<<employee ID>>     | PERSON#PERSONAL_DATA                                   | - PersonName                                                   |
+|                         |                                                        | - PersonSurname                                                |
+|                         |                                                        | - PersonDepartment                                             |
+|                         |                                                        | - PersonStatus                                                 |
+|                         |                                                        |                                                                |
+|                         | PERSON#ACCESS_CARD#<<CardIdx>>                         | - CardIssuedTimestamp                                          |
+|                         |                                                        | - CardRevokedTimestamp                                         |
+|                         |                                                        | - CardStatus (issued|lost|stolen|expired|revoked)              |
+|                         |                                                        | - CardIssuedTo (<<employee ID>>)                               |
+|                         |                                                        | - CardIssuedBy (<<employee ID>>)                               |
+|                         |                                                        | - CardIdx (<<access card ID>>#<<timestamp>>)                   |
+|                         |                                                        | - PersonName                                                   |
+|                         |                                                        | - PersonSurname                                                |
+|                         |                                                        | - ScannedBuildingIdx                                           |
+|                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                       |
+|                         |                                                        |                                                                |
+|                         | PERSON#ACCESS_CARD#<<CardIdx>>#<<timestamp>>           | - ScannedOutTimestamp (0=still scanned in)                     |
+|                         |    Note: This is a history record item as well         | - ScannedInEmployeeId (<<employee ID>>)                        |
+|                         |                                                        | - ScannedBuildingIdx (<<building ID>>)                         |
+|                         |                                                        | - ScannedInTimestamp (<<timestamp>>)                           |
+|                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                       |
+|                         |                                                        | - ScannedStatusComment (default="scanned normally")            |
+|                         |                                                        | - PersonName                                                   |
+|                         |                                                        | - PersonSurname                                                |
+|                         |                                                        |                                                                |
+| CARD#<<Access card ID>> | ISSUED#<<timestamp>>                                   | - CardIssuedTo (<<employee ID>>)                               |
+|                         |                                                        | - CardIssuedBy (<<employee ID>>)                               |
+|                         |                                                        |                                                                |
+|                         | SCANNED#<<timestamp>>                                  | - ScannedInTimestamp (<<timestamp>>)                           |
+|                         |                                                        |                                                                |
++-------------------------+--------------------------------------------------------+----------------------------------------------------------------+
 ```
 
 Global Secondary Indexes:
 
 ```text
-+-------------------------------------------------------------------------+
-| Primary Key                                                             |
-+---------------------------------+---------------------------------------+
-| Partition Key (PK)              | Sort Key (ST) Attribute               |
-+---------------------------------+---------------------------------------+
-| ACCESSCARD#<<access card ID>>   | - CardIssuedTimestamp                 |
-| OCCUPANCY#<<building ID>>       | - Employee (EMP#<<employee ID>>)      |
-+---------------------------------+---------------------------------------+
++-------------------------------------------------------------------------+------------------+
+| Primary Key                                                             | Index Name       |
++---------------------------------+---------------------------------------|                  |
+| Partition Key (PK)              | Sort Key (ST) Attribute               |                  |
++---------------------------------+---------------------------------------+------------------+
+| CardIdx                         | CardIssuedTimestamp                   | CardIssuedIdx    |
+| ScannedBuildingIdx              | ScannedInEmployeeId                   | OccupancyIdx     |
+| CardIdx                         | ScannedBuildingIdx                    | CardScannedInIdx |
++---------------------------------+---------------------------------------+------------------+
 ```
 
 ### Partition Key

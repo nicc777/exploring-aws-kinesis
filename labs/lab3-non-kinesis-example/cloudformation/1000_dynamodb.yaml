@@ -9,18 +9,42 @@ Resources:
     UpdateReplacePolicy: Delete
     Properties:
       KeySchema:
-      - AttributeName: Employee
+      - AttributeName: PK
         KeyType: HASH
-      - AttributeName: RecordType
+      - AttributeName: SK
         KeyType: RANGE
       AttributeDefinitions:
-      - AttributeName: Employee
+      - AttributeName: PK
         AttributeType: S
-      - AttributeName: RecordType
+      - AttributeName: SK
         AttributeType: S
-      GlobalSecondaryIndexes: []
+      - AttributeName: CardIssuedTimestamp
+        AttributeType: N
+      - AttributeName: CardIdx
+        AttributeType: S
+      - AttributeName: ScannedBuildingIdx
+        AttributeType: S
+      - AttributeName: ScannedInEmployeeId
+        AttributeType: S
+      GlobalSecondaryIndexes:
+      - IndexName: "CardIssuedIdx"
+        KeySchema: 
+        - AttributeName: "CardIdx"
+          KeyType: HASH
+        - AttributeName: "CardIssuedTimestamp"
+          KeyType: RANGE
+        Projection: 
+          ProjectionType: "ALL"
+      - IndexName: "OccupancyIdx"
+        KeySchema: 
+        - AttributeName: "ScannedBuildingIdx"
+          KeyType: HASH
+        - AttributeName: "ScannedInEmployeeId"
+          KeyType: RANGE
+        Projection: 
+          ProjectionType: "ALL"
       BillingMode: PROVISIONED
-      TableName: access-card-app
+      TableName: "lab3-access-card-app"
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
