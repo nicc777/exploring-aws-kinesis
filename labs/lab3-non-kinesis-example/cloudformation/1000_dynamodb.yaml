@@ -5,16 +5,18 @@ Resources:
 
   AccessCardApp:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       KeySchema:
-      - AttributeName: subject-id
+      - AttributeName: Employee
         KeyType: HASH
-      - AttributeName: subject-topic
+      - AttributeName: RecordType
         KeyType: RANGE
       AttributeDefinitions:
-      - AttributeName: subject-id
+      - AttributeName: Employee
         AttributeType: S
-      - AttributeName: subject-topic
+      - AttributeName: RecordType
         AttributeType: S
       GlobalSecondaryIndexes: []
       BillingMode: PROVISIONED
@@ -33,7 +35,7 @@ Resources:
       MinCapacity: 1
       MaxCapacity: 10
       RoleARN:
-        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
+        Fn::Sub: arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
 
   TableAccessCardAppReadCapacityScalingPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
@@ -80,12 +82,6 @@ Resources:
         TargetValue: 70
 
 Outputs:
-
-  StackName:
-    Description: "DynamoDB Stack Name"
-    Value: !Sub ${AWS::StackName}
-    Export:
-      Name: !Sub "Lab3DynamoDbStackName"
 
   AccessCardAppTableName:
     Description: "DynamoDB AccessCardApp Name"
