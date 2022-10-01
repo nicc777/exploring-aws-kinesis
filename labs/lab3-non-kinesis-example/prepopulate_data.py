@@ -194,7 +194,7 @@ def randomly_issue_first_100_cards_to_first_100_employees():
         subject_id = calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.LINKED_CARD, subject_id=linked_access_card_sequence)
 
         # Insert NEW linked Card
-        response1 = client.put_item(
+        client.put_item(
             TableName=TABLE_NAME,
             Item={
                 'subject-id'                                    : { 'S': subject_id},
@@ -289,7 +289,7 @@ def populate_v2(employees: dict, access_cards: dict):
                 Item={
                     'PK'                    : { 'S': PK},
                     'SK'                    : { 'S': SK},
-                    'CardIssuedTimestamp'   : { 'N': access_cards[selected_card_idx]['CardIssuedTimestamp']},
+                    'CardIssuedTimestamp'   : { 'N': '{}'.format(access_cards[selected_card_idx]['CardIssuedTimestamp'])},
                     'CardRevokedTimestamp'  : { 'N': '0'},
                     'CardStatus'            : { 'S': employee_data['CardStatus']},
                     'CardIssuedTo'          : { 'S': access_cards[selected_card_idx]['CardIssuedTo']},
@@ -330,7 +330,7 @@ def populate_v2(employees: dict, access_cards: dict):
                     'SK'                    : { 'S': SK},
                     'CardIssuedTo'          : { 'S': access_card_data['CardIssuedTo']},
                     'CardIssuedBy'          : { 'S': 'SYSTEM'},
-                    'CardIssuedTimestamp'   : { 'S': access_card_data['CardIssuedTimestamp']}
+                    'CardIssuedTimestamp'   : { 'N': '{}'.format(access_card_data['CardIssuedTimestamp'])}
                 },
                 ReturnValues='NONE',
                 ReturnConsumedCapacity='TOTAL',
