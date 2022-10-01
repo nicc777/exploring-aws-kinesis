@@ -401,3 +401,5 @@ if __name__ == '__main__':
     print(json.dumps(access_cards))
     print('-'*80)
     print(json.dumps(employees))
+
+    populate_v2(employees=employees, access_cards=access_cards)
