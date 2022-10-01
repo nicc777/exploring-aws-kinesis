@@ -18,20 +18,16 @@ Resources:
         AttributeType: S
       - AttributeName: SK
         AttributeType: S
-      - AttributeName: CardIssuedTimestamp
-        AttributeType: N
       - AttributeName: CardIdx
         AttributeType: S
       - AttributeName: ScannedBuildingIdx
-        AttributeType: S
-      - AttributeName: ScannedInEmployeeId
         AttributeType: S
       GlobalSecondaryIndexes:
       - IndexName: "CardIssuedIdx"
         KeySchema: 
         - AttributeName: "CardIdx"
           KeyType: HASH
-        - AttributeName: "CardIssuedTimestamp"
+        - AttributeName: "PK"
           KeyType: RANGE
         Projection: 
           ProjectionType: "ALL"
@@ -39,7 +35,7 @@ Resources:
         KeySchema: 
         - AttributeName: "ScannedBuildingIdx"
           KeyType: HASH
-        - AttributeName: "ScannedInEmployeeId"
+        - AttributeName: "PK"
           KeyType: RANGE
         Projection: 
           ProjectionType: "ALL"

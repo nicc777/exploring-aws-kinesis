@@ -125,6 +125,7 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        | - PersonSurname                                                |
 |                         |                                                        | - PersonDepartment                                             |
 |                         |                                                        | - PersonStatus (onboarding|active|inactive)                    |
+|                         |                                                        | - EmployeeId                                                   |
 |                         |                                                        |                                                                |
 |                         | PERSON#PERSONAL_DATA#ACCESS_CARD                       | - CardIssuedTimestamp                                          |
 |                         |                                                        | - CardRevokedTimestamp                                         |
@@ -132,17 +133,15 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        | - CardIssuedTo (<<employee ID>>)                               |
 |                         |                                                        | - CardIssuedBy (<<employee ID>>)                               |
 |                         |                                                        | - CardIdx (<<access card ID>>#<<timestamp>>)                   |
-|                         |                                                        | - ~~PersonName~~                                               |
-|                         |                                                        | - ~~PersonSurname~~                                            |
 |                         |                                                        | - ScannedBuildingIdx                                           |
 |                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                       |
 |                         |                                                        |                                                                |
-| CARD#<<Access card ID>> | STATUS#issued                                          | - CardIssuedTo (<<employee ID>>)                               |
+| CARD#<<Access card ID>> | CARD#STATUS#issued                                     | - CardIssuedTo (<<employee ID>>)                               |
 |                         |   NOTE: status in ( 'available', 'issued', 'blocked' ) | - CardIssuedBy (<<employee ID>>)                               |
 |                         |                                                        | - CardIssuedTimestamp                                          |
 |                         |                                                        |                                                                |
-|                         | EVENT#SCANNED                                          | - ScannedInTimestamp (<<timestamp>>)                           |
-|                         |                                                        | - ScannedBuildingIdx (<<building ID>>)                         |
+|                         | CARD#EVENT#SCANNED                                     | - ScannedInTimestamp (<<timestamp>>)                           |
+|                         |                                                        | - BuildingIdxWhereScanned (<<building ID>>)                    |
 |                         |                                                        | - ScannedInEmployeeId (<<employee ID>>)                        |
 |                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                       |
 |                         |                                                        | - ScannedStatusComment (default="scanned normally")            |
@@ -160,8 +159,8 @@ Global Secondary Indexes:
 +---------------------------------+---------------------------------------|                  |
 | Partition Key (PK)              | Sort Key (ST) Attribute               |                  |
 +---------------------------------+---------------------------------------+------------------+
-| CardIdx                         | CardIssuedTimestamp                   | CardIssuedIdx    |
-| ScannedBuildingIdx              | ScannedInEmployeeId                   | OccupancyIdx     |
+| CardIdx                         | PK                                    | CardIssuedIdx    |
+| ScannedBuildingIdx              | PK                                    | OccupancyIdx     |
 +---------------------------------+---------------------------------------+------------------+
 ```
 
