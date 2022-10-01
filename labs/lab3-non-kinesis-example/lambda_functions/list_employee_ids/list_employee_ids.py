@@ -444,7 +444,7 @@ def handler(
         'headers': {
             'content-type': 'application/json',
         },
-        'body': result,
+        'body': json.dumps(result),
         'isBase64Encoded': False,
     }
     

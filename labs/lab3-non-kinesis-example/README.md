@@ -329,18 +329,6 @@ Basic VPC design:
 
 ## Serving of a web site from EC2 (private only), accessed via a proxy server in a Public VPC
 
-TODO
-
-* ~~Create OpenZFS NFS Share for hosting web source files~~
-* ~~Synchronize a SSH key (for GitHub) with Secrets Manager~~
-* Create EC2 instance that the Lambda function can start in order to sync static web site artifacts to FSX. The EC2 instance will self-terminate once done
-    * ~~Fix Proxy Config to include CIDR's~~
-* Create a Lambda function, exposed with a URL, that GitHub can call (webhook integration)
-* Create application launch template to server these files using nginx (mount NFS read only)
-* Create autoscaling group for application cluster and host in private VPC
-* Create inbound load balancer in public VPC to connect to application cluster in private VPC
-* Add Route 53 entries for application (CNAME to Load Balancer) (intranet.DOMAIN) - NOTE: Even though this is an "internal" application, I don't have a VPN peering connection so I will come in via the Internet to test the application. Another option to consider is to use SSH tunneling through a jump host....
-
 As a demonstration, I wanted to synchronize the web site static files from GitHub to the FSX file system. The static web site artifacts is kept in a separate [GitHub repository](https://github.com/nicc777/exploring-aws-kinesis-static-website) as I needed to create a webhook in that repository that will call a URL from a Lambda Function that will trigger the internal processes to synchronize the static content with the FSX volume. Any commit in that repository should therefore trigger the web hook.
 
 > _**Important Pre-Requisite**_: A SSH key must be available in order to create a copy of that key in Secrets Manager, that can later be accessed to connect to GitHub and synchronize the web site.
