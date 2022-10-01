@@ -255,6 +255,106 @@ def create_access_cards(qty_cards: int=300)->dict:
     return cards
 
 
+def populate_v2(employees: dict, access_cards: dict):
+    client = boto3.client('dynamodb', region_name='eu-central-1')
+    now = get_utc_timestamp(with_decimal=False)
+    for employee_id, employee_data in employees.items():
+        PK = 'EMP#{}'.format(employee_id)
+        
+        # Personal Data
+        SK = 'PERSON#PERSONAL_DATA'
+        client.put_item(
+            TableName='access-card-app',
+            Item={
+                'PK'                : { 'S': PK},
+                'SK'                : { 'S': SK},
+                'PersonName'        : { 'S': employee_data['PersonName']},
+                'PersonSurname'     : { 'S': employee_data['PersonSurname']},
+                'PersonDepartment'  : { 'S': employee_data['PersonDepartment']},
+                'PersonStatus'      : { 'S': employee_data['PersonStatus']}
+            },
+            ReturnValues='NONE',
+            ReturnConsumedCapacity='TOTAL',
+            ReturnItemCollectionMetrics='SIZE'
+        )
+
+        # Issues Access Card
+        if employee_data['PersonStatus'] == 'active':
+            SK = 'PERSON#ACCESS_CARD#{}'.format(employee_data['CardIdx'])
+            client.put_item(
+                TableName='access-card-app',
+                Item={
+                    'PK'                    : { 'S': PK},
+                    'SK'                    : { 'S': SK},
+                    'CardIssuedTimestamp'   : { 'N': employee_data['CardIssuedTimestamp']},
+                    'CardRevokedTimestamp'  : { 'N': '0'},
+                    'CardStatus'            : { 'S': employee_data['CardStatus']},
+                    'CardIssuedTo'          : { 'S': employee_data['CardIssuedTo']},
+                    'CardIssuedBy'          : { 'S': employee_data['CardIssuedBy']},
+                    'CardIdx'               : { 'S': employee_data['CardIdx']},
+                    'PersonName'            : { 'S': employee_data['PersonName']},
+                    'PersonSurname'         : { 'S': employee_data['PersonSurname']},
+                    'ScannedBuildingIdx'    : { 'S': 'null'},
+                    'ScannedStatus'         : { 'S': 'scanned-out'}
+                },
+                ReturnValues='NONE',
+                ReturnConsumedCapacity='TOTAL',
+                ReturnItemCollectionMetrics='SIZE'
+            )
+
+    # Access Cards
+    for access_card_id, access_card_data in access_cards.items():
+        PK = 'CARD#{}'.format(access_card_id)
+        if access_card_data['CardIssuedTo'] == 'not-issued':
+            SK = 'STATUS#available'
+            client.put_item(
+                TableName='access-card-app',
+                Item={
+                    'PK'                : { 'S': PK},
+                    'SK'                : { 'S': SK},
+                    'LockIdentifier'    : { 'S': 'null'}
+                },
+                ReturnValues='NONE',
+                ReturnConsumedCapacity='TOTAL',
+                ReturnItemCollectionMetrics='SIZE'
+            )
+        else:
+            SK = 'ISSUED'
+            client.put_item(
+                TableName='access-card-app',
+                Item={
+                    'PK'                    : { 'S': PK},
+                    'SK'                    : { 'S': SK},
+                    'CardIssuedTo'          : { 'S': access_card_data['CardIssuedTo']},
+                    'CardIssuedBy'          : { 'S': 'SYSTEM'},
+                    'CardIssuedTimestamp'   : { 'S': access_card_data['CardIssuedTimestamp']}
+                },
+                ReturnValues='NONE',
+                ReturnConsumedCapacity='TOTAL',
+                ReturnItemCollectionMetrics='SIZE'
+            )
+            SK = 'STATUS#issued'
+            client.put_item(
+                TableName='access-card-app',
+                Item={
+                    'PK'                : { 'S': PK},
+                    'SK'                : { 'S': SK},
+                    'LockIdentifier'    : { 'S': 'null'}
+                },
+                ReturnValues='NONE',
+                ReturnConsumedCapacity='TOTAL',
+                ReturnItemCollectionMetrics='SIZE'
+            )
+            SK = 'STATUS#available'
+            client.delete_item(
+                TableName='access-card-app',
+                Key={
+                    'PK'    : { 'S': PK},
+                    'SK'    : { 'S': SK}
+                }
+            )
+
+
 def create_employees(total_qty: int=200, active: int=100, access_cards: dict=copy.deepcopy(create_access_cards()))->tuple:
     now = get_utc_timestamp(with_decimal=False)
     card_pool_idx = list(access_cards.keys())

@@ -157,6 +157,8 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        |                                                                |
 |                         | SCANNED#<<timestamp>>                                  | - ScannedInTimestamp (<<timestamp>>)                           |
 |                         |                                                        |                                                                |
+|                         | STATUS#<<status>>                                      | NOTE: status in ( 'available', 'issued', 'blocked' )           |
+|                         |                                                        |                                                                |
 +-------------------------+--------------------------------------------------------+----------------------------------------------------------------+
 ```
 
