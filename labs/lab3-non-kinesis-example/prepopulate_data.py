@@ -309,7 +309,7 @@ def populate_v2(employees: dict, access_cards: dict):
     for access_card_id, access_card_data in access_cards.items():
         PK = 'CARD#{}'.format(access_card_id)
         if access_card_data['CardIssuedTo'] == 'not-issued':
-            SK = 'STATUS#available'
+            SK = 'CARD#STATUS#available'
             client.put_item(
                 TableName=TABLE_NAME,
                 Item={
@@ -322,7 +322,7 @@ def populate_v2(employees: dict, access_cards: dict):
                 ReturnItemCollectionMetrics='SIZE'
             )
         else:
-            SK = 'STATUS#issued'
+            SK = 'CARD#STATUS#issued'
             client.put_item(
                 TableName=TABLE_NAME,
                 Item={
@@ -337,7 +337,7 @@ def populate_v2(employees: dict, access_cards: dict):
                 ReturnConsumedCapacity='TOTAL',
                 ReturnItemCollectionMetrics='SIZE'
             )
-            SK = 'STATUS#available'
+            SK = 'CARD#STATUS#available'
             client.delete_item(
                 TableName=TABLE_NAME,
                 Key={
