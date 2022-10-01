@@ -283,15 +283,16 @@ def populate_v2(employees: dict, access_cards: dict):
         # Issues Access Card
         if employee_data['PersonStatus'] == 'active':
             SK = 'PERSON#ACCESS_CARD#{}'.format(employee_data['CardIdx'])
+            selected_card_idx = employee_data['CardIdx']
             client.put_item(
                 TableName=TABLE_NAME,
                 Item={
                     'PK'                    : { 'S': PK},
                     'SK'                    : { 'S': SK},
-                    'CardIssuedTimestamp'   : { 'N': employee_data['CardIssuedTimestamp']},
+                    'CardIssuedTimestamp'   : { 'N': access_cards[selected_card_idx]['CardIssuedTimestamp']},
                     'CardRevokedTimestamp'  : { 'N': '0'},
                     'CardStatus'            : { 'S': employee_data['CardStatus']},
-                    'CardIssuedTo'          : { 'S': employee_data['CardIssuedTo']},
+                    'CardIssuedTo'          : { 'S': access_cards[selected_card_idx]['CardIssuedTo']},
                     'CardIssuedBy'          : { 'S': employee_data['CardIssuedBy']},
                     'CardIdx'               : { 'S': employee_data['CardIdx']},
                     'PersonName'            : { 'S': employee_data['PersonName']},
