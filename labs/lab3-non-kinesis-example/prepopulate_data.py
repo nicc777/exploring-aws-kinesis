@@ -12,6 +12,8 @@ DEPARTMENTS = dict()
 employee_ids = list()
 access_cards_ids = dict()
 
+TABLE_NAME = 'lab3-access-card-app'
+
 
 def get_utc_timestamp(with_decimal: bool = False):
     epoch = datetime(1970, 1, 1, 0, 0, 0)
@@ -72,7 +74,7 @@ def create_first_100_employees()->dict:
         subject_id = calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.EMPLOYEE, subject_id=employee_sequence)
         employee_ids.append(subject_id)
         response = client.put_item(
-            TableName='access-card-app',
+            TableName=TABLE_NAME,
             Item={
                 'subject-id'        : { 'S': subject_id},
                 'subject-topic'     : { 'S': 'employee#profile#{}'.format(subject_id_to_str)},
@@ -111,7 +113,7 @@ def create_employees_to_be_onboarded(qty: int=1000)->dict:
         subject_id_to_str = '1{}'.format(subject_id_to_str.zfill(11))
         subject_id = calc_partition_key_value_from_subject_and_id(subject_type=SubjectType.EMPLOYEE, subject_id=employee_sequence)
         response = client.put_item(
-            TableName='access-card-app',
+            TableName=TABLE_NAME,
             Item={
                 'subject-id'        : { 'S': subject_id},
                 'subject-topic'     : { 'S': 'employee#profile#{}'.format(subject_id_to_str)},
@@ -149,7 +151,7 @@ def create_access_cards(qty: int=1100):
         # access_cards_ids.append(subject_id)
         access_cards_ids[subject_id] = subject_id_to_str    # access_cards_ids[fgfgf...fsfs00AC] = 100000000001
         response = client.put_item(
-            TableName='access-card-app',
+            TableName=TABLE_NAME,
             Item={
                 'subject-id'            : { 'S': subject_id},
                 'subject-topic'         : { 'S': 'access-card#profile#{}'.format(subject_id_to_str)},
@@ -193,7 +195,7 @@ def randomly_issue_first_100_cards_to_first_100_employees():
 
         # Insert NEW linked Card
         response1 = client.put_item(
-            TableName='access-card-app',
+            TableName=TABLE_NAME,
             Item={
                 'subject-id'                                    : { 'S': subject_id},
                 'subject-topic'                                 : { 'S': 'linked-access-card#association#{}'.format(subject_id_to_str)},
@@ -216,7 +218,7 @@ def randomly_issue_first_100_cards_to_first_100_employees():
             access_cards_ids[ fgfgf...fsfs00AC ] = 100000000001
         """
         response2 = client.update_item(
-            TableName='access-card-app',
+            TableName=TABLE_NAME,
             Key={
                 'subject-id'    : { 'S': access_card_id},
                 'subject-topic' : { 'S': 'access-card#profile#{}'.format(access_cards_ids[access_card_id])}
@@ -264,7 +266,7 @@ def populate_v2(employees: dict, access_cards: dict):
         # Personal Data
         SK = 'PERSON#PERSONAL_DATA'
         client.put_item(
-            TableName='access-card-app',
+            TableName=TABLE_NAME,
             Item={
                 'PK'                : { 'S': PK},
                 'SK'                : { 'S': SK},
@@ -282,7 +284,7 @@ def populate_v2(employees: dict, access_cards: dict):
         if employee_data['PersonStatus'] == 'active':
             SK = 'PERSON#ACCESS_CARD#{}'.format(employee_data['CardIdx'])
             client.put_item(
-                TableName='access-card-app',
+                TableName=TABLE_NAME,
                 Item={
                     'PK'                    : { 'S': PK},
                     'SK'                    : { 'S': SK},
@@ -308,7 +310,7 @@ def populate_v2(employees: dict, access_cards: dict):
         if access_card_data['CardIssuedTo'] == 'not-issued':
             SK = 'STATUS#available'
             client.put_item(
-                TableName='access-card-app',
+                TableName=TABLE_NAME,
                 Item={
                     'PK'                : { 'S': PK},
                     'SK'                : { 'S': SK},
@@ -321,7 +323,7 @@ def populate_v2(employees: dict, access_cards: dict):
         else:
             SK = 'ISSUED'
             client.put_item(
-                TableName='access-card-app',
+                TableName=TABLE_NAME,
                 Item={
                     'PK'                    : { 'S': PK},
                     'SK'                    : { 'S': SK},
@@ -335,7 +337,7 @@ def populate_v2(employees: dict, access_cards: dict):
             )
             SK = 'STATUS#issued'
             client.put_item(
-                TableName='access-card-app',
+                TableName=TABLE_NAME,
                 Item={
                     'PK'                : { 'S': PK},
                     'SK'                : { 'S': SK},
@@ -347,7 +349,7 @@ def populate_v2(employees: dict, access_cards: dict):
             )
             SK = 'STATUS#available'
             client.delete_item(
-                TableName='access-card-app',
+                TableName=TABLE_NAME,
                 Key={
                     'PK'    : { 'S': PK},
                     'SK'    : { 'S': SK}
