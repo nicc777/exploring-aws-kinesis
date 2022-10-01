@@ -5,87 +5,103 @@ Resources:
 
   AccessCardApp:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       KeySchema:
-      - AttributeName: subject-id
+      - AttributeName: PK
         KeyType: HASH
-      - AttributeName: subject-topic
+      - AttributeName: SK
         KeyType: RANGE
       AttributeDefinitions:
-      - AttributeName: subject-id
+      - AttributeName: PK
         AttributeType: S
-      - AttributeName: subject-topic
+      - AttributeName: SK
         AttributeType: S
-      GlobalSecondaryIndexes: []
-      BillingMode: PROVISIONED
-      TableName: access-card-app
-      ProvisionedThroughput:
-        ReadCapacityUnits: 1
-        WriteCapacityUnits: 1
+      - AttributeName: CardIdx
+        AttributeType: S
+      - AttributeName: ScannedBuildingIdx
+        AttributeType: S
+      GlobalSecondaryIndexes:
+      - IndexName: "CardIssuedIdx"
+        KeySchema: 
+        - AttributeName: "CardIdx"
+          KeyType: HASH
+        - AttributeName: "PK"
+          KeyType: RANGE
+        Projection: 
+          ProjectionType: "ALL"
+      - IndexName: "OccupancyIdx"
+        KeySchema: 
+        - AttributeName: "ScannedBuildingIdx"
+          KeyType: HASH
+        - AttributeName: "PK"
+          KeyType: RANGE
+        Projection: 
+          ProjectionType: "ALL"
+      BillingMode: "PAY_PER_REQUEST"
+      TableName: "lab3-access-card-app"
+      # ProvisionedThroughput:
+      #   ReadCapacityUnits: 1
+      #   WriteCapacityUnits: 1
 
-  TableAccessCardAppReadCapacityScalableTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    DependsOn: AccessCardApp
-    Properties:
-      ServiceNamespace: dynamodb
-      ResourceId: table/access-card-app
-      ScalableDimension: dynamodb:table:ReadCapacityUnits
-      MinCapacity: 1
-      MaxCapacity: 10
-      RoleARN:
-        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
+  # TableAccessCardAppReadCapacityScalableTarget:
+  #   Type: AWS::ApplicationAutoScaling::ScalableTarget
+  #   DependsOn: AccessCardApp
+  #   Properties:
+  #     ServiceNamespace: dynamodb
+  #     ResourceId: table/access-card-app
+  #     ScalableDimension: dynamodb:table:ReadCapacityUnits
+  #     MinCapacity: 1
+  #     MaxCapacity: 10
+  #     RoleARN:
+  #       Fn::Sub: arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
 
-  TableAccessCardAppReadCapacityScalingPolicy:
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-    DependsOn: TableAccessCardAppReadCapacityScalableTarget
-    Properties:
-      ServiceNamespace: dynamodb
-      ResourceId: table/access-card-app
-      ScalableDimension: dynamodb:table:ReadCapacityUnits
-      PolicyName: access-card-app-read-capacity-scaling-policy
-      PolicyType: TargetTrackingScaling
-      TargetTrackingScalingPolicyConfiguration:
-        PredefinedMetricSpecification:
-          PredefinedMetricType: DynamoDBReadCapacityUtilization
-        ScaleOutCooldown: 60
-        ScaleInCooldown: 60
-        TargetValue: 70
+  # TableAccessCardAppReadCapacityScalingPolicy:
+  #   Type: AWS::ApplicationAutoScaling::ScalingPolicy
+  #   DependsOn: TableAccessCardAppReadCapacityScalableTarget
+  #   Properties:
+  #     ServiceNamespace: dynamodb
+  #     ResourceId: table/access-card-app
+  #     ScalableDimension: dynamodb:table:ReadCapacityUnits
+  #     PolicyName: access-card-app-read-capacity-scaling-policy
+  #     PolicyType: TargetTrackingScaling
+  #     TargetTrackingScalingPolicyConfiguration:
+  #       PredefinedMetricSpecification:
+  #         PredefinedMetricType: DynamoDBReadCapacityUtilization
+  #       ScaleOutCooldown: 60
+  #       ScaleInCooldown: 60
+  #       TargetValue: 70
 
-  TableAccessCardAppWriteCapacityScalableTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    DependsOn: AccessCardApp
-    Properties:
-      ServiceNamespace: dynamodb
-      ResourceId: table/access-card-app
-      ScalableDimension: dynamodb:table:WriteCapacityUnits
-      MinCapacity: 1
-      MaxCapacity: 10
-      RoleARN:
-        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
+  # TableAccessCardAppWriteCapacityScalableTarget:
+  #   Type: AWS::ApplicationAutoScaling::ScalableTarget
+  #   DependsOn: AccessCardApp
+  #   Properties:
+  #     ServiceNamespace: dynamodb
+  #     ResourceId: table/access-card-app
+  #     ScalableDimension: dynamodb:table:WriteCapacityUnits
+  #     MinCapacity: 1
+  #     MaxCapacity: 10
+  #     RoleARN:
+  #       Fn::Sub: arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
 
-  TableAccessCardAppWriteCapacityScalingPolicy:
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-    DependsOn: TableAccessCardAppReadCapacityScalableTarget
-    Properties:
-      ServiceNamespace: dynamodb
-      ResourceId: table/access-card-app
-      ScalableDimension: dynamodb:table:WriteCapacityUnits
-      PolicyName: access-card-app-write-capacity-scaling-policy
-      PolicyType: TargetTrackingScaling
-      TargetTrackingScalingPolicyConfiguration:
-        PredefinedMetricSpecification:
-          PredefinedMetricType: DynamoDBWriteCapacityUtilization
-        ScaleOutCooldown: 60
-        ScaleInCooldown: 60
-        TargetValue: 70
+  # TableAccessCardAppWriteCapacityScalingPolicy:
+  #   Type: AWS::ApplicationAutoScaling::ScalingPolicy
+  #   DependsOn: TableAccessCardAppReadCapacityScalableTarget
+  #   Properties:
+  #     ServiceNamespace: dynamodb
+  #     ResourceId: table/access-card-app
+  #     ScalableDimension: dynamodb:table:WriteCapacityUnits
+  #     PolicyName: access-card-app-write-capacity-scaling-policy
+  #     PolicyType: TargetTrackingScaling
+  #     TargetTrackingScalingPolicyConfiguration:
+  #       PredefinedMetricSpecification:
+  #         PredefinedMetricType: DynamoDBWriteCapacityUtilization
+  #       ScaleOutCooldown: 60
+  #       ScaleInCooldown: 60
+  #       TargetValue: 70
 
 Outputs:
-
-  StackName:
-    Description: "DynamoDB Stack Name"
-    Value: !Sub ${AWS::StackName}
-    Export:
-      Name: !Sub "Lab3DynamoDbStackName"
 
   AccessCardAppTableName:
     Description: "DynamoDB AccessCardApp Name"

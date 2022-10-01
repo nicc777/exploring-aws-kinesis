@@ -11,12 +11,17 @@ from urllib.parse import parse_qs
 
 
 DEFAULT_FIELDS_TO_RETRIEVE = [
-    'EmployeeSystemId',
-    'EmployeeId',
-    'Department',
-    'EmployeeStatus',
-    'EmployeeFirstName',
-    'EmployeeLastName',
+    'PersonName',
+    'PersonSurname',
+    'PersonDepartment',
+    'PersonStatus',
+    'CardIdx',
+    'CardIssuedTimestamp',
+    'CardRevokedTimestamp',
+    'CardStatus',
+    'CardIssuedBy',
+    'ScannedBuildingIdx',
+    'ScannedStatus',
 ]
 
 
@@ -137,16 +142,9 @@ def dynamodb_data_formatting(
     logger=get_logger()
 )->dict:
     debug_log(message='data={}', variable_as_list=[data,], logger=logger)
-    RECORD_NAME_MAP = {
-        "subject-id": "EmployeeSystemId",
-        "department": "Department",
-        "employee-id": "EmployeeId",
-        "employee-status": "EmployeeStatus",
-        "first-name": "EmployeeFirstName",
-        "last-name": "EmployeeLastName"
-    }
     EXCLUDE_FIELDS = (
-        'subject-topic',
+        'PK',
+        'SK',
     )
     result = dict()
     result['Employees'] = list()
@@ -160,10 +158,7 @@ def dynamodb_data_formatting(
             final_record  = dict()
             for field_name, field_value in record.items():
                 if field_name not in EXCLUDE_FIELDS:
-                    final_field_name = field_name
-                    if field_name in RECORD_NAME_MAP:
-                        final_field_name = RECORD_NAME_MAP[field_name]
-                        final_record[final_field_name] = field_value
+                    final_record[field_name] = field_value
             result['Employees'].append(final_record)
         result['LastEvaluatedKey'] = last_evaluation_key
         qty = len(result['Employees'])
@@ -178,39 +173,39 @@ def dynamodb_data_formatting(
     return result
 
 
-def compile_final_attributes_to_get_list(fields_to_retrieve: list, logger=get_logger())->list:
-    ATTRIBUTE_MAP = {
-        'EmployeeSystemId': 'subject-id',
-        'EmployeeId': 'employee-id',
-        'Department': 'department',
-        'EmployeeStatus': 'employee-status',
-        'EmployeeFirstName': 'first-name',
-        'EmployeeLastName': 'last-name',
-    }
-    MINIMAL_LIST = ['employee-id', 'employee-status', 'first-name', 'last-name']
-    final_list = list()
+# def compile_final_attributes_to_get_list(fields_to_retrieve: list, logger=get_logger())->list:
+#     ATTRIBUTE_MAP = {
+#         'EmployeeSystemId': 'SK',
+#         'EmployeeId': 'employee-id',
+#         'Department': 'department',
+#         'EmployeeStatus': 'employee-status',
+#         'EmployeeFirstName': 'first-name',
+#         'EmployeeLastName': 'last-name',
+#     }
+#     MINIMAL_LIST = ['employee-id', 'employee-status', 'first-name', 'last-name']
+#     final_list = list()
 
-    if fields_to_retrieve is None:
-        logger.error('fields_to_retrieve was None - returning MINIMAL_LIST')
-        return MINIMAL_LIST
-    if isinstance(fields_to_retrieve, list) is False:
-        logger.error('fields_to_retrieve is not a list type - returning MINIMAL_LIST')
-        return MINIMAL_LIST
-    if len(fields_to_retrieve) == 0:
-        logger.error('fields_to_retrieve was empty - returning MINIMAL_LIST')
-        return MINIMAL_LIST
+#     if fields_to_retrieve is None:
+#         logger.error('fields_to_retrieve was None - returning MINIMAL_LIST')
+#         return MINIMAL_LIST
+#     if isinstance(fields_to_retrieve, list) is False:
+#         logger.error('fields_to_retrieve is not a list type - returning MINIMAL_LIST')
+#         return MINIMAL_LIST
+#     if len(fields_to_retrieve) == 0:
+#         logger.error('fields_to_retrieve was empty - returning MINIMAL_LIST')
+#         return MINIMAL_LIST
 
-    for requested_field in fields_to_retrieve:
-        if requested_field in ATTRIBUTE_MAP:
-            final_list.append(ATTRIBUTE_MAP[requested_field])
-        else:
-            logger.warning('Unrecognized field name "{}" - ignoring'.format(requested_field))
+#     for requested_field in fields_to_retrieve:
+#         if requested_field in ATTRIBUTE_MAP:
+#             final_list.append(ATTRIBUTE_MAP[requested_field])
+#         else:
+#             logger.warning('Unrecognized field name "{}" - ignoring'.format(requested_field))
 
-    if len(final_list) == 0:
-        logger.warning('final_list was empty - returning MINIMAL_LIST')
-        return MINIMAL_LIST
+#     if len(final_list) == 0:
+#         logger.warning('final_list was empty - returning MINIMAL_LIST')
+#         return MINIMAL_LIST
 
-    return final_list
+#     return final_list
 
 
 ###############################################################################
@@ -233,30 +228,37 @@ def query_employees(
         logger.warning('max_items was {} which is more than the absolute max. of 100.'.format(max_items))
         max_items = 100
     final_start_key = dict()
+    if 'PK' not in attributes_to_get:
+        attributes_to_get.append('PK')
+    if 'SK' not in attributes_to_get:
+        attributes_to_get.append('SK')
+    logger.info('initial start_key={}'.format(start_key))
+    logger.info('final  max_items={}'.format(max_items))
+    logger.info('final  attributes_to_get={}'.format(attributes_to_get))
     if start_key is not None:
         if isinstance(start_key, dict):
             for k,v in start_key.items():
-                if k.startswith('employee#profile#'):
-                    final_start_key = {
-                        "subject-topic": {
-                            "S": k
-                        },
-                        "subject-id": {
-                            "S": v
-                        }
+                final_start_key = {
+                    "PK": {
+                        "S": k
+                    },
+                    "SK": {
+                        "S": v
                     }
+                }
+    logger.info('final start_key={}'.format(start_key))
     try:
         client = get_client('dynamodb', boto3_clazz=boto3_clazz)
         response = dict()
         if len(final_start_key) == 0:
             response = client.scan(
-                TableName='access-card-app',
+                TableName='lab3-access-card-app',
                 AttributesToGet=attributes_to_get,
                 Limit=max_items,
                 Select='SPECIFIC_ATTRIBUTES',
                 ScanFilter={
-                    'subject-topic': {
-                        'AttributeValueList': [{'S': 'employee#profile#'},],
+                    'SK': {
+                        'AttributeValueList': [{'S': 'PERSON#PERSONAL_DATA'},],
                         'ComparisonOperator': 'BEGINS_WITH'
                     }
                 },
@@ -265,21 +267,21 @@ def query_employees(
             )
         else:
             response = client.scan(
-                TableName='access-card-app',
+                TableName='lab3-access-card-app',
                 AttributesToGet=attributes_to_get,
                 Limit=max_items,
                 ExclusiveStartKey=final_start_key,
                 Select='SPECIFIC_ATTRIBUTES',
                 ScanFilter={
-                    'subject-topic': {
-                        'AttributeValueList': [{'S': 'employee#profile#'},],
+                    'SK': {
+                        'AttributeValueList': [{'S': 'PERSON#PERSONAL_DATA'},],
                         'ComparisonOperator': 'BEGINS_WITH'
                     }
                 },
                 ReturnConsumedCapacity='TOTAL',
                 ConsistentRead=False
             )
-        debug_log(message='response={}', variable_as_list=[response,])
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
         if 'Items' in response:
             for item in response['Items']:
                 record = dict()
@@ -290,7 +292,7 @@ def query_employees(
                 debug_log(message='record length now {} - Added record {}', variable_as_list=[len(result), record,], logger=logger)
         if 'LastEvaluatedKey' in response:
             start_key = {
-                response['LastEvaluatedKey']['subject-topic']['S']: response['LastEvaluatedKey']['subject-id']['S'] 
+                response['LastEvaluatedKey']['PK']['S']: response['LastEvaluatedKey']['SK']['S'] 
             }
             final_result = (
                 {
@@ -312,7 +314,7 @@ def query_employees(
 
 
 def query_employees_helper(
-    fields_to_retrieve: list,
+    fields_to_retrieve: list=DEFAULT_FIELDS_TO_RETRIEVE,
     max_items: int=25,
     start_key: dict=dict(),
     status_filter: list=['active', 'onboarding'],
@@ -324,10 +326,18 @@ def query_employees_helper(
         max_items = 100
     if max_items < 10:
         max_items = 10
+    
+    person_records = dict()
+    if 'EmployeeId' in fields_to_retrieve:
+        fields_to_retrieve.remove('EmployeeId')
+    logger.info('fields_to_retrieve={}'.format(fields_to_retrieve))
+
+
     result = list()
     run = True
     rounds = 0
-    attributes_to_get = compile_final_attributes_to_get_list(fields_to_retrieve=fields_to_retrieve, logger=logger)
+    attributes_to_get = DEFAULT_FIELDS_TO_RETRIEVE
+    # attributes_to_get = compile_final_attributes_to_get_list(fields_to_retrieve=fields_to_retrieve, logger=logger)
     while run:
         debug_log(message='rounds={}', variable_as_list=(rounds,), logger=logger)
 
@@ -342,22 +352,35 @@ def query_employees_helper(
         debug_log(message='query_result_records={}', variable_as_list=(query_result_records,), logger=logger)
         debug_log(message='len(query_result_records[result])={}', variable_as_list=(len(query_result_records['result']),), logger=logger)
 
-        final_query_result_records = list()
-        if 'employee-status' in attributes_to_get:
-            for record in query_result_records['result']:
-                if (len(result) + len(final_query_result_records)) < max_items:
-                    if record['employee-status'] in status_filter:
-                        logger.info('Employee ID "{}" matched status "{}" to be included'.format(record['employee-id'], record['employee-status']))
-                        final_query_result_records.append(record)
-                    else:
-                        logger.info('EXCLUDING Employee ID "{}" with status "{}" - excluded by requested statuses'.format(record['employee-id'], record['employee-status']))
-        else:
-            final_query_result_records = query_result_records['result']
+        for query_result_record in query_result_records['result']:
+            debug_log(message='query_result_record={}', variable_as_list=(query_result_record,), logger=logger)
+            if 'PK' in query_result_record:
+                if query_result_record['PK'].startswith('EMP#'):
+                    employee_id = query_result_record['PK'].split('#')[1]
+                    if employee_id not in person_records:
+                        person_records[employee_id] = dict()
+                    for k,v in query_result_record.items():
+                        if k in fields_to_retrieve:
+                            person_records[employee_id][k] = v
 
-        debug_log(message='query_result_records length={} new_start_key={}', variable_as_list=(len(query_result_records), new_start_key,), logger=logger)
-        result += final_query_result_records
+
+        # final_query_result_records = list()
+        # if 'employee-status' in attributes_to_get:
+        #     for record in query_result_records['result']:
+        #         if (len(result) + len(final_query_result_records)) < max_items:
+        #             if record['employee-status'] in status_filter:
+        #                 logger.info('Employee ID "{}" matched status "{}" to be included'.format(record['employee-id'], record['employee-status']))
+        #                 final_query_result_records.append(record)
+        #             else:
+        #                 logger.info('EXCLUDING Employee ID "{}" with status "{}" - excluded by requested statuses'.format(record['employee-id'], record['employee-status']))
+        # else:
+        #     final_query_result_records = query_result_records['result']
+
+        # debug_log(message='query_result_records length={} new_start_key={}', variable_as_list=(len(query_result_records), new_start_key,), logger=logger)
+        # result += final_query_result_records
+
         start_key = new_start_key
-        if len(result) >= max_items:
+        if len(person_records) >= max_items:
             logger.info('Maximum records reached. Returning collected data')
             run = False
 
@@ -367,10 +390,20 @@ def query_employees_helper(
         if duration > 20:
             logger.warning('Maximum Query Time Reached - breaking loop. Rounds={}'.format(rounds))
             run = False
-        elif rounds > 1 and len(result) == 0:
+        elif rounds > 1 and len(person_records) == 0:
             logger.warning('Looping without adding records - breaking loop')
             run = False
+
+    debug_log(message='person_records={}', variable_as_list=(person_records,), logger=logger)
+    for employee_id, employee_record in person_records.items():
+        new_record = dict()
+        new_record['EmployeeId'] = employee_id
+
+        result.append({**new_record, **employee_record})
+
     logger.info('rounds={}'.format(rounds))
+    debug_log(message='result={}', variable_as_list=(result,), logger=logger)
+    debug_log(message='start_key={}', variable_as_list=(start_key,), logger=logger)
     return (result, start_key)
 
 
@@ -390,9 +423,11 @@ def query_string_parser(
     query_parameters['Limit'] = 25
     query_parameters['StatusFields'] = ['active', 'onboarding',]
 
-    ALLOWED_STATUS_FIELD_VALUES = [
+    # PersonStatus (onboarding|active|inactive) 
+    ALLOWED_PERSON_STATUS_FIELD_VALUES = [
         'active',
-        'onboarding'
+        'onboarding',
+        'inactive',
     ]
 
     try:
@@ -424,7 +459,7 @@ def query_string_parser(
                 if len(event['queryStringParameters']['status']) > 0:
                     query_parameters['StatusFields'] = list()
                     for requested_status in  event['queryStringParameters']['status'].split(','):
-                        if requested_status in ALLOWED_STATUS_FIELD_VALUES:
+                        if requested_status in ALLOWED_PERSON_STATUS_FIELD_VALUES:
                             query_parameters['StatusFields'].append(requested_status)
         logger.info('StatusFields={}'.format(query_parameters['StatusFields']))
 
@@ -452,7 +487,7 @@ def handler(
         'headers': {
             'content-type': 'application/json',
         },
-        'body': result,
+        'body': json.dumps(result),
         'isBase64Encoded': False,
     }
     
@@ -521,15 +556,25 @@ if __name__ == '__main__':
         logger.setLevel(logging.INFO)
 
     # fields_to_retrieve = list()
-    fields_to_retrieve = ['EmployeeId', 'EmployeeFirstName', 'EmployeeLastName']
+    # fields_to_retrieve = ['EmployeeId', 'EmployeeFirstName', 'EmployeeLastName']
+    fields_to_retrieve = DEFAULT_FIELDS_TO_RETRIEVE
     start_key = dict() 
     # start_key = {"employee#profile#100000000189": "491fb2e94211a095bd388f9a250022d22c9f3b5adde478514cd6b5a70a63d84e-E"}
 
+    
+    """
+    'rawQueryString': 'start_key=access-card%23profile%23100000000203,8a05af74c47bfbf5efe8737a43413bfe407db898d572095332a659800d6a5e83AC&qty=12&status=onboarding', 
+    'queryStringParameters': {
+            'qty': '12', 
+            'start_key': 'access-card#profile#100000000203,8a05af74c47bfbf5efe8737a43413bfe407db898d572095332a659800d6a5e83AC', 
+            'status': 'onboarding'
+        }, 
+    """
     event = {
         'version': '2.0', 
         'routeKey': 'GET /access-card-app/employees', 
         'rawPath': '/sandbox/access-card-app/employees', 
-        'rawQueryString': 'start_key=access-card%23profile%23100000000203,8a05af74c47bfbf5efe8737a43413bfe407db898d572095332a659800d6a5e83AC&qty=12&status=onboarding', 
+        'rawQueryString': '', 
         'headers': {
             'accept': '*/*', 
             'content-length': '0', 
@@ -540,11 +585,7 @@ if __name__ == '__main__':
             'x-forwarded-port': '443', 
             'x-forwarded-proto': 'https'
         }, 
-        'queryStringParameters': {
-            'qty': '12', 
-            'start_key': 'access-card#profile#100000000203,8a05af74c47bfbf5efe8737a43413bfe407db898d572095332a659800d6a5e83AC', 
-            'status': 'onboarding'
-        }, 
+        'queryStringParameters': {}, 
         'requestContext': {
             'accountId': '000000000000', 
             'apiId': 'aaaaaaaaaa', 
