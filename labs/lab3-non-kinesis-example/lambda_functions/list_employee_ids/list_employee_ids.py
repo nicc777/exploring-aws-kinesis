@@ -11,12 +11,10 @@ from urllib.parse import parse_qs
 
 
 DEFAULT_FIELDS_TO_RETRIEVE = [
-    'EmployeeSystemId',
-    'EmployeeId',
-    'Department',
-    'EmployeeStatus',
-    'EmployeeFirstName',
-    'EmployeeLastName',
+    'PersonName',
+    'PersonSurname',
+    'PersonDepartment',
+    'PersonStatus',
 ]
 
 
@@ -131,86 +129,76 @@ def decode_data(event, body: str):
     return body
 
 
-def dynamodb_data_formatting(
-    data: list,
-    last_evaluation_key: dict=dict(),
-    logger=get_logger()
-)->dict:
-    debug_log(message='data={}', variable_as_list=[data,], logger=logger)
-    RECORD_NAME_MAP = {
-        "subject-id": "EmployeeSystemId",
-        "department": "Department",
-        "employee-id": "EmployeeId",
-        "employee-status": "EmployeeStatus",
-        "first-name": "EmployeeFirstName",
-        "last-name": "EmployeeLastName"
-    }
-    EXCLUDE_FIELDS = (
-        'subject-topic',
-    )
-    result = dict()
-    result['Employees'] = list()
-    result['RecordCount'] = 0
-    result['LastEvaluatedKey'] = dict()
-    result['QueryStatus'] = 'ERROR'
-    result['Message'] = 'Functionality Not Yet Implemented'
-    try:
-        for record in data:
-            debug_log(message='   Evaluating record: {}', variable_as_list=[record,], logger=logger)
-            final_record  = dict()
-            for field_name, field_value in record.items():
-                if field_name not in EXCLUDE_FIELDS:
-                    final_field_name = field_name
-                    if field_name in RECORD_NAME_MAP:
-                        final_field_name = RECORD_NAME_MAP[field_name]
-                        final_record[final_field_name] = field_value
-            result['Employees'].append(final_record)
-        result['LastEvaluatedKey'] = last_evaluation_key
-        qty = len(result['Employees'])
-        result['RecordCount'] = qty
-        result['QueryStatus'] = 'Ok'
-        result['Message'] = '{} Records Included'.format(qty)
-    except:
-        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-        result['QueryStatus'] = 'ERROR'
-        result['Message'] = 'Processing Error'    
-    debug_log(message='result={}', variable_as_list=[result,], logger=logger)
-    return result
+# def dynamodb_data_formatting(
+#     data: list,
+#     last_evaluation_key: dict=dict(),
+#     logger=get_logger()
+# )->dict:
+#     debug_log(message='data={}', variable_as_list=[data,], logger=logger)
+#     EXCLUDE_FIELDS = (
+#         'PK',
+#         'SK',
+#     )
+#     result = dict()
+#     result['Employees'] = list()
+#     result['RecordCount'] = 0
+#     result['LastEvaluatedKey'] = dict()
+#     result['QueryStatus'] = 'ERROR'
+#     result['Message'] = 'Functionality Not Yet Implemented'
+#     try:
+#         for record in data:
+#             debug_log(message='   Evaluating record: {}', variable_as_list=[record,], logger=logger)
+#             final_record  = dict()
+#             for field_name, field_value in record.items():
+#                 if field_name not in EXCLUDE_FIELDS:
+#                     final_record[field_name] = field_value
+#             result['Employees'].append(final_record)
+#         result['LastEvaluatedKey'] = last_evaluation_key
+#         qty = len(result['Employees'])
+#         result['RecordCount'] = qty
+#         result['QueryStatus'] = 'Ok'
+#         result['Message'] = '{} Records Included'.format(qty)
+#     except:
+#         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+#         result['QueryStatus'] = 'ERROR'
+#         result['Message'] = 'Processing Error'    
+#     debug_log(message='result={}', variable_as_list=[result,], logger=logger)
+#     return result
 
 
-def compile_final_attributes_to_get_list(fields_to_retrieve: list, logger=get_logger())->list:
-    ATTRIBUTE_MAP = {
-        'EmployeeSystemId': 'subject-id',
-        'EmployeeId': 'employee-id',
-        'Department': 'department',
-        'EmployeeStatus': 'employee-status',
-        'EmployeeFirstName': 'first-name',
-        'EmployeeLastName': 'last-name',
-    }
-    MINIMAL_LIST = ['employee-id', 'employee-status', 'first-name', 'last-name']
-    final_list = list()
+# def compile_final_attributes_to_get_list(fields_to_retrieve: list, logger=get_logger())->list:
+#     ATTRIBUTE_MAP = {
+#         'EmployeeSystemId': 'SK',
+#         'EmployeeId': 'employee-id',
+#         'Department': 'department',
+#         'EmployeeStatus': 'employee-status',
+#         'EmployeeFirstName': 'first-name',
+#         'EmployeeLastName': 'last-name',
+#     }
+#     MINIMAL_LIST = ['employee-id', 'employee-status', 'first-name', 'last-name']
+#     final_list = list()
 
-    if fields_to_retrieve is None:
-        logger.error('fields_to_retrieve was None - returning MINIMAL_LIST')
-        return MINIMAL_LIST
-    if isinstance(fields_to_retrieve, list) is False:
-        logger.error('fields_to_retrieve is not a list type - returning MINIMAL_LIST')
-        return MINIMAL_LIST
-    if len(fields_to_retrieve) == 0:
-        logger.error('fields_to_retrieve was empty - returning MINIMAL_LIST')
-        return MINIMAL_LIST
+#     if fields_to_retrieve is None:
+#         logger.error('fields_to_retrieve was None - returning MINIMAL_LIST')
+#         return MINIMAL_LIST
+#     if isinstance(fields_to_retrieve, list) is False:
+#         logger.error('fields_to_retrieve is not a list type - returning MINIMAL_LIST')
+#         return MINIMAL_LIST
+#     if len(fields_to_retrieve) == 0:
+#         logger.error('fields_to_retrieve was empty - returning MINIMAL_LIST')
+#         return MINIMAL_LIST
 
-    for requested_field in fields_to_retrieve:
-        if requested_field in ATTRIBUTE_MAP:
-            final_list.append(ATTRIBUTE_MAP[requested_field])
-        else:
-            logger.warning('Unrecognized field name "{}" - ignoring'.format(requested_field))
+#     for requested_field in fields_to_retrieve:
+#         if requested_field in ATTRIBUTE_MAP:
+#             final_list.append(ATTRIBUTE_MAP[requested_field])
+#         else:
+#             logger.warning('Unrecognized field name "{}" - ignoring'.format(requested_field))
 
-    if len(final_list) == 0:
-        logger.warning('final_list was empty - returning MINIMAL_LIST')
-        return MINIMAL_LIST
+#     if len(final_list) == 0:
+#         logger.warning('final_list was empty - returning MINIMAL_LIST')
+#         return MINIMAL_LIST
 
-    return final_list
+#     return final_list
 
 
 ###############################################################################
@@ -233,30 +221,33 @@ def query_employees(
         logger.warning('max_items was {} which is more than the absolute max. of 100.'.format(max_items))
         max_items = 100
     final_start_key = dict()
+    logger.info('initial start_key={}'.format(start_key))
+    logger.info('final  max_items={}'.format(max_items))
+    logger.info('final  attributes_to_get={}'.format(attributes_to_get))
     if start_key is not None:
         if isinstance(start_key, dict):
             for k,v in start_key.items():
-                if k.startswith('employee#profile#'):
-                    final_start_key = {
-                        "subject-topic": {
-                            "S": k
-                        },
-                        "subject-id": {
-                            "S": v
-                        }
+                final_start_key = {
+                    "PK": {
+                        "S": k
+                    },
+                    "SK": {
+                        "S": v
                     }
+                }
+    logger.info('final start_key={}'.format(start_key))
     try:
         client = get_client('dynamodb', boto3_clazz=boto3_clazz)
         response = dict()
         if len(final_start_key) == 0:
             response = client.scan(
-                TableName='access-card-app',
+                TableName='lab3-access-card-app',
                 AttributesToGet=attributes_to_get,
                 Limit=max_items,
                 Select='SPECIFIC_ATTRIBUTES',
                 ScanFilter={
-                    'subject-topic': {
-                        'AttributeValueList': [{'S': 'employee#profile#'},],
+                    'PK': {
+                        'AttributeValueList': [{'S': 'EMP#'},],
                         'ComparisonOperator': 'BEGINS_WITH'
                     }
                 },
@@ -265,14 +256,14 @@ def query_employees(
             )
         else:
             response = client.scan(
-                TableName='access-card-app',
+                TableName='lab3-access-card-app',
                 AttributesToGet=attributes_to_get,
                 Limit=max_items,
                 ExclusiveStartKey=final_start_key,
                 Select='SPECIFIC_ATTRIBUTES',
                 ScanFilter={
-                    'subject-topic': {
-                        'AttributeValueList': [{'S': 'employee#profile#'},],
+                    'PK': {
+                        'AttributeValueList': [{'S': 'EMP#'},],
                         'ComparisonOperator': 'BEGINS_WITH'
                     }
                 },
@@ -290,7 +281,7 @@ def query_employees(
                 debug_log(message='record length now {} - Added record {}', variable_as_list=[len(result), record,], logger=logger)
         if 'LastEvaluatedKey' in response:
             start_key = {
-                response['LastEvaluatedKey']['subject-topic']['S']: response['LastEvaluatedKey']['subject-id']['S'] 
+                response['LastEvaluatedKey']['PK']['S']: response['LastEvaluatedKey']['SK']['S'] 
             }
             final_result = (
                 {
@@ -312,7 +303,7 @@ def query_employees(
 
 
 def query_employees_helper(
-    fields_to_retrieve: list,
+    fields_to_retrieve: list=DEFAULT_FIELDS_TO_RETRIEVE,
     max_items: int=25,
     start_key: dict=dict(),
     status_filter: list=['active', 'onboarding'],
@@ -327,7 +318,8 @@ def query_employees_helper(
     result = list()
     run = True
     rounds = 0
-    attributes_to_get = compile_final_attributes_to_get_list(fields_to_retrieve=fields_to_retrieve, logger=logger)
+    attributes_to_get = DEFAULT_FIELDS_TO_RETRIEVE
+    # attributes_to_get = compile_final_attributes_to_get_list(fields_to_retrieve=fields_to_retrieve, logger=logger)
     while run:
         debug_log(message='rounds={}', variable_as_list=(rounds,), logger=logger)
 
@@ -488,9 +480,9 @@ def handler(
     debug_log(message='dynamodb_result={}', variable_as_list=[dynamodb_result,], logger=logger)
 
 
-    query_data = dynamodb_data_formatting(data=dynamodb_result, logger=logger, last_evaluation_key=last_evaluation_key)
-    debug_log(message='query_data={}', variable_as_list=[query_data,], logger=logger)
-    return_object['body'] = json.dumps(query_data)
+    # query_data = dynamodb_data_formatting(data=dynamodb_result, logger=logger, last_evaluation_key=last_evaluation_key)
+    # debug_log(message='query_data={}', variable_as_list=[query_data,], logger=logger)
+    # return_object['body'] = json.dumps(query_data)
 
     debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
     return return_object

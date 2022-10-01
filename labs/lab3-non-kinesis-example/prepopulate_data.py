@@ -282,7 +282,7 @@ def populate_v2(employees: dict, access_cards: dict):
 
         # Issues Access Card
         if employee_data['PersonStatus'] == 'active':
-            SK = 'PERSON#ACCESS_CARD#{}'.format(employee_data['CardIdx'])
+            SK = 'PERSON#PERSONAL_DATA#ACCESS_CARD'
             selected_card_idx = employee_data['CardIdx']
             client.put_item(
                 TableName=TABLE_NAME,
@@ -322,7 +322,7 @@ def populate_v2(employees: dict, access_cards: dict):
                 ReturnItemCollectionMetrics='SIZE'
             )
         else:
-            SK = 'ISSUED'
+            SK = 'STATUS#issued'
             client.put_item(
                 TableName=TABLE_NAME,
                 Item={
@@ -330,19 +330,8 @@ def populate_v2(employees: dict, access_cards: dict):
                     'SK'                    : { 'S': SK},
                     'CardIssuedTo'          : { 'S': access_card_data['CardIssuedTo']},
                     'CardIssuedBy'          : { 'S': 'SYSTEM'},
-                    'CardIssuedTimestamp'   : { 'N': '{}'.format(access_card_data['CardIssuedTimestamp'])}
-                },
-                ReturnValues='NONE',
-                ReturnConsumedCapacity='TOTAL',
-                ReturnItemCollectionMetrics='SIZE'
-            )
-            SK = 'STATUS#issued'
-            client.put_item(
-                TableName=TABLE_NAME,
-                Item={
-                    'PK'                : { 'S': PK},
-                    'SK'                : { 'S': SK},
-                    'LockIdentifier'    : { 'S': 'null'}
+                    'CardIssuedTimestamp'   : { 'N': '{}'.format(access_card_data['CardIssuedTimestamp'])},
+                    'LockIdentifier'        : { 'S': 'null'}
                 },
                 ReturnValues='NONE',
                 ReturnConsumedCapacity='TOTAL',
