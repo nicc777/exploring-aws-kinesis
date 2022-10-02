@@ -297,6 +297,8 @@ def populate_v2(employees: dict, access_cards: dict):
                     'CardIdx'               : { 'S': employee_data['CardIdx']},
                     'PersonName'            : { 'S': employee_data['PersonName']},
                     'PersonSurname'         : { 'S': employee_data['PersonSurname']},
+                    'PersonDepartment'      : { 'S': employee_data['PersonDepartment']},
+                    'PersonStatus'          : { 'S': employee_data['PersonStatus']},
                     'ScannedBuildingIdx'    : { 'S': 'null'},
                     'ScannedStatus'         : { 'S': 'scanned-out'}
                 },
