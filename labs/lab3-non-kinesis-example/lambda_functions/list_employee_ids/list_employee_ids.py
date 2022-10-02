@@ -332,6 +332,8 @@ def query_employees_helper(
         fields_to_retrieve.remove('EmployeeId')
     logger.info('fields_to_retrieve={}'.format(fields_to_retrieve))
 
+    excluded_employee_ids = list()
+
 
     result = list()
     run = True
@@ -354,14 +356,31 @@ def query_employees_helper(
 
         for query_result_record in query_result_records['result']:
             debug_log(message='query_result_record={}', variable_as_list=(query_result_record,), logger=logger)
+            include_record = True
             if 'PK' in query_result_record:
                 if query_result_record['PK'].startswith('EMP#'):
                     employee_id = query_result_record['PK'].split('#')[1]
                     if employee_id not in person_records:
                         person_records[employee_id] = dict()
-                    for k,v in query_result_record.items():
-                        if k in fields_to_retrieve:
-                            person_records[employee_id][k] = v
+
+                    if 'PersonStatus' in fields_to_retrieve and 'PersonStatus' in query_result_record:
+                        if len(status_filter) > 0:
+                            if query_result_record['PersonStatus'] not in status_filter:
+                                if employee_id not in excluded_employee_ids:
+                                    excluded_employee_ids.append(employee_id)
+                                if employee_id in person_records:
+                                    person_records.pop(employee_id)
+                                include_record = False
+                                logger.warning('Excluding employee id "{}" based on current employee status "{}"'.format(employee_id, query_result_record['PersonStatus']))
+
+                    if employee_id in excluded_employee_ids and include_record is True:
+                        include_record = False
+                        logger.warning('Excluding employee ID "{}" based on exclude criteria'.format(employee_id))
+
+                    if include_record is True:
+                        for k,v in query_result_record.items():
+                            if k in fields_to_retrieve:
+                                person_records[employee_id][k] = v
 
 
         # final_query_result_records = list()
@@ -585,7 +604,9 @@ if __name__ == '__main__':
             'x-forwarded-port': '443', 
             'x-forwarded-proto': 'https'
         }, 
-        'queryStringParameters': {}, 
+        'queryStringParameters': {
+            'status': 'active'
+        }, 
         'requestContext': {
             'accountId': '000000000000', 
             'apiId': 'aaaaaaaaaa', 

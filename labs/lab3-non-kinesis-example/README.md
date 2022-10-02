@@ -212,7 +212,7 @@ The Lambda function will have the following characteristics:
 
 * Supports only the GET method
 * Query string variables: 
-    * `max-items` - INTEGER - min. 10 and max. 100, default=100
+    * `max-items` - INTEGER - min. 10 and max. 100, default=25
     * `start` STRING - index key to start again (as returned by a previous query)
 
 The Lambda function is located in the file [`list_employee_ids.py`](lambda_functions/list_employee_ids/list_employee_ids.py)
