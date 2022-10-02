@@ -597,7 +597,8 @@ if __name__ == '__main__':
         }, 
         'queryStringParameters': {
             'qty': '8',
-            'status': 'onboarding'
+            'status': 'onboarding',
+            'start_key': 'CARD#100000000087,CARD#STATUS#issued'
         }, 
         'requestContext': {
             'accountId': '000000000000', 
