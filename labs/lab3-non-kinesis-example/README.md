@@ -200,23 +200,11 @@ aws cloudformation deploy \
 python3 labs/lab3-non-kinesis-example/prepopulate_data.py
 ```
 
-Below are some example records:
+To test, you can run the following command to get the full logging and final output:
 
-> Example of an Employee Record:
-
-![Example Employee Record](../../images/example_record_employee_profile.png)
-
-> Example of an available for issue Access Card Record:
-
-![Example Available Access Card Record](../../images/example_record_access-card_not_issued_profile.png)
-
-> Example of an Access Card Record, issued to an Employee:
-
-![Example Access Card Record](../../images/example_record_access-card_profile.png)
-
-> Example of an Linked Access Card Record:
-
-![Example Linked Access Card Record](../../images/example_record_issued_access-card.png)
+```shell
+python3 labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.py 2>&1 1>/dev/null | less
+```
 
 ## Lambda Function for Listing Employee ID's
 
