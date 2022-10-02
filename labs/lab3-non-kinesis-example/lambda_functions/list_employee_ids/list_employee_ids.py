@@ -281,9 +281,10 @@ def query_employees(
                 ReturnConsumedCapacity='TOTAL',
                 ConsistentRead=False
             )
-        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        # debug_log(message='response={}', variable_as_list=[response,], logger=logger)
         if 'Items' in response:
             for item in response['Items']:
+                debug_log(message='DynamoDB Item: item={}', variable_as_list=[item,], logger=logger)
                 record = dict()
                 for field_name, field_data in item.items():
                     for field_data_type, field_data_value in field_data.items():
@@ -363,6 +364,10 @@ def query_employees_helper(
                     if employee_id not in person_records:
                         person_records[employee_id] = dict()
 
+                    if len(person_records) >= max_items and employee_id not in person_records:
+                        logger.warning('Maximum person records reached - ignoring record for employee ID "{}"'.format(employee_id))
+                        include_record = False
+
                     if 'PersonStatus' in fields_to_retrieve and 'PersonStatus' in query_result_record:
                         if len(status_filter) > 0:
                             if query_result_record['PersonStatus'] not in status_filter:
@@ -382,24 +387,8 @@ def query_employees_helper(
                             if k in fields_to_retrieve:
                                 person_records[employee_id][k] = v
 
-
-        # final_query_result_records = list()
-        # if 'employee-status' in attributes_to_get:
-        #     for record in query_result_records['result']:
-        #         if (len(result) + len(final_query_result_records)) < max_items:
-        #             if record['employee-status'] in status_filter:
-        #                 logger.info('Employee ID "{}" matched status "{}" to be included'.format(record['employee-id'], record['employee-status']))
-        #                 final_query_result_records.append(record)
-        #             else:
-        #                 logger.info('EXCLUDING Employee ID "{}" with status "{}" - excluded by requested statuses'.format(record['employee-id'], record['employee-status']))
-        # else:
-        #     final_query_result_records = query_result_records['result']
-
-        # debug_log(message='query_result_records length={} new_start_key={}', variable_as_list=(len(query_result_records), new_start_key,), logger=logger)
-        # result += final_query_result_records
-
         start_key = new_start_key
-        if len(person_records) >= max_items:
+        if len(person_records) >= max_items + 1:
             logger.info('Maximum records reached. Returning collected data')
             run = False
 
@@ -417,8 +406,8 @@ def query_employees_helper(
     for employee_id, employee_record in person_records.items():
         new_record = dict()
         new_record['EmployeeId'] = employee_id
-
-        result.append({**new_record, **employee_record})
+        if len(result) < max_items:
+            result.append({**new_record, **employee_record})
 
     logger.info('rounds={}'.format(rounds))
     debug_log(message='result={}', variable_as_list=(result,), logger=logger)
@@ -460,6 +449,8 @@ def query_string_parser(
         if 'qty' in event['queryStringParameters']:
             if int(event['queryStringParameters']['qty']) > 9:
                 query_parameters['Limit'] = int(event['queryStringParameters']['qty'])
+            elif int(event['queryStringParameters']['qty']) < 10:
+                query_parameters['Limit'] = 10
         if query_parameters['Limit'] > 100:
             query_parameters['Limit'] = 100
         logger.info('Limit={}'.format(query_parameters['Limit']))
@@ -605,7 +596,8 @@ if __name__ == '__main__':
             'x-forwarded-proto': 'https'
         }, 
         'queryStringParameters': {
-            'status': 'active'
+            'qty': '8',
+            'status': 'onboarding'
         }, 
         'requestContext': {
             'accountId': '000000000000', 
