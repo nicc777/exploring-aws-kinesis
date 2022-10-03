@@ -89,6 +89,9 @@ Resources:
       - Fn::Sub:
         - "${UserPoolProviderUrl}/oauth2/idpresponse"
         - UserPoolProviderUrl: !GetAtt  CognitoAuthorizerUserPool.ProviderURL
+      - Fn::Sub:
+        - "https://internal.${DomainName}:8443/loggedout.html"
+        - DomainName: !Ref PublicDnsNameParam
       ClientName: employee-alb-cognito-client
       GenerateSecret: true
       LogoutURLs:
