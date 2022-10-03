@@ -12,7 +12,7 @@ Parameters:
   CorsTrustedDomainsParam:
     Type: String
     Description: "A CSV string with trusted domains for API calls. Example to add two sites: https://www.example.tld,http://localhost:5000"
-    Default: "http://localhost,http://localhost:9000,https://internal.sandybox.com:8443"
+    Default: "http://localhost,http://localhost:9000,https://internal.sandybox.link:8443,https://internal-api.sandybox.link:8443"
   S3SourceBucketParam:
     Type: String
     Description: "The S3 bucket name containing the Lambda function ZIP file"

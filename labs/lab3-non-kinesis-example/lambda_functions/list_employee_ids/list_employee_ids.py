@@ -150,6 +150,7 @@ def dynamodb_data_formatting(
     result['Employees'] = list()
     result['RecordCount'] = 0
     result['LastEvaluatedKey'] = dict()
+    result['LastEvaluatedKeyAsString'] = ""
     result['QueryStatus'] = 'ERROR'
     result['Message'] = 'Functionality Not Yet Implemented'
     try:
@@ -161,6 +162,8 @@ def dynamodb_data_formatting(
                     final_record[field_name] = field_value
             result['Employees'].append(final_record)
         result['LastEvaluatedKey'] = last_evaluation_key
+        for k,v in last_evaluation_key.items():
+            result['LastEvaluatedKeyAsString'] = '{},{}'.format(k,v)
         qty = len(result['Employees'])
         result['RecordCount'] = qty
         result['QueryStatus'] = 'Ok'
