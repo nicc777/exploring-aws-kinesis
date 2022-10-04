@@ -35,6 +35,8 @@ The web application is very straight forward. A form will be presented where a b
 
 The event will be created by the containerized application by publishing to an SNS topic. The SNS topic will forward the message to an SQS queue from where a Lambda function will generate the final event and persist it to S3. The API gateway will require at least the following API end-points:
 
+> _**Note**_: The API end-points below is out of date and I still need to update it (2022-10-04)
+
 | API Endpoint                                                   | Method | Expected Input Data                                                                                                                          | Processing                                                                                            | Result                                    |
 |----------------------------------------------------------------|:------:|----------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|-------------------------------------------|
 | `/building-access/link-employee-and-card`                      | POST   | JSON Post with the following data: <br /><ul><li>HR Employee ID</li><li>Building ID</li><li>New Employee ID</li><li>Access Card ID</li></ul> | Basic input validation. Construct SNS message and publish to SNS topic.                               | Return `OK` when SNS Accepted the message |
@@ -182,7 +184,7 @@ Each time the script run, it will assume it starts with an empty table.
 
 > _**IMPORTANT**_: Delete the stack, recreate the stack and then run the script
 
-> _**WARNING**: This may take a while and is an expensive operation!
+> _**WARNING**_: This may take a while and is an expensive operation!
 
 Typical run:
 
