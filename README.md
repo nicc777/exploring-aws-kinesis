@@ -165,7 +165,7 @@ A new Access Card is Issued.
 
 A person enters the building and must scan their access card at the turnstile gate.
 
-![Scenario 01](images/scenario_02.png)
+![Scenario 02](images/scenario_02.png)
 
 | Requires API Gateway | Sync/Async   | High Volume | Authentication | Authorization |
 |:--------------------:|:------------:|:-----------:|:--------------:|:-------------:|
@@ -175,7 +175,7 @@ A person enters the building and must scan their access card at the turnstile ga
 
 A person exits the building. In emergencies, this could be a high volume scenario.
 
-![Scenario 01](images/scenario_03.png)
+![Scenario 03](images/scenario_03.png)
 
 | Requires API Gateway | Sync/Async   | High Volume | Authentication | Authorization |
 |:--------------------:|:------------:|:-----------:|:--------------:|:-------------:|
@@ -186,7 +186,7 @@ A person exits the building. In emergencies, this could be a high volume scenari
 
 An external auditor review key scan logs of an individual.
 
-![Scenario 01](images/scenario_04.png)
+![Scenario 04](images/scenario_04.png)
 
 | Requires API Gateway | Sync/Async   | High Volume | Authentication | Authorization |
 |:--------------------:|:------------:|:-----------:|:--------------:|:-------------:|
