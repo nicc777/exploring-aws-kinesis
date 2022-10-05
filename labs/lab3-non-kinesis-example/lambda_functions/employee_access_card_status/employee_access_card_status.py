@@ -111,6 +111,26 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 ###                                                                         ###
 ###############################################################################
 
+
+def _extract_employee_id_from_path(event: dict)->str:
+    employee_id = None
+    if 'rawPath' in event:
+        # Expecting /access-card-app/employee/<<employee-id>>/access-card-status
+        path_elements = event['rawPath'].split('/')
+        if len(path_elements) != 5:
+            logger.error('Path has wrong number of parts. Expected 5, but got {}'.format(len(path_elements)))
+            return employee_id
+        potential_employee_id = path_elements[3]
+        logger.info('Integer range validation of id "{}"'.format(potential_employee_id))
+        try:
+            if int(potential_employee_id) > 100000000000 and int(potential_employee_id) < 999999999999:
+                employee_id = '{}'.format(potential_employee_id)
+            else:
+                logger.error('Employee ID has invalid numeric range.')
+        except:
+            logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return employee_id
+
     
 def handler(
     event,
@@ -119,13 +139,40 @@ def handler(
     boto3_clazz=boto3,
     run_from_main: bool=False
 ):
+    result = dict()
+    return_object = {
+        'statusCode': 200,
+        'headers': {
+            'content-type': 'application/json',
+        },
+        'body': json.dumps(result),
+        'isBase64Encoded': False,
+    }
     refresh_environment_cache(logger=logger)
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
         logger  = get_logger(level=logging.DEBUG)
-    
     debug_log('event={}', variable_as_list=[event], logger=logger)
     
-    return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
+    # Process the request
+    employee_id = _extract_employee_id_from_path(event=event)
+    if employee_id is not None:
+        logger.info('Status requested for employee ID {}'.format(employee_id))
+        pass    # TODO process employee ID
+    else:
+        return_object = {
+            'statusCode': 400,
+            'headers': {
+                'content-type': 'text/plain',
+            },
+            'body': 'Invalid Employee ID Syntax',
+            'isBase64Encoded': False,
+        }
+        logger.error('Failed basic employee ID validation - returning error 400 to client')
+        return return_object
+
+    return_object['body'] = json.dumps(result)
+    debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
+    return return_object
 
 
 ###############################################################################
