@@ -13,21 +13,23 @@ def get_logger(level=logging.INFO):
     logger = logging.getLogger()
     for h in logger.handlers:
         logger.removeHandler(h)
-    formatter = logging.Formatter('%(funcName)s:%(lineno)d -  %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        '%(funcName)s:%(lineno)d -  %(levelname)s - %(message)s')
     ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(level)    
+    ch.setLevel(level)
     ch.setFormatter(formatter)
     logger.addHandler(ch)
     logger.setLevel(level)
     return logger
 
 
-def get_client(client_name: str, region: str='eu-central-1', boto3_clazz=boto3):
+def get_client(client_name: str, region: str = 'eu-central-1', boto3_clazz=boto3):
     return boto3_clazz.client(client_name, region_name=region)
 
 
 CACHE_TTL_DEFAULT = 600
 cache = dict()
+
 
 def get_utc_timestamp(with_decimal: bool = False):
     epoch = datetime(1970, 1, 1, 0, 0, 0)
@@ -36,17 +38,17 @@ def get_utc_timestamp(with_decimal: bool = False):
     if with_decimal:
         return timestamp
     return int(timestamp)
-    
-    
-def get_debug()->bool:
+
+
+def get_debug() -> bool:
     try:
         return bool(int(os.getenv('DEBUG', '0')))
     except:
         pass
     return False
-    
 
-def get_cache_ttl(logger=get_logger())->int:
+
+def get_cache_ttl(logger=get_logger()) -> int:
     try:
         return int(os.getenv('CACHE_TTL', '{}'.format(CACHE_TTL_DEFAULT)))
     except:
@@ -65,13 +67,13 @@ def refresh_environment_cache(logger=get_logger()):
         'Data': {
             'CACHE_TTL': get_cache_ttl(logger=logger),
             'DEBUG': get_debug(),
-            # Other ENVIRONMENT variables can be added here... The environment will be re-read after the CACHE_TTL 
+            # Other ENVIRONMENT variables can be added here... The environment will be re-read after the CACHE_TTL
         }
     }
     logger.debug('cache: {}'.format((json.dumps(cache))))
 
 
-def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: list=list(), logger=get_logger(level=logging.INFO)):
+def debug_log(message: str, variables_as_dict: dict = dict(), variable_as_list: list = list(), logger=get_logger(level=logging.INFO)):
     """
         See:
             https://docs.python.org/3/library/stdtypes.html#str.format
@@ -107,21 +109,81 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 
 ###############################################################################
 ###                                                                         ###
+###                 A W S    A P I    I N T E G R A T I O N                 ###
+###                                                                         ###
+###############################################################################
+
+
+def get_employee_access_card_record(
+    employee_id,
+    client=get_client(client_name="dynamodb"),
+    logger=get_logger(level=logging.INFO)
+) -> dict:
+    result = dict()
+    result['AccessCardLinked'] = False
+    result['EmployeeStatus'] = 'unknown'
+    result['Name'] = None
+    result['Surname'] = None
+    result['AccessCardData'] = dict()
+    try:
+        response = client.query(
+            TableName='lab3-access-card-app',
+            Select='ALL_ATTRIBUTES',
+            Limit=2,
+            ConsistentRead=True,
+            ReturnConsumedCapacity='TOTAL',
+            KeyConditionExpression='PK = :pk and begins_with(SK, :sk)',
+            ExpressionAttributeValues={
+                ':pk': {'S': 'EMP#{}'.format(employee_id), },
+                ':sk': {'S': 'PERSON#PERSONAL_DATA', }
+            }
+        )
+        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        if 'Items' in response:
+            if len(response['Items']) > 0:
+                for item in response['Items']:
+                    if item['SK']['S'] == 'PERSON#PERSONAL_DATA':
+                        result['EmployeeStatus'] = item['PersonStatus']['S'].title()
+                        result['Name'] = item['PersonName']['S'].title()
+                        result['Surname'] = item['PersonSurname']['S'].title()
+                    elif item['SK']['S'] == 'PERSON#PERSONAL_DATA#ACCESS_CARD':
+                        card_issue_timestamp = int(item['CardIssuedTimestamp']['N'])
+                        result['AccessCardData'][card_issue_timestamp] = dict()
+                        result['AccessCardData'][card_issue_timestamp]['CardId'] = item['CardIdx']['S']
+                        result['AccessCardData'][card_issue_timestamp]['IssuedBy'] = item['CardIssuedBy']['S']
+                        result['AccessCardData'][card_issue_timestamp]['CardStatus'] = item['CardStatus']['S']
+        # Check if last card issued is status ISSUED
+        if len(result['AccessCardData']) > 0:
+            issue_timestamps = list(result['AccessCardData'].keys())
+            issue_timestamps.sort(reverse=True)
+            if result['AccessCardData'][issue_timestamps[0]]['CardStatus'] == 'issued':
+                result['AccessCardLinked'] = True
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        result = dict()
+    logger.debug('result={}'.format(json.dumps(result, default=str)))
+    return result
+
+
+###############################################################################
+###                                                                         ###
 ###                         M A I N    H A N D L E R                        ###
 ###                                                                         ###
 ###############################################################################
 
 
-def _extract_employee_id_from_path(event: dict)->str:
+def _extract_employee_id_from_path(event: dict) -> str:
     employee_id = None
     if 'rawPath' in event:
         # Expecting /access-card-app/employee/<<employee-id>>/access-card-status
         path_elements = event['rawPath'].split('/')
         if len(path_elements) != 5:
-            logger.error('Path has wrong number of parts. Expected 5, but got {}'.format(len(path_elements)))
+            logger.error('Path has wrong number of parts. Expected 5, but got {}'.format(
+                len(path_elements)))
             return employee_id
         potential_employee_id = path_elements[3]
-        logger.info('Integer range validation of id "{}"'.format(potential_employee_id))
+        logger.info('Integer range validation of id "{}"'.format(
+            potential_employee_id))
         try:
             if int(potential_employee_id) > 100000000000 and int(potential_employee_id) < 999999999999:
                 employee_id = '{}'.format(potential_employee_id)
@@ -131,13 +193,13 @@ def _extract_employee_id_from_path(event: dict)->str:
             logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     return employee_id
 
-    
+
 def handler(
     event,
     context,
     logger=get_logger(level=logging.INFO),
     boto3_clazz=boto3,
-    run_from_main: bool=False
+    run_from_main: bool = False
 ):
     result = dict()
     return_object = {
@@ -150,14 +212,17 @@ def handler(
     }
     refresh_environment_cache(logger=logger)
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
-        logger  = get_logger(level=logging.DEBUG)
+        logger = get_logger(level=logging.DEBUG)
     debug_log('event={}', variable_as_list=[event], logger=logger)
-    
+
     # Process the request
     employee_id = _extract_employee_id_from_path(event=event)
     if employee_id is not None:
-        logger.info('Status requested for employee ID {}'.format(employee_id))
-        pass    # TODO process employee ID
+        logger.info('Requesting status for employee ID {}'.format(employee_id))
+        result = get_employee_access_card_record(
+            employee_id=employee_id,
+            logger=logger
+        )
     else:
         return_object = {
             'statusCode': 400,
@@ -167,11 +232,13 @@ def handler(
             'body': 'Invalid Employee ID Syntax',
             'isBase64Encoded': False,
         }
-        logger.error('Failed basic employee ID validation - returning error 400 to client')
+        logger.error(
+            'Failed basic employee ID validation - returning error 400 to client')
         return return_object
 
     return_object['body'] = json.dumps(result)
-    debug_log('return_object={}', variable_as_list=[return_object,], logger=logger)
+    debug_log('return_object={}', variable_as_list=[
+              return_object, ], logger=logger)
     return return_object
 
 
@@ -184,18 +251,19 @@ def handler(
 
 if __name__ == '__main__':
     logger = logging.getLogger("my_lambda")
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(funcName)s:%(lineno)d -  %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(funcName)s:%(lineno)d -  %(levelname)s - %(message)s')
 
     ch = logging.StreamHandler()
     if get_debug() is True:
-        ch.setLevel(logging.DEBUG)    
+        ch.setLevel(logging.DEBUG)
     else:
         ch.setLevel(logging.INFO)
     ch.setFormatter(formatter)
     logger.addHandler(ch)
-    
+
     if get_debug() is True:
         logger.setLevel(logging.DEBUG)
-    else:    
+    else:
         logger.setLevel(logging.INFO)
     handler(event={}, context=None, logger=logger, run_from_main=True)
