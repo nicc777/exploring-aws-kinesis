@@ -37,3 +37,7 @@ API end-point:
 * `/access-card-app/employee/<<employee-id>>/access-card-status`
 * Query string parameters: None
 * Requires authentication (JWT): Yes
+
+Processing Notes:
+
+* None
