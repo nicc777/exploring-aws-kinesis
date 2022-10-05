@@ -266,4 +266,49 @@ if __name__ == '__main__':
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
-    handler(event={}, context=None, logger=logger, run_from_main=True)
+    
+
+    # employee_id = '100000000050'
+    # employee_id = '100000000003'
+    employee_id = '100000000150'
+    event = {
+        'version': '2.0', 
+        'routeKey': 'GET /access-card-app/employee/{}/access-card-status'.format(employee_id), 
+        'rawPath': '/access-card-app/employee/{}/access-card-status'.format(employee_id), 
+        'rawQueryString': '', 
+        'headers': {
+            'accept': '*/*', 
+            'content-length': '0', 
+            'host': 'aaaaaaaaaa.execute-api.eu-central-1.amazonaws.com', 
+            'user-agent': 'curl/7.81.0', 
+            'x-amzn-trace-id': 'aaaaaaaaaa', 
+            'x-forwarded-for': 'nnn.nnn.nnn.nnn', 
+            'x-forwarded-port': '443', 
+            'x-forwarded-proto': 'https'
+        }, 
+        'queryStringParameters': {}, 
+        'requestContext': {
+            'accountId': '000000000000', 
+            'apiId': 'aaaaaaaaaa', 
+            'domainName': 'aaaaaaaaaa.execute-api.eu-central-1.amazonaws.com', 
+            'domainPrefix': 'aaaaaaaaaa', 
+            'http': {
+                'method': 'GET', 
+                'path': '/access-card-app/employee/{}/access-card-status'.format(employee_id), 
+                'protocol': 'HTTP/1.1', 
+                'sourceIp': 'nnn.nnn.nnn.nnn', 
+                'userAgent': 'curl/7.81.0'
+            }, 
+            'requestId': 'Y842FhTEliAEJVw=', 
+            'routeKey': 'GET /access-card-app/employees', 
+            'stage': 'sandbox', 
+            'time': '24/Sep/2022:06:20:48 +0000', 
+            'timeEpoch': 1664000448395
+        }, 
+        'isBase64Encoded': False
+    }
+
+    result1 = handler(event=event, context=None, logger=logger, run_from_main=True)
+    print('------------------------------------------------------------------------------------------------------------------------')
+    print('{}'.format(json.dumps(result1)))
+
