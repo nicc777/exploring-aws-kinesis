@@ -1,0 +1,208 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This template is the template for all AWS Lambda Functions that need to be deployed for 
+  integration with the API Gateway
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  S3SourceBucketParam:
+    Type: String
+    Description: "The S3 bucket name containing the Lambda function ZIP file"
+  DynamoDbStackName:
+    Type: String
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                    LAMBDA FUNCTION: Retrieve Employee Records                                   ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  EmployeeRecordsQueryLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "EmployeeRecordsQueryLambdaFunctionRoleAssumeRolePolicyDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role EmployeeRecordsQueryLambdaFunction"
+      Policies:
+      - PolicyName: EmployeeRecordsQueryLambdaFunctionPolicy01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+      - PolicyName: EmployeeRecordsQueryLambdaFunctionPolicy02
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "dynamodb:Scan"
+            Resource:
+              Fn::Sub:
+              - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
+              - TableName: 
+                  Fn::ImportValue: !Sub "${DynamoDbStackName}-AccessCardAppTableName"
+      RoleName: EmployeeRecordsQueryLambdaFunctionRole
+
+  EmployeeRecordsQueryLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref EmployeeRecordsQueryLambdaFunction
+      RetentionInDays: 7
+
+  EmployeeRecordsQueryLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Environment:
+        Variables: 
+          DEBUG: "1"
+      Code: 
+        S3Bucket: !Ref S3SourceBucketParam
+        S3Key: "list_employee_ids.zip"
+      Description: "Catch GitHub web hook calls and process request"
+      FunctionName: "EmployeeRecordsQueryLambdaFunction"
+      Handler: "list_employee_ids.handler"
+      MemorySize: 128
+      Role: !GetAtt EmployeeRecordsQueryLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 30
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                           LAMBDA FUNCTION: Retrieve Access Card Status for an Employee                          ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  ListAccessCardStatusLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "ListAccessCardStatusLambdaFunctionRoleAssumeRolePolicyDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role ListAccessCardStatusLambdaFunction"
+      Policies:
+      - PolicyName: ListAccessCardStatusLambdaFunctionPolicy01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+      - PolicyName: ListAccessCardStatusLambdaFunctionPolicy02
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "dynamodb:Query"
+            Resource:
+              Fn::Sub:
+              - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
+              - TableName: 
+                  Fn::ImportValue: !Sub "${DynamoDbStackName}-AccessCardAppTableName"
+      RoleName: ListAccessCardStatusLambdaFunctionRole
+
+  ListAccessCardStatusLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref ListAccessCardStatusLambdaFunction
+      RetentionInDays: 7
+
+  ListAccessCardStatusLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Environment:
+        Variables: 
+          DEBUG: "1"
+      Code: 
+        S3Bucket: !Ref S3SourceBucketParam
+        S3Key: "employee_access_card_status.zip"
+      Description: "Catch GitHub web hook calls and process request"
+      FunctionName: "ListAccessCardStatusLambdaFunction"
+      Handler: "employee_access_card_status.handler"
+      MemorySize: 128
+      Role: !GetAtt ListAccessCardStatusLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 30
+
+Outputs:
+
+  # LAMBDA FUNCTION: Retrieve Employee Records
+
+  EmployeeRecordsQueryLambdaFunctionName:
+    Description: "EmployeeRecordsQueryLambdaFunction NAME"
+    Value: !Ref EmployeeRecordsQueryLambdaFunction
+    Export:
+      Name: !Sub "${AWS::StackName}-EmployeeRecordsQueryLambdaFunctionName"
+
+  EmployeeRecordsQueryLambdaFunctionArn:
+    Description: "EmployeeRecordsQueryLambdaFunction ARN"
+    Value: !GetAtt  EmployeeRecordsQueryLambdaFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-EmployeeRecordsQueryLambdaFunctionArn"
+
+  # LAMBDA FUNCTION: Retrieve Access Card Status for an Employee
+
+  ListAccessCardStatusLambdaFunctionName:
+    Description: "ListAccessCardStatusLambdaFunction NAME"
+    Value: !Ref ListAccessCardStatusLambdaFunction
+    Export:
+      Name: !Sub "${AWS::StackName}-ListAccessCardStatusLambdaFunctionName"
+
+  ListAccessCardStatusLambdaFunctionArn:
+    Description: "ListAccessCardStatusLambdaFunction ARN"
+    Value: !GetAtt  ListAccessCardStatusLambdaFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ListAccessCardStatusLambdaFunctionArn"
+

@@ -49,30 +49,36 @@ Each of the API endpoints is services by a Lambda function.
 
 When running commands, the following environment variables are assumed to be set:
 
-| Environment Variable Example                | Description                                                                           |
-|---------------------------------------------|---------------------------------------------------------------------------------------|
-| `export AWS_PROFILE="..."`                  | The AWS Credentials Profile to use                                                    |
-| `export AWS_REGION="..."`                   | The AWS Region to deploy resources to                                                 |
-| `export PARAMETERS_FILE="..."`              | The file containing the stack parameters                                              |
-| `export DYNAMODB_STACK_NAME="..."`          | The CloudFormation stack name for deploying the DynamoDB Table                        |
-| `export LAMBDA_STACK_NAME="..."`            | The CloudFormation stack name for deploying Lambda Functions                          |
-| `export VPC_STACK_NAME="..."`               | The CloudFormation stack name for deploying the VPC resources                         |
-| `export NFS_STACK_NAME="..."`               | The CloudFormation stack name for deploying a FSX Filesystem                          |
-| `export DNS_STACK_NAME="..."`               | The CloudFormation stack name for deploying DNS and ACM                               |
-| `export PROXY_STACK_NAME="..."`             | The CloudFormation stack name for deploying the Proxy server                          |
-| `export GITHUB_SECRET_STACK_NAME="..."`     | The CloudFormation stack name for deploying the GitHub SSH Key in Secrets Manager     |
-| `export GITHUB_SYNC_STACK_NAME="..."`       | The CloudFormation stack name for deploying the GitHub Sync Resources                 |
-| `export SSM_VPC_ENDPOINT_STACK_NAME="..."`  | The CloudFormation stack name for deploying The SSM VPC End Point resource            |
-| `export WEB_SERVER_STACK_NAME="..."`        | The CloudFormation stack name for deploying The Web Server and API Gateway Resources  |
-| `export COGNITO_STACK_NAME="..."`           | The CloudFormation stack name for deploying The employee Cognito Pool                 |
-| `export WEBAPI_STACK_NAME="..."`            | The CloudFormation stack name for deploying The Website API Resources                 |
-| `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                                |
-| `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                  |
-| `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                    |
-| `export GITHUB_AUTHORIZED_SENDERS="..."`    | CSV List of supported sender login values                                             |
-| `export ROUTE53_PUBLIC_ZONEID="..."`        | The Route 53 Hosted Zone ID of the Public DNS Domain                                  |
-| `export ROUTE53_PUBLIC_DNSNAME="..."`       | The Route 53 Hosted Public DNS Domain Name                                            |
-| `export EMPLOYEE_1_EMAIL="..."`             | A valid email address of a dummy employee (expect actual e-mails to be sent here)     |
+| Environment Variable Example                | Description                                                                                       |
+|---------------------------------------------|---------------------------------------------------------------------------------------------------|
+| `export AWS_PROFILE="..."`                  | The AWS Credentials Profile to use                                                                |
+| `export AWS_REGION="..."`                   | The AWS Region to deploy resources to                                                             |
+| `export PARAMETERS_FILE="..."`              | The file containing the stack parameters                                                          |
+| `export DYNAMODB_STACK_NAME="..."`          | The CloudFormation stack name for deploying the DynamoDB Table                                    |
+| `export LAMBDA_STACK_NAME="..."`            | The CloudFormation stack name for deploying Lambda Functions                                      |
+| `export VPC_STACK_NAME="..."`               | The CloudFormation stack name for deploying the VPC resources                                     |
+| `export NFS_STACK_NAME="..."`               | The CloudFormation stack name for deploying a FSX Filesystem                                      |
+| `export DNS_STACK_NAME="..."`               | The CloudFormation stack name for deploying DNS and ACM                                           |
+| `export PROXY_STACK_NAME="..."`             | The CloudFormation stack name for deploying the Proxy server                                      |
+| `export GITHUB_SECRET_STACK_NAME="..."`     | The CloudFormation stack name for deploying the GitHub SSH Key in Secrets Manager                 |
+| `export GITHUB_SYNC_STACK_NAME="..."`       | The CloudFormation stack name for deploying the GitHub Sync Resources                             |
+| `export SSM_VPC_ENDPOINT_STACK_NAME="..."`  | The CloudFormation stack name for deploying The SSM VPC End Point resource                        |
+| `export WEB_SERVER_STACK_NAME="..."`        | The CloudFormation stack name for deploying The Web Server and API Gateway Resources              |
+| `export COGNITO_STACK_NAME="..."`           | The CloudFormation stack name for deploying The employee Cognito Pool                             |
+| `export WEBAPI_STACK_NAME="..."`            | The CloudFormation stack name for deploying The Website API Resources                             |
+
+| `export WEBAPI_LAMBDA_STACK_NAME="..."`     | The CloudFormation stack name for deploying The Website API Resources - Lambda Functions          |
+| `export WEBAPI_ROUTES_1_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations   |
+| `export WEBAPI_ROUTES_2_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations   |
+| `export WEBAPI_DEPLOYMENT_STACK_NAME="..."` | The CloudFormation stack name for deploying The Website API Resources - Deployment and DNS        |
+
+| `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                                            |
+| `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                              |
+| `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                                |
+| `export GITHUB_AUTHORIZED_SENDERS="..."`    | CSV List of supported sender login values                                                         |
+| `export ROUTE53_PUBLIC_ZONEID="..."`        | The Route 53 Hosted Zone ID of the Public DNS Domain                                              |
+| `export ROUTE53_PUBLIC_DNSNAME="..."`       | The Route 53 Hosted Public DNS Domain Name                                                        |
+| `export EMPLOYEE_1_EMAIL="..."`             | A valid email address of a dummy employee (expect actual e-mails to be sent here)                 |
 
 Some of these variables, like 
 
@@ -420,15 +426,46 @@ aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_st
 aws cloudformation deploy \
     --stack-name $WEBAPI_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/5200_web_site_api_resources.yaml \
+    --parameter-overrides CognitoStackNameParam="$COGNITO_STACK_NAME" \
+        CognitoIssuerUrlParam="$COGNITO_ISSUER_URL" 
+
+aws cloudformation deploy \
+    --stack-name $WEBAPI_LAMBDA_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5225_web_site_api_lambda_functions.yaml \
     --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
         DynamoDbStackName="$DYNAMODB_STACK_NAME" \
-        WebServerStackName="$WEB_SERVER_STACK_NAME" \
-        PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
-        PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
-        CognitoStackNameParam="$COGNITO_STACK_NAME" \
-        CognitoIssuerUrlParam="$COGNITO_ISSUER_URL" \
     --capabilities CAPABILITY_NAMED_IAM
 
+
+export LAMBDA_1_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "EmployeeRecordsQueryLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
+aws cloudformation deploy \
+    --stack-name $WEBAPI_ROUTES_1_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
+    --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
+        LambdaFunctionArnParam="$LAMBDA_1_ARN" \
+        LambdaSourcePathParam="/access-card-app/employees" \
+        RouteKeyParam="/access-card-app/employees" \
+        HttpMethodParam="GET" \
+    --capabilities CAPABILITY_NAMED_IAM
+
+export LAMBDA_2_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "ListAccessCardStatusLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
+aws cloudformation deploy \
+    --stack-name $WEBAPI_ROUTES_2_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
+    --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
+        LambdaFunctionArnParam="$LAMBDA_2_ARN" \
+        LambdaSourcePathParam="/access-card-app/employee/*/access-card-status" \
+        RouteKeyParam="/access-card-app/employee/{employeeId}/access-card-status" \
+        HttpMethodParam="GET" \
+    --capabilities CAPABILITY_NAMED_IAM
+
+aws cloudformation deploy \
+    --stack-name $WEBAPI_DEPLOYMENT_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5275_web_site_api_deployment.yaml \
+    --parameter-overrides WebServerStackName="$WEB_SERVER_STACK_NAME" \
+        PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
+        PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
+        ApiGatewayStackNameParam="$WEBAPI_STACK_NAME"
 ```
 
 > In EC2 instances, the FSX volume can be mounted with the command: `mkdir /data && mount -t nfs fs-aaaaaaaaaaaaaaaaa.fsx.eu-central-1.amazonaws.com:/fsx /data`

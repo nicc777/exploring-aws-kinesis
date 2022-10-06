@@ -1,0 +1,128 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This template is the base template for the API Gateway basic resources. It does not include routes or integrations - 
+  each route and integration will have their own stack.
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  ApiGatewayStackNameParam:
+    Type: String
+  LambdaFunctionArnParam:
+    Type: String
+  LambdaSourcePathParam:
+    Type: String
+    Description: >
+      A path that is also mapped in the API Route, for example /access-card-app/employees 
+      or /access-card-app/employee/*/access-card-status
+  RouteKeyParam:
+    Type: String
+    Description: >
+      A path that is  mapped in the API that will be linked to the Lambda function, 
+      for example /access-card-app/employees or /access-card-app/employee/{employeeId}/access-card-status
+  HttpMethodParam:
+    Type: String
+    Default: "GET"
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                 API HTTP GATEWAY                                                ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  ###
+  ### ROUTES
+  ### 
+
+  ApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: 
+      ApiId: 
+        Fn::ImportValue: !Sub "${ApiGatewayStackNameParam}-InternalWebAppApiGatewayId"
+      ApiKeyRequired: false
+      # AuthorizationScopes: 
+      # - String
+      AuthorizationType: "JWT"
+      AuthorizerId:
+        Fn::ImportValue: !Sub "${ApiGatewayStackNameParam}-InternalWebAppApiGatewayAuthorizerId"
+      OperationName: "test-public-event-operation"
+      RouteKey: 
+        Fn::Sub:
+        - "${Method} ${Path}"
+        - Method: !Ref HttpMethodParam
+          Path: !Ref RouteKeyParam
+      Target: 
+        Fn::Join:
+        - /
+        - - integrations
+          - !Ref ApiAppIntegration
+
+
+  ###
+  ### PERMISSIONS
+  ### 
+
+  ApiIntegrationPermission:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !Ref LambdaFunctionArnParam
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn:
+        Fn::Sub:
+        -  "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGwId}/*/*${SourcePath}"
+        - ApiGwId:
+            Fn::ImportValue: !Sub "${ApiGatewayStackNameParam}-InternalWebAppApiGatewayId"
+          SourcePath: !Ref LambdaSourcePathParam
+
+
+
+  ###
+  ### INTEGRATIONS
+  ### 
+
+  ApiAppIntegration:  # NOTE: The maximum (and default) timeout is 30 seconds
+    Type: AWS::ApiGatewayV2::Integration
+    Properties: 
+      ApiId:
+        Fn::ImportValue: !Sub "${ApiGatewayStackNameParam}-InternalWebAppApiGatewayId"
+      Description: "Lambda Integration"
+      IntegrationType: AWS_PROXY
+      IntegrationUri: 
+        Fn::Sub: 
+        - "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${functionArn}/invocations"
+        - functionArn: !Ref LambdaFunctionArnParam
+      IntegrationMethod: POST
+      PayloadFormatVersion: '2.0'
+
+# Outputs:
+
+#   InternalWebAppApiGatewayId:
+#     Description: "InternalWebAppApiGateway ID"
+#     Value: !Ref InternalWebAppApiGateway
+#     Export:
+#       Name: !Sub "${AWS::StackName}-InternalWebAppApiGatewayId"
+
+#   InternalWebAppApiGatewayEndPoint:
+#     Description: "InternalWebAppApiGateway EndPoint"
+#     Value: !GetAtt InternalWebAppApiGateway.ApiEndpoint
+#     Export:
+#       Name: !Sub "${AWS::StackName}-InternalWebAppApiGatewayEndPoint"
