@@ -351,21 +351,15 @@ export PYTHON_REQUIREMENTS_FILE_URL="https://raw.githubusercontent.com/nicc777/e
 export PYTHON_SCRIPT_SRC_URL="https://raw.githubusercontent.com/nicc777/exploring-aws-kinesis/main/labs/lab3-non-kinesis-example/scripts/github_sync/github_sync.py"
 
 rm -vf labs/lab3-non-kinesis-example/lambda_functions/github_webhook_lambda/github_webhook_lambda.zip
-
 cd labs/lab3-non-kinesis-example/lambda_functions/github_webhook_lambda/ && zip github_webhook_lambda.zip github_webhook_lambda.py && cd $OLDPWD 
-
 aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/github_webhook_lambda/github_webhook_lambda.zip s3://$ARTIFACT_S3_BUCKET_NAME/github_webhook_lambda.zip
 
 rm -vf labs/lab3-non-kinesis-example/lambda_functions/github_syncserver_starter_lambda/github_syncserver_starter_lambda.zip
-
 cd labs/lab3-non-kinesis-example/lambda_functions/github_syncserver_starter_lambda/ && zip github_syncserver_starter_lambda.zip github_syncserver_starter_lambda.py && cd $OLDPWD 
-
 aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/github_syncserver_starter_lambda/github_syncserver_starter_lambda.zip s3://$ARTIFACT_S3_BUCKET_NAME/github_syncserver_starter_lambda.zip
 
 rm -vf labs/lab3-non-kinesis-example/lambda_functions/access_token_requestor/access_token_requestor.zip
-
 cd labs/lab3-non-kinesis-example/lambda_functions/access_token_requestor/ && zip access_token_requestor.zip access_token_requestor.py && cd $OLDPWD 
-
 aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/access_token_requestor/access_token_requestor.zip s3://$ARTIFACT_S3_BUCKET_NAME/access_token_requestor.zip
 
 aws cloudformation deploy \
@@ -416,15 +410,11 @@ aws cloudformation deploy \
 
 
 rm -vf labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip
-
 cd labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/ && zip list_employee_ids.zip list_employee_ids.py && cd $OLDPWD 
-
 aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip s3://$ARTIFACT_S3_BUCKET_NAME/list_employee_ids.zip
 
 rm -vf labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip
-
 cd labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/ && zip employee_access_card_status.zip employee_access_card_status.py && cd $OLDPWD 
-
 aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip s3://$ARTIFACT_S3_BUCKET_NAME/employee_access_card_status.zip
 
 aws cloudformation deploy \
