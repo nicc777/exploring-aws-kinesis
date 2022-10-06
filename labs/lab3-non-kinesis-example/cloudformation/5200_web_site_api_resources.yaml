@@ -1,9 +1,7 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: >
-  This template is the base template for the API Gateway basic resources. It does not include routes or integrations - 
-  each route and integration will have their own stack.
+Description: This template is the base template for the API Gateway base configuration
 
 # Metadata:
 #   template metadata
@@ -13,41 +11,12 @@ Parameters:
     Type: String
     Description: "A CSV string with trusted domains for API calls. Example to add two sites: https://www.example.tld,http://localhost:5000"
     Default: "http://localhost,http://localhost:9000,https://internal.sandybox.link:8443,https://internal-api.sandybox.link:8443"
-  S3SourceBucketParam:
-    Type: String
-    Description: "The S3 bucket name containing the Lambda function ZIP file"
-  DynamoDbStackName:
-    Type: String
-  WebServerStackName:
-    Type: String
-  PublicDnsNameParam:
-    Type: String
-    Description: "The domain name of the public DNS zone, for example: example.tld"
-  PublicDnsHostedZoneIdParam:
-    Type: String
-    Description: "The Hosted Zone ID (Route 53) of the public DNS zone"
   CognitoStackNameParam:
     Type: String
     Description: "The stack name of the Cognito User Pool"
   CognitoIssuerUrlParam:
     Type: String
     Description: "The Issuer URL from https://cognito-idp.[region].amazonaws.com/[userPoolId]/.well-known/openid-configuration (refer to the issuer claim)"
-  # DnsStackNameParam:
-  #   Type: String
-  #   Description: "The name of the DNS stack, in order to import values"
-  # FirstTrustedInternetCiderParam:
-  #   Type: String
-  #   Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Private VPC"
-  #   Default: "0.0.0.0/0"
-  # PublicDnsHostedZoneIdParam:
-  #   Type: String
-  #   Description: "The Hosted Zone ID (Route 53) of the public DNS zone"
-  # PublicDnsNameParam:
-  #   Type: String
-  #   Description: "The domain name of the public DNS zone, for example: example.tld"
-  # CognitoStackNameParam:
-  #   Type: String
-  #   Description: "The stack name of the Cognito User Pool"
 
 # Rules:
 #   set of rules
@@ -62,153 +31,6 @@ Parameters:
 #   set of transforms
 
 Resources:
-
-#######################################################################################################################
-###                                                                                                                 ###
-###                                    LAMBDA FUNCTION: Retrieve Employee Records                                   ###
-###                                                                                                                 ###
-#######################################################################################################################
-
-  EmployeeRecordsQueryLambdaFunctionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Sid: "EmployeeRecordsQueryLambdaFunctionRoleAssumeRolePolicyDocument"
-          Effect: "Allow"
-          Principal:
-            Service: "lambda.amazonaws.com"
-          Action: "sts:AssumeRole"
-      Description: "Lambda role EmployeeRecordsQueryLambdaFunction"
-      Policies:
-      - PolicyName: EmployeeRecordsQueryLambdaFunctionPolicy01
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: "Allow"
-            Action:
-            - "logs:CreateLogGroup"
-            - "logs:CreateLogStream"
-            - "logs:PutLogEvents"
-            Resource: arn:aws:logs:*:*:*
-      - PolicyName: EmployeeRecordsQueryLambdaFunctionPolicy02
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: "Allow"
-            Action:
-            - "dynamodb:Scan"
-            Resource:
-              Fn::Sub:
-              - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
-              - TableName: 
-                  Fn::ImportValue: !Sub "${DynamoDbStackName}-AccessCardAppTableName"
-      RoleName: EmployeeRecordsQueryLambdaFunctionRole
-
-  EmployeeRecordsQueryLambdaFunctionLogGroup:
-    Type: AWS::Logs::LogGroup
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
-    Properties:
-      LogGroupName:
-        Fn::Sub:
-        -  "/aws/lambda/${functionRef}"
-        - functionRef: !Ref EmployeeRecordsQueryLambdaFunction
-      RetentionInDays: 7
-
-  EmployeeRecordsQueryLambdaFunction:
-    Type: AWS::Lambda::Function
-    Properties: 
-      Architectures: 
-      - "arm64"
-      Environment:
-        Variables: 
-          DEBUG: "1"
-      Code: 
-        S3Bucket: !Ref S3SourceBucketParam
-        S3Key: "list_employee_ids.zip"
-      Description: "Catch GitHub web hook calls and process request"
-      FunctionName: "EmployeeRecordsQueryLambdaFunction"
-      Handler: "list_employee_ids.handler"
-      MemorySize: 128
-      Role: !GetAtt EmployeeRecordsQueryLambdaFunctionRole.Arn
-      Runtime: "python3.8"
-      Timeout: 30
-
-
-#######################################################################################################################
-###                                                                                                                 ###
-###                                    LAMBDA FUNCTION: Retrieve Employee Records                                   ###
-###                                                                                                                 ###
-#######################################################################################################################
-
-  ListAccessCardStatusLambdaFunctionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Sid: "ListAccessCardStatusLambdaFunctionRoleAssumeRolePolicyDocument"
-          Effect: "Allow"
-          Principal:
-            Service: "lambda.amazonaws.com"
-          Action: "sts:AssumeRole"
-      Description: "Lambda role ListAccessCardStatusLambdaFunction"
-      Policies:
-      - PolicyName: ListAccessCardStatusLambdaFunctionPolicy01
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: "Allow"
-            Action:
-            - "logs:CreateLogGroup"
-            - "logs:CreateLogStream"
-            - "logs:PutLogEvents"
-            Resource: arn:aws:logs:*:*:*
-      - PolicyName: ListAccessCardStatusLambdaFunctionPolicy02
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: "Allow"
-            Action:
-            - "dynamodb:Query"
-            Resource:
-              Fn::Sub:
-              - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
-              - TableName: 
-                  Fn::ImportValue: !Sub "${DynamoDbStackName}-AccessCardAppTableName"
-      RoleName: ListAccessCardStatusLambdaFunctionRole
-
-  ListAccessCardStatusLambdaFunctionLogGroup:
-    Type: AWS::Logs::LogGroup
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
-    Properties:
-      LogGroupName:
-        Fn::Sub:
-        -  "/aws/lambda/${functionRef}"
-        - functionRef: !Ref ListAccessCardStatusLambdaFunction
-      RetentionInDays: 7
-
-  ListAccessCardStatusLambdaFunction:
-    Type: AWS::Lambda::Function
-    Properties: 
-      Architectures: 
-      - "arm64"
-      Environment:
-        Variables: 
-          DEBUG: "1"
-      Code: 
-        S3Bucket: !Ref S3SourceBucketParam
-        S3Key: "employee_access_card_status.zip"
-      Description: "Catch GitHub web hook calls and process request"
-      FunctionName: "ListAccessCardStatusLambdaFunction"
-      Handler: "employee_access_card_status.handler"
-      MemorySize: 128
-      Role: !GetAtt ListAccessCardStatusLambdaFunctionRole.Arn
-      Runtime: "python3.8"
-      Timeout: 30
 
 #######################################################################################################################
 ###                                                                                                                 ###
@@ -247,170 +69,6 @@ Resources:
       ProtocolType: "HTTP"
       Version: "v1"
 
-
-  ###
-  ### ROUTES
-  ### 
-
-  InternalWebAppRouteTest01:
-    Type: AWS::ApiGatewayV2::Route
-    Properties: 
-      ApiId: !Ref InternalWebAppApiGateway
-      ApiKeyRequired: false
-      # AuthorizationScopes: 
-      # - String
-      AuthorizationType: "JWT"
-      AuthorizerId: !Ref InternalWebAppApiGatewayAuthorizer
-      OperationName: "test-public-event-operation"
-      RouteKey: "GET /access-card-app/employees"
-      Target: 
-        Fn::Join:
-        - /
-        - - integrations
-          - !Ref InternalWebAppIntegrationTest01
-
-  InternalWebAppRouteTest02:
-    Type: AWS::ApiGatewayV2::Route
-    Properties: 
-      ApiId: !Ref InternalWebAppApiGateway
-      ApiKeyRequired: false
-      # AuthorizationScopes: 
-      # - String
-      AuthorizationType: "JWT"
-      AuthorizerId: !Ref InternalWebAppApiGatewayAuthorizer
-      OperationName: "get-access-card-status"
-      RouteKey: "GET /access-card-app/employee/{employeeId}/access-card-status"
-      Target: 
-        Fn::Join:
-        - /
-        - - integrations
-          - !Ref InternalWebAppIntegrationTest02
-
-  ###
-  ### PERMISSIONS
-  ### 
-
-  InternalWebAppIntegrationTest01Permission:
-    Type: AWS::Lambda::Permission
-    Properties: 
-      FunctionName: !GetAtt EmployeeRecordsQueryLambdaFunction.Arn
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceAccount: !Ref 'AWS::AccountId'
-      SourceArn:
-        Fn::Sub:
-        -  "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGwId}/*/*/access-card-app/employees"
-        - ApiGwId: !Ref InternalWebAppApiGateway
-
-  InternalWebAppIntegrationTest02Permission:
-    Type: AWS::Lambda::Permission
-    Properties: 
-      FunctionName: !GetAtt ListAccessCardStatusLambdaFunction.Arn
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceAccount: !Ref 'AWS::AccountId'
-      SourceArn:
-        Fn::Sub:
-        -  "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGwId}/*/*/access-card-app/employee/*/access-card-status"
-        - ApiGwId: !Ref InternalWebAppApiGateway
-
-
-  ###
-  ### INTEGRATIONS
-  ### 
-
-  InternalWebAppIntegrationTest01:  # NOTE: The maximum (and default) timeout is 30 seconds
-    Type: AWS::ApiGatewayV2::Integration
-    Properties: 
-      ApiId: !Ref InternalWebAppApiGateway
-      Description: "Lambda Integration"
-      IntegrationType: AWS_PROXY
-      IntegrationUri: 
-        Fn::Sub: 
-        - "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${functionArn}/invocations"
-        - functionArn: !GetAtt EmployeeRecordsQueryLambdaFunction.Arn
-      IntegrationMethod: POST
-      PayloadFormatVersion: '2.0'
-
-  InternalWebAppIntegrationTest02:  # NOTE: The maximum (and default) timeout is 30 seconds
-    Type: AWS::ApiGatewayV2::Integration
-    Properties: 
-      ApiId: !Ref InternalWebAppApiGateway
-      Description: "Lambda Integration"
-      IntegrationType: AWS_PROXY
-      IntegrationUri: 
-        Fn::Sub: 
-        - "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${functionArn}/invocations"
-        - functionArn: !GetAtt ListAccessCardStatusLambdaFunction.Arn
-      IntegrationMethod: POST
-      PayloadFormatVersion: '2.0'
-
-  ###
-  ### DEPLOYMENT AND STAGES
-  ### 
-
-  InternalWebAppApiGatewaySandboxStageDeployment:
-    Type: AWS::ApiGatewayV2::Deployment
-    DependsOn: InternalWebAppRouteTest01
-    Properties: 
-      ApiId: !Ref InternalWebAppApiGateway
-      Description: "Sandbox Deployment"
-
-  InternalWebAppApiGatewaySandboxStageLogs:
-    Type: AWS::Logs::LogGroup
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
-    Properties:
-      RetentionInDays: 90
-
-  InternalWebAppApiGatewaySandboxStage:
-    Type: AWS::ApiGatewayV2::Stage
-    Properties: 
-      AccessLogSettings: 
-        DestinationArn: !GetAtt InternalWebAppApiGatewaySandboxStageLogs.Arn
-        Format: $context.stage $context.integrationErrorMessage $context.authorizer.error $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId $context.extendedRequestId
-      ApiId: !Ref InternalWebAppApiGateway
-      AutoDeploy: true
-      DeploymentId: !Ref InternalWebAppApiGatewaySandboxStageDeployment
-      Description: "Testing Stage - Not for Production"
-      StageName: "sandbox"
-      DefaultRouteSettings:
-        ThrottlingBurstLimit: 10
-        ThrottlingRateLimit: 10
-
-  InternalWebAppApiGatewayCustomDomain:
-    Type: AWS::ApiGatewayV2::DomainName
-    Properties: 
-      DomainName:
-        Fn::Sub:
-        - "internal-api.${DomainName}"
-        - DomainName: !Ref PublicDnsNameParam
-      DomainNameConfigurations: 
-      - CertificateArn:
-          Fn::ImportValue: !Sub "${WebServerStackName}-WebServerAcmCertificateArn"
-        SecurityPolicy: "TLS_1_2"
-
-  InternalWebAppApiGatewayCustomDomainMapping:
-    Type: AWS::ApiGatewayV2::ApiMapping
-    Properties: 
-      ApiId: !Ref InternalWebAppApiGateway
-      # ApiMappingKey: String
-      DomainName:
-        Fn::Sub:
-        - "internal-api.${DomainName}"
-        - DomainName: !Ref PublicDnsNameParam
-      Stage: !Ref InternalWebAppApiGatewaySandboxStage
-
-  WebServerPublicDnsRecord:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneId: !Ref PublicDnsHostedZoneIdParam
-      Name: !Ref InternalWebAppApiGatewayCustomDomain
-      ResourceRecords:
-      - !GetAtt InternalWebAppApiGatewayCustomDomain.RegionalDomainName
-      TTL: 300
-      Type: "CNAME"
-
   InternalWebAppApiGatewayAuthorizer:
     Type: AWS::ApiGatewayV2::Authorizer
     Properties: 
@@ -424,16 +82,22 @@ Resources:
         Issuer: !Ref CognitoIssuerUrlParam
       Name: "internal-auth"
 
-# Outputs:
+Outputs:
 
-#   InternalWebAppApiGatewayId:
-#     Description: "InternalWebAppApiGateway ID"
-#     Value: !Ref InternalWebAppApiGateway
-#     Export:
-#       Name: !Sub "${AWS::StackName}-InternalWebAppApiGatewayId"
+  InternalWebAppApiGatewayId:
+    Description: "InternalWebAppApiGateway ID"
+    Value: !Ref InternalWebAppApiGateway
+    Export:
+      Name: !Sub "${AWS::StackName}-InternalWebAppApiGatewayId"
 
-#   InternalWebAppApiGatewayEndPoint:
-#     Description: "InternalWebAppApiGateway EndPoint"
-#     Value: !GetAtt InternalWebAppApiGateway.ApiEndpoint
-#     Export:
-#       Name: !Sub "${AWS::StackName}-InternalWebAppApiGatewayEndPoint"
+  InternalWebAppApiGatewayEndPoint:
+    Description: "InternalWebAppApiGateway EndPoint"
+    Value: !GetAtt InternalWebAppApiGateway.ApiEndpoint
+    Export:
+      Name: !Sub "${AWS::StackName}-InternalWebAppApiGatewayEndPoint"
+
+  InternalWebAppApiGatewayAuthorizerId:
+    Description: "InternalWebAppApiGatewayAuthorizer EndPoint"
+    Value: !Ref InternalWebAppApiGatewayAuthorizer
+    Export:
+      Name: !Sub "${AWS::StackName}-InternalWebAppApiGatewayAuthorizerId"

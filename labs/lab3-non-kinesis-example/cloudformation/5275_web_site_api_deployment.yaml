@@ -1,0 +1,113 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This template is the base template for the API Gateway basic resources. It does not include routes or integrations - 
+  each route and integration will have their own stack.
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  WebServerStackName:
+    Type: String
+  PublicDnsNameParam:
+    Type: String
+    Description: "The domain name of the public DNS zone, for example: example.tld"
+  PublicDnsHostedZoneIdParam:
+    Type: String
+    Description: "The Hosted Zone ID (Route 53) of the public DNS zone"
+  ApiGatewayStackNameParam:
+    Type: String
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+  InternalWebAppApiGatewaySandboxStageDeployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    Properties: 
+      ApiId:
+        Fn::ImportValue: !Sub "${ApiGatewayStackNameParam}-InternalWebAppApiGatewayId"
+      Description: "Sandbox Deployment"
+
+  InternalWebAppApiGatewaySandboxStageLogs:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      RetentionInDays: 90
+
+  InternalWebAppApiGatewaySandboxStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties: 
+      AccessLogSettings: 
+        DestinationArn: !GetAtt InternalWebAppApiGatewaySandboxStageLogs.Arn
+        Format: $context.stage $context.integrationErrorMessage $context.authorizer.error $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId $context.extendedRequestId
+      ApiId:
+        Fn::ImportValue: !Sub "${ApiGatewayStackNameParam}-InternalWebAppApiGatewayId"
+      AutoDeploy: true
+      DeploymentId: !Ref InternalWebAppApiGatewaySandboxStageDeployment
+      Description: "Testing Stage - Not for Production"
+      StageName: "sandbox"
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 10
+
+  InternalWebAppApiGatewayCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Properties: 
+      DomainName:
+        Fn::Sub:
+        - "internal-api.${DomainName}"
+        - DomainName: !Ref PublicDnsNameParam
+      DomainNameConfigurations: 
+      - CertificateArn:
+          Fn::ImportValue: !Sub "${WebServerStackName}-WebServerAcmCertificateArn"
+        SecurityPolicy: "TLS_1_2"
+
+  InternalWebAppApiGatewayCustomDomainMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Properties: 
+      ApiId: 
+        Fn::ImportValue: !Sub "${ApiGatewayStackNameParam}-InternalWebAppApiGatewayId"
+      # ApiMappingKey: String
+      DomainName:
+        Fn::Sub:
+        - "internal-api.${DomainName}"
+        - DomainName: !Ref PublicDnsNameParam
+      Stage: !Ref InternalWebAppApiGatewaySandboxStage
+
+  WebServerPublicDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref PublicDnsHostedZoneIdParam
+      Name: !Ref InternalWebAppApiGatewayCustomDomain
+      ResourceRecords:
+      - !GetAtt InternalWebAppApiGatewayCustomDomain.RegionalDomainName
+      TTL: 300
+      Type: "CNAME"
+
+# Outputs:
+
+#   InternalWebAppApiGatewayId:
+#     Description: "InternalWebAppApiGateway ID"
+#     Value: !Ref InternalWebAppApiGateway
+#     Export:
+#       Name: !Sub "${AWS::StackName}-InternalWebAppApiGatewayId"
+
+#   InternalWebAppApiGatewayEndPoint:
+#     Description: "InternalWebAppApiGateway EndPoint"
+#     Value: !GetAtt InternalWebAppApiGateway.ApiEndpoint
+#     Export:
+#       Name: !Sub "${AWS::StackName}-InternalWebAppApiGatewayEndPoint"
