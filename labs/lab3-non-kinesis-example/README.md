@@ -441,7 +441,7 @@ aws cloudformation deploy \
 
 ```
 
-> In EC2 instances, the FSX volume can be mounted with the command: `mkdir /data && mount -t nfs fs-abcdefghijklmnopq.fsx.eu-central-1.amazonaws.com:/fsx /data`
+> In EC2 instances, the FSX volume can be mounted with the command: `mkdir /data && mount -t nfs fs-aaaaaaaaaaaaaaaaa.fsx.eu-central-1.amazonaws.com:/fsx /data`
 
 ### Capturing Proxy Request Data to the Docker Containers
 
