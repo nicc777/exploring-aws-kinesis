@@ -172,7 +172,7 @@ def get_employee_access_card_record(
 ###############################################################################
 
 
-def _extract_employee_id_from_path(event: dict) -> str:
+def _extract_employee_id_from_path(event: dict, logger=get_logger()) -> str:
     employee_id = None
     if 'rawPath' in event:
         # Expecting /access-card-app/employee/<<employee-id>>/access-card-status
@@ -216,7 +216,7 @@ def handler(
     debug_log('event={}', variable_as_list=[event], logger=logger)
 
     # Process the request
-    employee_id = _extract_employee_id_from_path(event=event)
+    employee_id = _extract_employee_id_from_path(event=event, logger=logger)
     if employee_id is not None:
         logger.info('Requesting status for employee ID {}'.format(employee_id))
         result = get_employee_access_card_record(
