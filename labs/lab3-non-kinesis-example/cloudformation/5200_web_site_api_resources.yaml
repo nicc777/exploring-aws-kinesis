@@ -247,6 +247,11 @@ Resources:
       ProtocolType: "HTTP"
       Version: "v1"
 
+
+  ###
+  ### ROUTES
+  ### 
+
   InternalWebAppRouteTest01:
     Type: AWS::ApiGatewayV2::Route
     Properties: 
@@ -264,6 +269,27 @@ Resources:
         - - integrations
           - !Ref InternalWebAppIntegrationTest01
 
+  InternalWebAppRouteTest02:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: 
+      ApiId: !Ref InternalWebAppApiGateway
+      ApiKeyRequired: false
+      # AuthorizationScopes: 
+      # - String
+      AuthorizationType: "JWT"
+      AuthorizerId: !Ref InternalWebAppApiGatewayAuthorizer
+      OperationName: "get-access-card-status"
+      RouteKey: "GET /access-card-app/employee/{employeeId}/access-card-status"
+      Target: 
+        Fn::Join:
+        - /
+        - - integrations
+          - !Ref InternalWebAppIntegrationTest02
+
+  ###
+  ### PERMISSIONS
+  ### 
+
   InternalWebAppIntegrationTest01Permission:
     Type: AWS::Lambda::Permission
     Properties: 
@@ -276,6 +302,22 @@ Resources:
         -  "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGwId}/*/*/access-card-app/employees"
         - ApiGwId: !Ref InternalWebAppApiGateway
 
+  InternalWebAppIntegrationTest02Permission:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !GetAtt ListAccessCardStatusLambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn:
+        Fn::Sub:
+        -  "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGwId}/*/*/access-card-app/employee/*/access-card-status"
+        - ApiGwId: !Ref InternalWebAppApiGateway
+
+
+  ###
+  ### INTEGRATIONS
+  ### 
 
   InternalWebAppIntegrationTest01:  # NOTE: The maximum (and default) timeout is 30 seconds
     Type: AWS::ApiGatewayV2::Integration
@@ -289,6 +331,23 @@ Resources:
         - functionArn: !GetAtt EmployeeRecordsQueryLambdaFunction.Arn
       IntegrationMethod: POST
       PayloadFormatVersion: '2.0'
+
+  InternalWebAppIntegrationTest02:  # NOTE: The maximum (and default) timeout is 30 seconds
+    Type: AWS::ApiGatewayV2::Integration
+    Properties: 
+      ApiId: !Ref InternalWebAppApiGateway
+      Description: "Lambda Integration"
+      IntegrationType: AWS_PROXY
+      IntegrationUri: 
+        Fn::Sub: 
+        - "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${functionArn}/invocations"
+        - functionArn: !GetAtt ListAccessCardStatusLambdaFunction.Arn
+      IntegrationMethod: POST
+      PayloadFormatVersion: '2.0'
+
+  ###
+  ### DEPLOYMENT AND STAGES
+  ### 
 
   InternalWebAppApiGatewaySandboxStageDeployment:
     Type: AWS::ApiGatewayV2::Deployment
