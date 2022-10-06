@@ -177,11 +177,15 @@ def _extract_employee_id_from_path(event: dict, logger=get_logger()) -> str:
     if 'rawPath' in event:
         # Expecting /access-card-app/employee/<<employee-id>>/access-card-status
         path_elements = event['rawPath'].split('/')
-        if len(path_elements) != 5:
-            logger.error('Path has wrong number of parts. Expected 5, but got {}'.format(
+        if len(path_elements) < 5 or len(path_elements) > 6:
+            logger.error('Path has wrong number of parts. Expected 5 or 6, but got {}'.format(
                 len(path_elements)))
             return employee_id
-        potential_employee_id = path_elements[3]
+        potential_employee_id = -1
+        if len(path_elements) == 5:
+            potential_employee_id = path_elements[3]
+        else:
+            potential_employee_id = path_elements[4]
         logger.info('Integer range validation of id "{}"'.format(
             potential_employee_id))
         try:
