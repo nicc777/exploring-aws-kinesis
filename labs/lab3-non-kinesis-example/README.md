@@ -437,23 +437,23 @@ aws cloudformation deploy \
     --capabilities CAPABILITY_NAMED_IAM
 
 
-# TODO get the Lambda function ARN from the previous stack....
+export LAMBDA_1_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "EmployeeRecordsQueryLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
 aws cloudformation deploy \
     --stack-name $WEBAPI_ROUTES_1_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
     --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
-        LambdaFunctionArnParam="...." \
+        LambdaFunctionArnParam="$LAMBDA_1_ARN" \
         LambdaSourcePathParam="/access-card-app/employees" \
         RouteKeyParam="/access-card-app/employees" \
         HttpMethodParam="GET" \
     --capabilities CAPABILITY_NAMED_IAM
 
-# TODO get the Lambda function ARN from the previous stack....
+export LAMBDA_2_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "ListAccessCardStatusLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
 aws cloudformation deploy \
     --stack-name $WEBAPI_ROUTES_2_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
     --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
-        LambdaFunctionArnParam="...." \
+        LambdaFunctionArnParam="$LAMBDA_2_ARN" \
         LambdaSourcePathParam="/access-card-app/employee/*/access-card-status" \
         RouteKeyParam="/access-card-app/employee/{employeeId}/access-card-status" \
         HttpMethodParam="GET" \
