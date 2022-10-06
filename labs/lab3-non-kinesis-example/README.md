@@ -421,6 +421,12 @@ cd labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/ && zip list
 
 aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip s3://$ARTIFACT_S3_BUCKET_NAME/list_employee_ids.zip
 
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip
+
+cd labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/ && zip employee_access_card_status.zip employee_access_card_status.py && cd $OLDPWD 
+
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip s3://$ARTIFACT_S3_BUCKET_NAME/employee_access_card_status.zip
+
 aws cloudformation deploy \
     --stack-name $WEBAPI_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/5200_web_site_api_resources.yaml \
