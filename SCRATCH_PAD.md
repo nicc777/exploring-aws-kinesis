@@ -7,7 +7,7 @@ This is just a file where I keep some notes with the intention to later move it 
 Some next steps I'm thinking about (Lab 3)...
 
 * ~~Create Lambda function `employee-access-card-status` with API end-point~~
-* Create S3 Events bucket
+* ~~Create S3 Events bucket~~
 * Create Lambda function `link-employee-and-card` with API end-point. Persist events in directory `/employee-access-card-link-events`
 * Create a UI to link an access card to a person busy onboarding.
 * Create UI to view (and poll) for card linking status

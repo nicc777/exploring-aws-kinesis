@@ -17,8 +17,9 @@
     - [GitHub Web Hooks](#github-web-hooks)
     - [Managing the GitHub Sync Server](#managing-the-github-sync-server)
     - [Handling the SQS Payload](#handling-the-sqs-payload)
+  - [Web API Stack (AWS API Gateway)](#web-api-stack-aws-api-gateway)
   - [Event Infrastructure](#event-infrastructure)
-  - [Private API Gateway to access the Lambda API's.](#private-api-gateway-to-access-the-lambda-apis)
+    - [S3 Events Bucket Resources](#s3-events-bucket-resources)
 - [Random Thoughts](#random-thoughts)
 
 # Lab 3 Goals
@@ -66,12 +67,11 @@ When running commands, the following environment variables are assumed to be set
 | `export WEB_SERVER_STACK_NAME="..."`        | The CloudFormation stack name for deploying The Web Server and API Gateway Resources              |
 | `export COGNITO_STACK_NAME="..."`           | The CloudFormation stack name for deploying The employee Cognito Pool                             |
 | `export WEBAPI_STACK_NAME="..."`            | The CloudFormation stack name for deploying The Website API Resources                             |
-
 | `export WEBAPI_LAMBDA_STACK_NAME="..."`     | The CloudFormation stack name for deploying The Website API Resources - Lambda Functions          |
 | `export WEBAPI_ROUTES_1_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations   |
 | `export WEBAPI_ROUTES_2_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations   |
 | `export WEBAPI_DEPLOYMENT_STACK_NAME="..."` | The CloudFormation stack name for deploying The Website API Resources - Deployment and DNS        |
-
+| `export S3_EVENTS_STACK_NAME="..."`         | The CloudFormation stack name for deploying The S3 Events Bucket                                  |
 | `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                                            |
 | `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                              |
 | `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                                |
@@ -273,43 +273,6 @@ aws cloudformation deploy \
     --template-file labs/lab3-non-kinesis-example/cloudformation/3100_dns.yaml \
     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME"
 
-# The following three VPC Endpoint stacks creates the end points required for SSM Console Access to running instances in the Private VPC
-
-# aws cloudformation deploy \
-#     --stack-name SsmVpcEndPointStack \
-#     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
-#     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
-#         VpcEndPointServiceName="com.amazonaws.eu-central-1.ssm"
-
-# aws cloudformation deploy \
-#     --stack-name SsmMessagesVpcEndPointStack \
-#     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
-#     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
-#         VpcEndPointServiceName="com.amazonaws.eu-central-1.ssmmessages"
-
-# aws cloudformation deploy \
-#     --stack-name KmsVpcEndPointStack \
-#     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
-#     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
-#         VpcEndPointServiceName="com.amazonaws.eu-central-1.kms"
-
-# aws cloudformation deploy \
-#     --stack-name SqsVpcEndPointStack \
-#     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
-#     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
-#         VpcEndPointServiceName="com.amazonaws.eu-central-1.sqs"
-
-# aws cloudformation deploy \
-#     --stack-name Ec2VpcEndPointStack \
-#     --template-file labs/lab3-non-kinesis-example/cloudformation/3200_interface_vpc_endpoint_base_stack.yaml \
-#     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" \
-#         VpcEndPointServiceName="com.amazonaws.eu-central-1.ec2"
-
-# aws cloudformation deploy \
-#     --stack-name S3GatewayVpcEndPointStack \
-#     --template-file labs/lab3-non-kinesis-example/cloudformation/3250_s3_gateway_vpc_endpoint_stack.yaml \
-#     --parameter-overrides VpcStackNameParam="$VPC_STACK_NAME" 
-
 aws cloudformation deploy \
     --stack-name $PROXY_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/3300_proxy_server.yaml \
@@ -413,59 +376,6 @@ aws cloudformation deploy \
         CognitoStackNameParam="$COGNITO_STACK_NAME" \
         S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
-
-
-rm -vf labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip
-cd labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/ && zip list_employee_ids.zip list_employee_ids.py && cd $OLDPWD 
-aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip s3://$ARTIFACT_S3_BUCKET_NAME/list_employee_ids.zip
-
-rm -vf labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip
-cd labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/ && zip employee_access_card_status.zip employee_access_card_status.py && cd $OLDPWD 
-aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip s3://$ARTIFACT_S3_BUCKET_NAME/employee_access_card_status.zip
-
-aws cloudformation deploy \
-    --stack-name $WEBAPI_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/5200_web_site_api_resources.yaml \
-    --parameter-overrides CognitoStackNameParam="$COGNITO_STACK_NAME" \
-        CognitoIssuerUrlParam="$COGNITO_ISSUER_URL" 
-
-aws cloudformation deploy \
-    --stack-name $WEBAPI_LAMBDA_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/5225_web_site_api_lambda_functions.yaml \
-    --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
-        DynamoDbStackName="$DYNAMODB_STACK_NAME" \
-    --capabilities CAPABILITY_NAMED_IAM
-
-
-export LAMBDA_1_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "EmployeeRecordsQueryLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
-aws cloudformation deploy \
-    --stack-name $WEBAPI_ROUTES_1_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
-    --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
-        LambdaFunctionArnParam="$LAMBDA_1_ARN" \
-        LambdaSourcePathParam="/access-card-app/employees" \
-        RouteKeyParam="/access-card-app/employees" \
-        HttpMethodParam="GET" \
-    --capabilities CAPABILITY_NAMED_IAM
-
-export LAMBDA_2_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "ListAccessCardStatusLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
-aws cloudformation deploy \
-    --stack-name $WEBAPI_ROUTES_2_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
-    --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
-        LambdaFunctionArnParam="$LAMBDA_2_ARN" \
-        LambdaSourcePathParam="/access-card-app/employee/*/access-card-status" \
-        RouteKeyParam="/access-card-app/employee/{employeeId}/access-card-status" \
-        HttpMethodParam="GET" \
-    --capabilities CAPABILITY_NAMED_IAM
-
-aws cloudformation deploy \
-    --stack-name $WEBAPI_DEPLOYMENT_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/5275_web_site_api_deployment.yaml \
-    --parameter-overrides WebServerStackName="$WEB_SERVER_STACK_NAME" \
-        PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
-        PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
-        ApiGatewayStackNameParam="$WEBAPI_STACK_NAME"
 ```
 
 > In EC2 instances, the FSX volume can be mounted with the command: `mkdir /data && mount -t nfs fs-aaaaaaaaaaaaaaaaa.fsx.eu-central-1.amazonaws.com:/fsx /data`
@@ -632,14 +542,82 @@ drwxrwxr-x 4 ec2-user ec2-user    7 Sep 10 14:56 .
 drwxr-xr-x 3 ec2-user ec2-user    3 Sep 14 05:20 ..
 ```
 
+## Web API Stack (AWS API Gateway)
+
+These commands can be used to deploy the stack for creating the AWS API Gateway resources that will handle mostly interaction with the Website:
+
+```shell
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip
+cd labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/ && zip list_employee_ids.zip list_employee_ids.py && cd $OLDPWD 
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip s3://$ARTIFACT_S3_BUCKET_NAME/list_employee_ids.zip
+
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip
+cd labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/ && zip employee_access_card_status.zip employee_access_card_status.py && cd $OLDPWD 
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip s3://$ARTIFACT_S3_BUCKET_NAME/employee_access_card_status.zip
+
+aws cloudformation deploy \
+    --stack-name $WEBAPI_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5200_web_site_api_resources.yaml \
+    --parameter-overrides CognitoStackNameParam="$COGNITO_STACK_NAME" \
+        CognitoIssuerUrlParam="$COGNITO_ISSUER_URL" 
+
+aws cloudformation deploy \
+    --stack-name $WEBAPI_LAMBDA_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5225_web_site_api_lambda_functions.yaml \
+    --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
+        DynamoDbStackName="$DYNAMODB_STACK_NAME" \
+    --capabilities CAPABILITY_NAMED_IAM
+
+
+export LAMBDA_1_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "EmployeeRecordsQueryLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
+aws cloudformation deploy \
+    --stack-name $WEBAPI_ROUTES_1_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
+    --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
+        LambdaFunctionArnParam="$LAMBDA_1_ARN" \
+        LambdaSourcePathParam="/access-card-app/employees" \
+        RouteKeyParam="/access-card-app/employees" \
+        HttpMethodParam="GET" \
+    --capabilities CAPABILITY_NAMED_IAM
+
+export LAMBDA_2_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "ListAccessCardStatusLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
+aws cloudformation deploy \
+    --stack-name $WEBAPI_ROUTES_2_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
+    --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
+        LambdaFunctionArnParam="$LAMBDA_2_ARN" \
+        LambdaSourcePathParam="/access-card-app/employee/*/access-card-status" \
+        RouteKeyParam="/access-card-app/employee/{employeeId}/access-card-status" \
+        HttpMethodParam="GET" \
+    --capabilities CAPABILITY_NAMED_IAM
+
+aws cloudformation deploy \
+    --stack-name $WEBAPI_DEPLOYMENT_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5275_web_site_api_deployment.yaml \
+    --parameter-overrides WebServerStackName="$WEB_SERVER_STACK_NAME" \
+        PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
+        PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
+        ApiGatewayStackNameParam="$WEBAPI_STACK_NAME"
+```
 
 ## Event Infrastructure
 
-TODO 
+### S3 Events Bucket Resources
 
-## Private API Gateway to access the Lambda API's.
+> _**Note**_: The S3 bucket has a retention policy and therefore the creation is more a once-off kind of thing. If you need to delete the bucket, you need to wait until the last object's lock has been removed and then delete all objects, and then delete the stack. Alternatively, you can delete the stack but keep the S3 bucket.
 
-TODO
+The S3 bucket can be deployed with the following commands:
+
+```shell
+export S3_EVENTS_STACK_NAME="..."
+export S3_EVENTS_BUCKET_NAME="..."
+
+aws cloudformation deploy \
+    --stack-name $S3_EVENTS_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/6000_s3_events_bucket.yaml \
+    --parameter-overrides S3EventBucketParam="$S3_EVENTS_BUCKET_NAME" \
+    --capabilities CAPABILITY_NAMED_IAM
+```
 
 # Random Thoughts
 
