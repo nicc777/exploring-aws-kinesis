@@ -19,7 +19,7 @@
     - [Handling the SQS Payload](#handling-the-sqs-payload)
   - [Web API Stack (AWS API Gateway)](#web-api-stack-aws-api-gateway)
   - [Event Infrastructure](#event-infrastructure)
-  - [Private API Gateway to access the Lambda API's.](#private-api-gateway-to-access-the-lambda-apis)
+    - [S3 Events Bucket Resources](#s3-events-bucket-resources)
 - [Random Thoughts](#random-thoughts)
 
 # Lab 3 Goals
@@ -602,6 +602,8 @@ aws cloudformation deploy \
 
 ## Event Infrastructure
 
+### S3 Events Bucket Resources
+
 > _**Note**_: The S3 bucket has a retention policy and therefore the creation is more a once-off kind of thing. If you need to delete the bucket, you need to wait until the last object's lock has been removed and then delete all objects, and then delete the stack. Alternatively, you can delete the stack but keep the S3 bucket.
 
 The S3 bucket can be deployed with the following commands:
@@ -616,10 +618,6 @@ aws cloudformation deploy \
     --parameter-overrides S3EventBucketParam="$S3_EVENTS_BUCKET_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
-
-## Private API Gateway to access the Lambda API's.
-
-TODO
 
 # Random Thoughts
 
