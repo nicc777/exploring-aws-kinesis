@@ -66,12 +66,11 @@ When running commands, the following environment variables are assumed to be set
 | `export WEB_SERVER_STACK_NAME="..."`        | The CloudFormation stack name for deploying The Web Server and API Gateway Resources              |
 | `export COGNITO_STACK_NAME="..."`           | The CloudFormation stack name for deploying The employee Cognito Pool                             |
 | `export WEBAPI_STACK_NAME="..."`            | The CloudFormation stack name for deploying The Website API Resources                             |
-
 | `export WEBAPI_LAMBDA_STACK_NAME="..."`     | The CloudFormation stack name for deploying The Website API Resources - Lambda Functions          |
 | `export WEBAPI_ROUTES_1_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations   |
 | `export WEBAPI_ROUTES_2_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations   |
 | `export WEBAPI_DEPLOYMENT_STACK_NAME="..."` | The CloudFormation stack name for deploying The Website API Resources - Deployment and DNS        |
-
+| `export S3_EVENTS_STACK_NAME="..."`         | The CloudFormation stack name for deploying The S3 Events Bucket                                  |
 | `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                                            |
 | `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                              |
 | `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                                |
@@ -635,7 +634,20 @@ drwxr-xr-x 3 ec2-user ec2-user    3 Sep 14 05:20 ..
 
 ## Event Infrastructure
 
-TODO 
+> _**Note**_: The S3 bucket has a retention policy and therefore the creation is more a once-off kind of thing. If you need to delete the bucket, you need to wait until the last object's lock has been removed and then delete all objects, and then delete the stack. Alternatively, you can delete the stack but keep the S3 bucket.
+
+The S3 bucket can be deployed with the following commands:
+
+```shell
+export S3_EVENTS_STACK_NAME="..."
+export S3_EVENTS_BUCKET_NAME="..."
+
+aws cloudformation deploy \
+    --stack-name $S3_EVENTS_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/6000_s3_events_bucket.yaml \
+    --parameter-overrides S3EventBucketParam="$S3_EVENTS_BUCKET_NAME" \
+    --capabilities CAPABILITY_NAMED_IAM
+```
 
 ## Private API Gateway to access the Lambda API's.
 
