@@ -111,13 +111,19 @@ Resources:
           Status: "Enabled"
           Transitions: 
           - StorageClass: "GLACIER"
-            TransitionInDays: 7
+            TransitionInDays: 8
           - StorageClass: "DEEP_ARCHIVE"  # Days' in the 'Transition' action for StorageClass 'DEEP_ARCHIVE' for filter must be 90 days more than 'Transition' action for StorageClass 'GLACIER' 
             TransitionInDays: 97
       NotificationConfiguration: 
         TopicConfigurations: 
         - Event: "s3:ObjectCreated:*"   # See https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
           Topic: !Ref S3EventStoreNotificationTopic
+      ObjectLockConfiguration:
+        ObjectLockEnabled: "Enabled"
+        Rule: 
+          DefaultRetention: 
+            Days: 7
+      ObjectLockEnabled: true
       Tags: 
       - Key: Purpose
         Value: EventStore
