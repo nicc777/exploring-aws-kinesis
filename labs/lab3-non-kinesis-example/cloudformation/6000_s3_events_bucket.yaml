@@ -123,6 +123,7 @@ Resources:
         Rule: 
           DefaultRetention: 
             Days: 7
+            Mode: "COMPLIANCE"
       ObjectLockEnabled: true
       Tags: 
       - Key: Purpose
