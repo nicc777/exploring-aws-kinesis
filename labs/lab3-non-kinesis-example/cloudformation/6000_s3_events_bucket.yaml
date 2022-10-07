@@ -1,0 +1,133 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: This template creates the S3 bucket to hold event objects
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  S3EventBucketParam:
+    Type: String
+    Description: "The name of the S3 bucket where the incoming event data will be stored. This is the Event store."
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###              S3 BUCKET WITH SNS TOPIC AND LAMBDA FOR PROCESSING NEW EVENTS IN THE EVENT STORE (S3)              ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  S3EventStoreNotificationDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: "S3EventStoreNotificationDeadLetterQueue"
+      VisibilityTimeout: 60
+
+  S3EventStoreNotificationQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: "S3EventStoreNotificationQueue"
+      RedriveAllowPolicy:
+        redrivePermission: "allowAll"
+      RedrivePolicy:
+        deadLetterTargetArn : !GetAtt S3EventStoreNotificationDeadLetterQueue.Arn
+        maxReceiveCount : 3
+      VisibilityTimeout: 60
+
+  S3EventStoreNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties: 
+      DisplayName: "S3EventStoreNotificationTopic"
+      FifoTopic: false
+      Subscription:
+      - Protocol: sqs
+        Endpoint: !GetAtt S3EventStoreNotificationQueue.Arn
+      TopicName: "S3EventStoreNotification"
+
+  S3EventStoreNotificationPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: "s3.amazonaws.com"
+            Action: sns:Publish
+            Resource: !Ref S3EventStoreNotificationTopic
+      Topics:
+        - !Ref S3EventStoreNotificationTopic
+
+  SnsToSqsPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "Allow SNS publish to SQS"
+            Effect: Allow
+            Principal:
+              Service: "sns.amazonaws.com"
+            Resource: !GetAtt S3EventStoreNotificationQueue.Arn
+            Action: SQS:SendMessage
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref S3EventStoreNotificationTopic
+      Queues:
+      - Ref: S3EventStoreNotificationQueue
+
+  S3EventStoreBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties: 
+      AccessControl: "Private"
+      BucketName: !Ref S3EventBucketParam
+      LifecycleConfiguration: 
+        Rules: 
+        - AbortIncompleteMultipartUpload: 
+            DaysAfterInitiation: 1
+          Id: !Sub "${S3EventBucketParam}-archive-lifecycle-01"
+          Status: "Enabled"
+          Transitions: 
+          - StorageClass: "GLACIER"
+            TransitionInDays: 7
+          - StorageClass: "DEEP_ARCHIVE"  # Days' in the 'Transition' action for StorageClass 'DEEP_ARCHIVE' for filter must be 90 days more than 'Transition' action for StorageClass 'GLACIER' 
+            TransitionInDays: 97
+      NotificationConfiguration: 
+        TopicConfigurations: 
+        - Event: "s3:ObjectCreated:*"   # See https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
+          Topic: !Ref S3EventStoreNotificationTopic
+      Tags: 
+      - Key: Purpose
+        Value: EventStore
+
+
+Outputs:
+
+  S3EventStoreBucketDomainName:
+    Description: "Bucket DomainName"
+    Value: !GetAtt S3EventStoreBucket.DomainName
+    Export:
+      Name: !Sub "${AWS::StackName}-S3EventStoreBucketDomainName"
+
