@@ -17,6 +17,7 @@
     - [GitHub Web Hooks](#github-web-hooks)
     - [Managing the GitHub Sync Server](#managing-the-github-sync-server)
     - [Handling the SQS Payload](#handling-the-sqs-payload)
+  - [Web API Stack (AWS API Gateway)](#web-api-stack-aws-api-gateway)
   - [Event Infrastructure](#event-infrastructure)
   - [Private API Gateway to access the Lambda API's.](#private-api-gateway-to-access-the-lambda-apis)
 - [Random Thoughts](#random-thoughts)
@@ -412,59 +413,6 @@ aws cloudformation deploy \
         CognitoStackNameParam="$COGNITO_STACK_NAME" \
         S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
-
-
-rm -vf labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip
-cd labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/ && zip list_employee_ids.zip list_employee_ids.py && cd $OLDPWD 
-aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip s3://$ARTIFACT_S3_BUCKET_NAME/list_employee_ids.zip
-
-rm -vf labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip
-cd labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/ && zip employee_access_card_status.zip employee_access_card_status.py && cd $OLDPWD 
-aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip s3://$ARTIFACT_S3_BUCKET_NAME/employee_access_card_status.zip
-
-aws cloudformation deploy \
-    --stack-name $WEBAPI_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/5200_web_site_api_resources.yaml \
-    --parameter-overrides CognitoStackNameParam="$COGNITO_STACK_NAME" \
-        CognitoIssuerUrlParam="$COGNITO_ISSUER_URL" 
-
-aws cloudformation deploy \
-    --stack-name $WEBAPI_LAMBDA_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/5225_web_site_api_lambda_functions.yaml \
-    --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
-        DynamoDbStackName="$DYNAMODB_STACK_NAME" \
-    --capabilities CAPABILITY_NAMED_IAM
-
-
-export LAMBDA_1_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "EmployeeRecordsQueryLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
-aws cloudformation deploy \
-    --stack-name $WEBAPI_ROUTES_1_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
-    --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
-        LambdaFunctionArnParam="$LAMBDA_1_ARN" \
-        LambdaSourcePathParam="/access-card-app/employees" \
-        RouteKeyParam="/access-card-app/employees" \
-        HttpMethodParam="GET" \
-    --capabilities CAPABILITY_NAMED_IAM
-
-export LAMBDA_2_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "ListAccessCardStatusLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
-aws cloudformation deploy \
-    --stack-name $WEBAPI_ROUTES_2_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
-    --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
-        LambdaFunctionArnParam="$LAMBDA_2_ARN" \
-        LambdaSourcePathParam="/access-card-app/employee/*/access-card-status" \
-        RouteKeyParam="/access-card-app/employee/{employeeId}/access-card-status" \
-        HttpMethodParam="GET" \
-    --capabilities CAPABILITY_NAMED_IAM
-
-aws cloudformation deploy \
-    --stack-name $WEBAPI_DEPLOYMENT_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/5275_web_site_api_deployment.yaml \
-    --parameter-overrides WebServerStackName="$WEB_SERVER_STACK_NAME" \
-        PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
-        PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
-        ApiGatewayStackNameParam="$WEBAPI_STACK_NAME"
 ```
 
 > In EC2 instances, the FSX volume can be mounted with the command: `mkdir /data && mount -t nfs fs-aaaaaaaaaaaaaaaaa.fsx.eu-central-1.amazonaws.com:/fsx /data`
@@ -631,6 +579,63 @@ drwxrwxr-x 4 ec2-user ec2-user    7 Sep 10 14:56 .
 drwxr-xr-x 3 ec2-user ec2-user    3 Sep 14 05:20 ..
 ```
 
+## Web API Stack (AWS API Gateway)
+
+These commands can be used to deploy the stack for creating the AWS API Gateway resources that will handle mostly interaction with the Website:
+
+```shell
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip
+cd labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/ && zip list_employee_ids.zip list_employee_ids.py && cd $OLDPWD 
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/list_employee_ids/list_employee_ids.zip s3://$ARTIFACT_S3_BUCKET_NAME/list_employee_ids.zip
+
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip
+cd labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/ && zip employee_access_card_status.zip employee_access_card_status.py && cd $OLDPWD 
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip s3://$ARTIFACT_S3_BUCKET_NAME/employee_access_card_status.zip
+
+aws cloudformation deploy \
+    --stack-name $WEBAPI_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5200_web_site_api_resources.yaml \
+    --parameter-overrides CognitoStackNameParam="$COGNITO_STACK_NAME" \
+        CognitoIssuerUrlParam="$COGNITO_ISSUER_URL" 
+
+aws cloudformation deploy \
+    --stack-name $WEBAPI_LAMBDA_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5225_web_site_api_lambda_functions.yaml \
+    --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
+        DynamoDbStackName="$DYNAMODB_STACK_NAME" \
+    --capabilities CAPABILITY_NAMED_IAM
+
+
+export LAMBDA_1_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "EmployeeRecordsQueryLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
+aws cloudformation deploy \
+    --stack-name $WEBAPI_ROUTES_1_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
+    --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
+        LambdaFunctionArnParam="$LAMBDA_1_ARN" \
+        LambdaSourcePathParam="/access-card-app/employees" \
+        RouteKeyParam="/access-card-app/employees" \
+        HttpMethodParam="GET" \
+    --capabilities CAPABILITY_NAMED_IAM
+
+export LAMBDA_2_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "ListAccessCardStatusLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
+aws cloudformation deploy \
+    --stack-name $WEBAPI_ROUTES_2_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
+    --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
+        LambdaFunctionArnParam="$LAMBDA_2_ARN" \
+        LambdaSourcePathParam="/access-card-app/employee/*/access-card-status" \
+        RouteKeyParam="/access-card-app/employee/{employeeId}/access-card-status" \
+        HttpMethodParam="GET" \
+    --capabilities CAPABILITY_NAMED_IAM
+
+aws cloudformation deploy \
+    --stack-name $WEBAPI_DEPLOYMENT_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5275_web_site_api_deployment.yaml \
+    --parameter-overrides WebServerStackName="$WEB_SERVER_STACK_NAME" \
+        PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
+        PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
+        ApiGatewayStackNameParam="$WEBAPI_STACK_NAME"
+```
 
 ## Event Infrastructure
 
