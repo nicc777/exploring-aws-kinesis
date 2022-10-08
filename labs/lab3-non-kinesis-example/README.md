@@ -614,7 +614,7 @@ export S3_EVENTS_BUCKET_NAME="..."
 
 aws cloudformation deploy \
     --stack-name $S3_EVENTS_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/6000_s3_events_bucket.yaml \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/1100_s3_events_bucket.yaml \
     --parameter-overrides S3EventBucketParam="$S3_EVENTS_BUCKET_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
