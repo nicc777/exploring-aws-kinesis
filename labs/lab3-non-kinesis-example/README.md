@@ -18,6 +18,9 @@
     - [Managing the GitHub Sync Server](#managing-the-github-sync-server)
     - [Handling the SQS Payload](#handling-the-sqs-payload)
   - [Web API Stack (AWS API Gateway)](#web-api-stack-aws-api-gateway)
+    - [Example curl commands](#example-curl-commands)
+      - [Query Access Card (GET)](#query-access-card-get)
+      - [Link an Access Card to an Employee (POST)](#link-an-access-card-to-an-employee-post)
   - [Event Infrastructure](#event-infrastructure)
     - [S3 Events Bucket Resources](#s3-events-bucket-resources)
 - [Random Thoughts](#random-thoughts)
@@ -613,6 +616,29 @@ aws cloudformation deploy \
         PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
         PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
         ApiGatewayStackNameParam="$WEBAPI_STACK_NAME"
+```
+
+### Example curl commands
+
+The following environment variables are used:
+
+| Variable     | Content                                                        |
+|--------------|----------------------------------------------------------------|
+| `JWT_TOKEN`  | The Access Token                                               |
+| `API_DOMAIN` | The API Gateway domain, for example `internal-api.example.tld` |
+| `EMP_ID`     | An employee ID for example `100000000003`                      |
+| `CARD_ID`    | An access card ID                                              |
+
+#### Query Access Card (GET)
+
+```shell
+curl -H "Authorization: ${JWT_TOKEN}" https://$API_DOMAIN/access-card-app/employee/$EMP_ID/access-card-status
+```
+
+#### Link an Access Card to an Employee (POST)
+
+```shell
+curl -X POST -H "Authorization: ${JWT_TOKEN}" -H "Content-Type: application/json" -d "{\"CardId\": \"$CARD_ID\", \"CompleteOnboarding\": false, \"LinkedBy\": \"TEST\"}"  https://$API_DOMAIN/access-card-app/employee/$EMP_ID/link-card
 ```
 
 ## Event Infrastructure

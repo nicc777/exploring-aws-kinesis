@@ -281,41 +281,67 @@ if __name__ == '__main__':
     
 
     employee_id = '100000000150'
+    card_id = '10000000099'
     event = {
-        'version': '2.0', 
-        'routeKey': 'GET /access-card-app/employee/{}/access-card-status'.format(employee_id), 
-        'rawPath': '/access-card-app/employee/{}/access-card-status'.format(employee_id), 
-        'rawQueryString': '', 
-        'headers': {
-            'accept': '*/*', 
-            'content-length': '0', 
-            'host': 'aaaaaaaaaa.execute-api.eu-central-1.amazonaws.com', 
-            'user-agent': 'curl/7.81.0', 
-            'x-amzn-trace-id': 'aaaaaaaaaa', 
-            'x-forwarded-for': 'nnn.nnn.nnn.nnn', 
-            'x-forwarded-port': '443', 
-            'x-forwarded-proto': 'https'
-        }, 
-        'queryStringParameters': {}, 
-        'requestContext': {
-            'accountId': '000000000000', 
-            'apiId': 'aaaaaaaaaa', 
-            'domainName': 'aaaaaaaaaa.execute-api.eu-central-1.amazonaws.com', 
-            'domainPrefix': 'aaaaaaaaaa', 
-            'http': {
-                'method': 'GET', 
-                'path': '/access-card-app/employee/{}/access-card-status'.format(employee_id), 
-                'protocol': 'HTTP/1.1', 
-                'sourceIp': 'nnn.nnn.nnn.nnn', 
-                'userAgent': 'curl/7.81.0'
-            }, 
-            'requestId': 'Y842FhTEliAEJVw=', 
-            'routeKey': 'GET /access-card-app/employees', 
-            'stage': 'sandbox', 
-            'time': '24/Sep/2022:06:20:48 +0000', 
-            'timeEpoch': 1664000448395
-        }, 
-        'isBase64Encoded': False
+        "version": "2.0",
+        "routeKey": "POST /access-card-app/employee/{employeeId}/link-card",
+        "rawPath": "/sandbox/access-card-app/employee/{}/link-card".format(employee_id),
+        "rawQueryString": "",
+        "headers": {
+            "accept": "*/*",
+            "authorization": "...",
+            "content-length": "63",
+            "content-type": "application/json",
+            "host": "internal-api.example.tld",
+            "user-agent": "curl/7.81.0",
+            "x-amzn-trace-id": "...",
+            "x-forwarded-for": "nnn.nnn.nnn.nnn",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https"
+        },
+        "requestContext": {
+            "accountId": "000000000000",
+            "apiId": "5b5g16o1yc",
+            "authorizer": {
+                "jwt": {
+                    "claims": {
+                        "auth_time": "1665240605",
+                        "client_id": "...",
+                        "event_id": "...",
+                        "exp": "1665244205",
+                        "iat": "1665240605",
+                        "iss": "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_...",
+                        "jti": "....",
+                        "origin_jti": "...",
+                        "scope": "openid",
+                        "sub": "943f64ad-6c94-4662-885c-83158d4c61da",
+                        "token_use": "access",
+                        "username": "user@example.tld",
+                        "version": "2"
+                    },
+                    "scopes": None
+                }
+            },
+            "domainName": "internal-api.example.tld",
+            "domainPrefix": "internal-api",
+            "http": {
+                "method": "POST",
+                "path": "/sandbox/access-card-app/employee/{}/link-card".format(employee_id),
+                "protocol": "HTTP/1.1",
+                "sourceIp": "nnn.nnn.nnn.nnn",
+                "userAgent": "curl/7.81.0"
+            },
+            "requestId": "ZsNp0inLliAEPmg=",
+            "routeKey": "POST /access-card-app/employee/<<employeeId>>/link-card",
+            "stage": "sandbox",
+            "time": "08/Oct/2022:14:57:28 +0000",
+            "timeEpoch": 1665241048234
+        },
+        "pathParameters": {
+            "employeeId": "100000000003"
+        },
+        "body": '{{"CardId": "{}", "CompleteOnboarding": false, "LinkedBy": "TEST"}}'.format(card_id),
+        "isBase64Encoded": False
     }
 
     result1 = handler(event=event, context=None, logger=logger, run_from_main=True)
