@@ -555,6 +555,10 @@ rm -vf labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_statu
 cd labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/ && zip employee_access_card_status.zip employee_access_card_status.py && cd $OLDPWD 
 aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip s3://$ARTIFACT_S3_BUCKET_NAME/employee_access_card_status.zip
 
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/link_employee_and_access_card/link_employee_and_access_card.zip
+cd labs/lab3-non-kinesis-example/lambda_functions/link_employee_and_access_card/ && zip link_employee_and_access_card.zip link_employee_and_access_card.py && cd $OLDPWD 
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/link_employee_and_access_card/link_employee_and_access_card.zip s3://$ARTIFACT_S3_BUCKET_NAME/link_employee_and_access_card.zip
+
 aws cloudformation deploy \
     --stack-name $WEBAPI_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/5200_web_site_api_resources.yaml \
@@ -589,6 +593,17 @@ aws cloudformation deploy \
         LambdaSourcePathParam="/access-card-app/employee/*/access-card-status" \
         RouteKeyParam="/access-card-app/employee/{employeeId}/access-card-status" \
         HttpMethodParam="GET" \
+    --capabilities CAPABILITY_NAMED_IAM
+
+export LAMBDA_3_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "EmpCardLinkLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
+aws cloudformation deploy \
+    --stack-name $WEBAPI_ROUTES_3_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
+    --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
+        LambdaFunctionArnParam="$LAMBDA_3_ARN" \
+        LambdaSourcePathParam="/access-card-app/employee/*/link-card" \
+        RouteKeyParam="/access-card-app/employee/{employeeId}/link-card" \
+        HttpMethodParam="POST" \
     --capabilities CAPABILITY_NAMED_IAM
 
 aws cloudformation deploy \
