@@ -1,3 +1,4 @@
+from cmath import log
 import boto3
 import traceback
 import os
@@ -178,24 +179,58 @@ def _extract_employee_id_from_path(event: dict, logger=get_logger()) -> str:
         # Expecting /access-card-app/employee/<<employee-id>>/access-card-status
         path_elements = event['rawPath'].split('/')
         if len(path_elements) < 5 or len(path_elements) > 6:
-            logger.error('Path has wrong number of parts. Expected 5 or 6, but got {}'.format(
-                len(path_elements)))
+            logger.error('Path has wrong number of parts. Expected 5 or 6, but got {}'.format(len(path_elements)))
             return employee_id
         potential_employee_id = -1
         if len(path_elements) == 5:
             potential_employee_id = path_elements[3]
         else:
             potential_employee_id = path_elements[4]
-        logger.info('Integer range validation of id "{}"'.format(
-            potential_employee_id))
-        try:
-            if int(potential_employee_id) > 100000000000 and int(potential_employee_id) < 999999999999:
-                employee_id = '{}'.format(potential_employee_id)
-            else:
-                logger.error('Employee ID has invalid numeric range.')
-        except:
-            logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        logger.info('Integer range validation of id "{}"'.format(potential_employee_id))
+        
     return employee_id
+
+
+def _extract_json_body_as_dict(event: dict, logger=get_logger())->dict:
+    data = dict()
+    try:
+        if event['requestContext']['http']['method'] == 'GET':
+            logger.error('Cannot extract body from a GET request')
+            return data
+        data = json.loads(event['body'])
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log(message='data={}'.format(data), variable_as_list=[data, ], logger=logger)
+    return data
+
+
+def _validate_basic_request_data_is_valid(employee_id: str, body_data: dict, logger=get_logger())->bool:
+    try:
+        if int(employee_id) < 10000000000 or int(employee_id) > 99999999999:
+            logger.error('Employee ID basic validation failed')
+            return False
+        if 'CardId' not in body_data:
+            logger.error('CardId not found in request body')
+            return False
+        if 'CompleteOnboarding' not in body_data:
+            logger.error('CompleteOnboarding not found in request body')
+            return False
+        if 'LinkedBy' not in body_data:
+            logger.error('LinkedBy not found in request body')
+            return False
+        if int(body_data['CardId']) < 10000000000 or int(body_data['CardId']) > 99999999999:
+            logger.error('CardId basic validation failed')
+            return False
+        if int(body_data['LinkedBy']) < 10000000000 or int(body_data['LinkedBy']) > 99999999999:
+            logger.error('LinkedBy basic validation failed')
+            return False
+        if isinstance(body_data['CompleteOnboarding'], bool) is False:
+            logger.error('CompleteOnboarding basic validation failed')
+            return False
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        return False
+    return True
 
 
 def handler(
@@ -228,7 +263,22 @@ def handler(
     debug_log('event={}', variable_as_list=[event], logger=logger)
 
     # Process the request
+    body_data = _extract_json_body_as_dict(event=event, logger=logger)
     employee_id = _extract_employee_id_from_path(event=event, logger=logger)
+    if _validate_basic_request_data_is_valid(employee_id=employee_id, body_data=body_data, logger=logger) is False:
+        return_object = {
+            'statusCode': 400,
+            'headers': {
+                'content-type': 'text/plain',
+            },
+            'body': 'Bad Request',
+            'isBase64Encoded': False,
+        }
+        logger.error('Failed basic employee ID validation - returning error 400 to client')
+        return return_object
+
+
+
     if employee_id is not None:
         logger.info('Attempting to link card to employee ID {}'.format(employee_id))
         current_employee_access_card_record = get_employee_access_card_record(
