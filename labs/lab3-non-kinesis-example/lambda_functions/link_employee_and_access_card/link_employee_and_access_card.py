@@ -121,8 +121,10 @@ def write_s3_event(
     s3_body: str,
     client=get_client(client_name="s3"),
     logger=get_logger(level=logging.INFO)
-)->bool:
-    event_written = False
+)->dict:
+    event_written = dict()
+    event_written['PutObjectOperationCompleted'] = False
+    event_written['VersionId'] = None
     try:
         response = client.put_object(
             ACL='private',
@@ -141,10 +143,50 @@ def write_s3_event(
             }
         )
         logger.info('write_s3_event() response={}'.format(response))
-        event_written = True
+        event_written['PutObjectOperationCompleted'] = True
+        event_written['VersionId'] = response['VersionId']
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    logger.info('write_s3_event() event_written={}'.format(event_written))
     return event_written
+
+
+def read_s3_event(
+    s3_bucket_name: str,
+    s3_key: str,
+    version_id: str,
+    client=get_client(client_name="s3"),
+    logger=get_logger(level=logging.INFO)
+)->dict:
+    result = dict()
+    result['JasonDataAsDict'] = None
+    result['ObjectLockMode'] = None
+    result['ObjectLockRetainUntilDate'] = None
+    result['StorageClass'] = None
+    result['ServerSideEncryption'] = None
+    try:
+        response = client.get_object(
+            Bucket=s3_bucket_name,
+            Key=s3_key,
+            VersionId=version_id
+        )
+        logger.debug('read_s3_event(): response={}'.format(response))
+        if 'Body' in response:
+            result['JasonData'] = json.loads(
+                response['Body'].decode('utf-8')
+            )
+        if 'ObjectLockMode' in response:
+            result['ObjectLockMode'] = response['ObjectLockMode']
+        if 'ObjectLockRetainUntilDate' in response:
+            result['ObjectLockRetainUntilDate'] = response['ObjectLockRetainUntilDate']
+        if 'StorageClass' in response:
+            result['StorageClass'] = response['StorageClass']
+        if 'ServerSideEncryption' in response:
+            result['ServerSideEncryption'] = response['ServerSideEncryption']
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    logger.info('write_s3_event() result={}'.format(result))
+    return result
 
 
 ###############################################################################
@@ -248,6 +290,7 @@ def handler(
     result = dict()
     result['event-bucket-name'] = None
     result['event-key'] = None
+    result['event-key-version'] = None
     result['event-created-timestamp'] = None
     result['event-request-id'] = None
 
@@ -311,16 +354,30 @@ def handler(
         client=get_client(client_name="s3"),
         logger=logger
     )
-    if s3_event_commit_result is False:
+    if s3_event_commit_result['PutObjectOperationCompleted'] is False:
         return _bad_request_return_object(reason='Failed to create S3 event - returning error 400 to client', logger=logger)
 
-    # Red Event
-
+    # Read Event Back (final confirmation)
+    s3_verified_read_data = read_s3_event(
+        s3_bucket_name=os.getenv('S3_EVENT_BUCKET'),
+        s3_key=s3_key,
+        version_id=s3_event_commit_result['VersionId'],
+        client=get_client(client_name="s3"),
+        logger=logger
+    )
+    if s3_verified_read_data['JasonDataAsDict'] is None:
+        return _bad_request_return_object(reason='S3 Object Body is None type - returning error 400 to client', logger=logger)
+    if isinstance(s3_verified_read_data['JasonDataAsDict'], dict) is False:
+        return _bad_request_return_object(reason='S3 Object Body is of Unexpected type - returning error 400 to client', logger=logger)
+    confirmed_event_data = s3_verified_read_data['JasonDataAsDict']
+    if 'RequestId' not in confirmed_event_data:
+        return _bad_request_return_object(reason='RequestId Field Not Found in S3 Object Body - returning error 400 to client', logger=logger)
     
     result['event-bucket-name'] = os.getenv('S3_EVENT_BUCKET', None)
     result['event-key'] = s3_key
+    result['event-key-version'] = s3_event_commit_result['VersionId']
     result['event-created-timestamp'] = create_timestamp
-    result['event-request-id'] = request_id
+    result['event-request-id'] = confirmed_event_data['RequestId']
     return_object['body'] = json.dumps(result)
     debug_log('return_object={}', variable_as_list=[
               return_object, ], logger=logger)
