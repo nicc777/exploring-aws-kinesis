@@ -14,6 +14,9 @@ Parameters:
     Description: "The S3 bucket name containing the Lambda function ZIP file"
   DynamoDbStackName:
     Type: String
+  S3EventBucketNameParam:
+    Type: String
+    Description: "The name of the S3 bucket holding Events"
 
 # Rules:
 #   set of rules
@@ -212,12 +215,24 @@ Resources:
           Statement:
           - Effect: "Allow"
             Action:
-            - "dynamodb:Query"
+            - "s3:GetObjectRetention"
+            - "s3:GetObjectVersionTagging"
+            - "s3:GetObjectAttributes"
+            - "s3:PutObjectVersionTagging"
+            - "s3:GetObjectLegalHold"
+            - "s3:GetObjectVersionAttributes"
+            - "s3:PutObject"
+            - "s3:GetObjectAcl"
+            - "s3:GetObject"
+            - "s3:PutObjectRetention"
+            - "s3:GetObjectVersionAcl"
+            - "s3:GetObjectTagging"
+            - "s3:PutObjectTagging"
+            - "s3:GetObjectVersion"
             Resource:
               Fn::Sub:
-              - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
-              - TableName: 
-                  Fn::ImportValue: !Sub "${DynamoDbStackName}-AccessCardAppTableName"
+              - "arn:${AWS::Partition}:s3:::${S3BucketName}/*"
+              - S3BucketName: !Ref S3EventBucketNameParam
       RoleName: EmpCardLinkLambdaFunctionRole
 
   EmpCardLinkLambdaFunctionLogGroup:
@@ -239,6 +254,7 @@ Resources:
       Environment:
         Variables: 
           DEBUG: "1"
+          S3_EVENT_BUCKET: !Ref S3EventBucketNameParam
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: "link_employee_and_access_card.zip"
