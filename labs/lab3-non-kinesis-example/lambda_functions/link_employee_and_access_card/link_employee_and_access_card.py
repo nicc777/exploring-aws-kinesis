@@ -115,55 +115,36 @@ def debug_log(message: str, variables_as_dict: dict = dict(), variable_as_list: 
 ###############################################################################
 
 
-def get_employee_access_card_record(
-    employee_id,
-    client=get_client(client_name="dynamodb"),
+def write_s3_event(
+    s3_bucket_name: str,
+    s3_key: str,
+    s3_body: str,
+    client=get_client(client_name="s3"),
     logger=get_logger(level=logging.INFO)
-) -> dict:
-    result = dict()
-    result['AccessCardLinked'] = False
-    result['EmployeeStatus'] = 'unknown'
-    result['Name'] = None
-    result['Surname'] = None
-    result['AccessCardData'] = dict()
+)->bool:
+    event_written = False
     try:
-        response = client.query(
-            TableName='lab3-access-card-app',
-            Select='ALL_ATTRIBUTES',
-            Limit=2,
-            ConsistentRead=True,
-            ReturnConsumedCapacity='TOTAL',
-            KeyConditionExpression='PK = :pk and begins_with(SK, :sk)',
-            ExpressionAttributeValues={
-                ':pk': {'S': 'EMP#{}'.format(employee_id), },
-                ':sk': {'S': 'PERSON#PERSONAL_DATA', }
+        response = client.put_object(
+            ACL='private',
+            Body=s3_body.encode('utf-8'),
+            Bucket=s3_bucket_name,
+            ContentType='application/json',
+            Key=s3_key,
+            StorageClass='STANDARD',
+            Tagging={
+                'TagSet': [
+                    {
+                        'Key': 'EventType',
+                        'Value': 'LinkEmployeeAccessCard',
+                    },
+                ]
             }
         )
-        logger.debug('response={}'.format(json.dumps(response, default=str)))
-        if 'Items' in response:
-            if len(response['Items']) > 0:
-                for item in response['Items']:
-                    if item['SK']['S'] == 'PERSON#PERSONAL_DATA':
-                        result['EmployeeStatus'] = item['PersonStatus']['S'].title()
-                        result['Name'] = item['PersonName']['S'].title()
-                        result['Surname'] = item['PersonSurname']['S'].title()
-                    elif item['SK']['S'] == 'PERSON#PERSONAL_DATA#ACCESS_CARD':
-                        card_issue_timestamp = int(item['CardIssuedTimestamp']['N'])
-                        result['AccessCardData'][card_issue_timestamp] = dict()
-                        result['AccessCardData'][card_issue_timestamp]['CardId'] = item['CardIdx']['S']
-                        result['AccessCardData'][card_issue_timestamp]['IssuedBy'] = item['CardIssuedBy']['S']
-                        result['AccessCardData'][card_issue_timestamp]['CardStatus'] = item['CardStatus']['S']
-        # Check if last card issued is status ISSUED
-        if len(result['AccessCardData']) > 0:
-            issue_timestamps = list(result['AccessCardData'].keys())
-            issue_timestamps.sort(reverse=True)
-            if result['AccessCardData'][issue_timestamps[0]]['CardStatus'] == 'issued':
-                result['AccessCardLinked'] = True
+        logger.info('write_s3_event() response={}'.format(response))
+        event_written = True
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-        result = dict()
-    logger.debug('result={}'.format(json.dumps(result, default=str)))
-    return result
+    return event_written
 
 
 ###############################################################################
@@ -323,6 +304,15 @@ def handler(
     s3_body['RequestId'] = request_id
 
     # Write Event
+    s3_event_commit_result = write_s3_event(
+        s3_bucket_name=os.getenv('S3_EVENT_BUCKET'),
+        s3_key=s3_key,
+        s3_body=json.dumps(s3_body),
+        client=get_client(client_name="s3"),
+        logger=logger
+    )
+    if s3_event_commit_result is False:
+        return _bad_request_return_object(reason='Failed to create S3 event - returning error 400 to client', logger=logger)
 
     # Red Event
 
