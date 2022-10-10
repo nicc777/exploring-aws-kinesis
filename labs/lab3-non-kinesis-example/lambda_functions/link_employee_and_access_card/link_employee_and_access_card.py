@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 import sys
 from inspect import getframeinfo, stack
-# Other imports here...
+import hashlib
 
 
 def get_logger(level=logging.INFO):
@@ -233,6 +233,30 @@ def _validate_basic_request_data_is_valid(employee_id: str, body_data: dict, log
     return True
 
 
+def _bad_request_return_object(reason: str, logger=get_logger()):
+    return_object = {
+        'statusCode': 400,
+        'headers': {
+            'content-type': 'text/plain',
+        },
+        'body': 'Bad Request',
+        'isBase64Encoded': False,
+    }
+    logger.error('{}'.format(reason))
+
+
+def _extract_authorized_requestor(event: dict, logger=get_logger())->dict:
+    requestor = dict()
+    requestor['Username'] = None
+    requestor['CognitoId'] = None
+    try:
+        requestor['Username'] = event['requestContext']['authorizer']['jwt']['claims']['username']
+        requestor['CognitoId'] = event['requestContext']['authorizer']['jwt']['claims']['sub']
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return requestor
+
+
 def handler(
     event,
     context,
@@ -245,7 +269,6 @@ def handler(
     result['event-key'] = None
     result['event-created-timestamp'] = None
     result['event-request-id'] = None
-    result['request-id'] = None
 
     create_timestamp = get_utc_timestamp(with_decimal=False)
 
@@ -266,38 +289,48 @@ def handler(
     body_data = _extract_json_body_as_dict(event=event, logger=logger)
     employee_id = _extract_employee_id_from_path(event=event, logger=logger)
     if _validate_basic_request_data_is_valid(employee_id=employee_id, body_data=body_data, logger=logger) is False:
-        return_object = {
-            'statusCode': 400,
-            'headers': {
-                'content-type': 'text/plain',
-            },
-            'body': 'Bad Request',
-            'isBase64Encoded': False,
-        }
-        logger.error('Failed basic employee ID validation - returning error 400 to client')
-        return return_object
+        return _bad_request_return_object(reason='Failed basic employee ID validation - returning error 400 to client', logger=logger)
+    requestor_data = _extract_authorized_requestor(event=event, logger=logger)
+    if requestor_data['Username'] is None or requestor_data['CognitoId'] is None:
+        return _bad_request_return_object(reason='Failed authorizer data extraction - returning error 400 to client', logger=logger)
 
+    # Setup S3 event data
+    request_id = '{}'.format(
+        hashlib.sha256(
+            '{}-{}-{}-{}'.format(
+                employee_id,
+                body_data['CardId'],
+                requestor_data['CognitoId'],
+                create_timestamp
+            ).encode('utf-8')
+        ).hexdigest()
+    )
+    s3_key = 'link_employee_and_access_card_{}.request-{}'.format(
+        hashlib.sha256(
+            '{}-{}'.format(
+                employee_id,
+                body_data['CardId']
+            ).encode('utf-8')
+        ).hexdigest(),
+        create_timestamp
+    )
+    s3_body = dict()
+    s3_body['EmployeeId'] = employee_id
+    s3_body['CardId'] = body_data['CardId']
+    s3_body['CompleteOnboarding'] = body_data['CompleteOnboarding']
+    s3_body['LinkedBy'] = requestor_data
+    s3_body['LinkedTimestamp'] = create_timestamp
+    s3_body['RequestId'] = request_id
 
+    # Write Event
 
-    if employee_id is not None:
-        logger.info('Attempting to link card to employee ID {}'.format(employee_id))
-        current_employee_access_card_record = get_employee_access_card_record(
-            employee_id=employee_id,
-            logger=logger
-        )
-    else:
-        return_object = {
-            'statusCode': 400,
-            'headers': {
-                'content-type': 'text/plain',
-            },
-            'body': 'Invalid Employee ID Syntax',
-            'isBase64Encoded': False,
-        }
-        logger.error(
-            'Failed basic employee ID validation - returning error 400 to client')
-        return return_object
+    # Red Event
 
+    
+    result['event-bucket-name'] = os.getenv('S3_EVENT_BUCKET', None)
+    result['event-key'] = s3_key
+    result['event-created-timestamp'] = create_timestamp
+    result['event-request-id'] = request_id
     return_object['body'] = json.dumps(result)
     debug_log('return_object={}', variable_as_list=[
               return_object, ], logger=logger)
