@@ -197,21 +197,19 @@ def read_s3_event(
 
 
 def _extract_employee_id_from_path(event: dict, logger=get_logger()) -> str:
-    employee_id = None
+    potential_employee_id = -1
     if 'rawPath' in event:
         # Expecting /access-card-app/employee/<<employee-id>>/access-card-status
         path_elements = event['rawPath'].split('/')
         if len(path_elements) < 5 or len(path_elements) > 6:
             logger.error('Path has wrong number of parts. Expected 5 or 6, but got {}'.format(len(path_elements)))
             return employee_id
-        potential_employee_id = -1
+        
         if len(path_elements) == 5:
             potential_employee_id = path_elements[3]
         else:
             potential_employee_id = path_elements[4]
-        logger.info('Integer range validation of id "{}"'.format(potential_employee_id))
-        
-    return employee_id
+    return potential_employee_id
 
 
 def _extract_json_body_as_dict(event: dict, logger=get_logger())->dict:
@@ -228,6 +226,7 @@ def _extract_json_body_as_dict(event: dict, logger=get_logger())->dict:
 
 
 def _validate_basic_request_data_is_valid(employee_id: str, body_data: dict, logger=get_logger())->bool:
+    logger.info('Integer range validation of id "{}"'.format(employee_id))
     try:
         if int(employee_id) < 10000000000 or int(employee_id) > 99999999999:
             logger.error('Employee ID basic validation failed')
