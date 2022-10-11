@@ -136,10 +136,10 @@ def write_s3_event(
             Tagging="EventType=LinkEmployeeAccessCard"
         )
         logger.info('write_s3_event() response={}'.format(response))
-        event_written['PutObjectOperationCompleted'] = True
         event_written['VersionId'] = response['VersionId']
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    event_written['PutObjectOperationCompleted'] = True
     logger.info('write_s3_event() event_written={}'.format(event_written))
     return event_written
 
@@ -158,11 +158,18 @@ def read_s3_event(
     result['StorageClass'] = None
     result['ServerSideEncryption'] = None
     try:
-        response = client.get_object(
-            Bucket=s3_bucket_name,
-            Key=s3_key,
-            VersionId=version_id
-        )
+        response = dict()
+        if version_id is None:
+            response = client.get_object(
+                Bucket=s3_bucket_name,
+                Key=s3_key
+            )
+        else:
+            response = client.get_object(
+                Bucket=s3_bucket_name,
+                Key=s3_key,
+                VersionId=version_id
+            )
         logger.debug('read_s3_event(): response={}'.format(response))
         if 'Body' in response:
             result['JasonDataAsDict'] = json.loads(
@@ -321,14 +328,13 @@ def handler(
             ).encode('utf-8')
         ).hexdigest()
     )
-    s3_key = 'link_employee_and_access_card_{}.request-{}'.format(
+    s3_key = 'link_employee_and_access_card_{}.request'.format(
         hashlib.sha256(
             '{}-{}'.format(
                 employee_id,
                 body_data['CardId']
             ).encode('utf-8')
-        ).hexdigest(),
-        create_timestamp
+        ).hexdigest()
     )
     s3_body = dict()
     s3_body['EmployeeId'] = employee_id
