@@ -157,6 +157,7 @@ def read_s3_event(
     result['ObjectLockRetainUntilDate'] = None
     result['StorageClass'] = None
     result['ServerSideEncryption'] = None
+    result['VersionId'] = None
     try:
         response = dict()
         if version_id is None:
@@ -183,6 +184,8 @@ def read_s3_event(
             result['StorageClass'] = response['StorageClass']
         if 'ServerSideEncryption' in response:
             result['ServerSideEncryption'] = response['ServerSideEncryption']
+        if 'VersionId' in response:
+            result['VersionId'] = response['VersionId']
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     logger.info('read_s3_event() result={}'.format(result))
@@ -344,25 +347,46 @@ def handler(
     s3_body['LinkedTimestamp'] = create_timestamp
     s3_body['RequestId'] = request_id
 
-    # Write Event
-    s3_event_commit_result = write_s3_event(
+    # Does this event already exist?
+    check_event = read_s3_event(
         s3_bucket_name=os.getenv('S3_EVENT_BUCKET'),
         s3_key=s3_key,
-        s3_body=json.dumps(s3_body),
+        version_id=None,
         client=get_client(client_name="s3"),
         logger=logger
     )
-    if s3_event_commit_result['PutObjectOperationCompleted'] is False:
-        return _bad_request_return_object(reason='Failed to create S3 event - returning error 400 to client', logger=logger)
+    s3_verified_read_data = None
+
+    # Write Event
+    s3_event_commit_result = dict()
+    if check_event['JasonDataAsDict'] is None:
+        s3_event_commit_result = write_s3_event(
+            s3_bucket_name=os.getenv('S3_EVENT_BUCKET'),
+            s3_key=s3_key,
+            s3_body=json.dumps(s3_body),
+            client=get_client(client_name="s3"),
+            logger=logger
+        )
+        if s3_event_commit_result['PutObjectOperationCompleted'] is False:
+            return _bad_request_return_object(reason='Failed to create S3 event - returning error 400 to client', logger=logger)
+    else:
+        logger.warning('Event Already Exists - Returning Existing Event Details')
+        if 'VersionId' in check_event:
+            s3_event_commit_result['VersionId'] = check_event['VersionId']
+        else:
+            s3_event_commit_result['VersionId'] = None
+        s3_verified_read_data = check_event
+
 
     # Read Event Back (final confirmation)
-    s3_verified_read_data = read_s3_event(
-        s3_bucket_name=os.getenv('S3_EVENT_BUCKET'),
-        s3_key=s3_key,
-        version_id=s3_event_commit_result['VersionId'],
-        client=get_client(client_name="s3"),
-        logger=logger
-    )
+    if s3_verified_read_data is None:
+        s3_verified_read_data = read_s3_event(
+            s3_bucket_name=os.getenv('S3_EVENT_BUCKET'),
+            s3_key=s3_key,
+            version_id=s3_event_commit_result['VersionId'],
+            client=get_client(client_name="s3"),
+            logger=logger
+        )
     if s3_verified_read_data['JasonDataAsDict'] is None:
         return _bad_request_return_object(reason='S3 Object Body is None type - returning error 400 to client', logger=logger)
     if isinstance(s3_verified_read_data['JasonDataAsDict'], dict) is False:
