@@ -19,6 +19,8 @@ I also need to add CognitoID to the DynamoDB table for any employee with a login
 
 Create a new index in DynamoDB with Partition Key `CognitoSubjectId` and sort key `SK`
 
+Add appropriate scope to the employee allowed to link access cards and ensure that is enforced on the API Gateway.
+
 # Design Thoughts...
 
 ## Issuing of an Access Card
