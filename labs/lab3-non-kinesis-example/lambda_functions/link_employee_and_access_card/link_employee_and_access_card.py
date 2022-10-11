@@ -133,14 +133,7 @@ def write_s3_event(
             ContentType='application/json',
             Key=s3_key,
             StorageClass='STANDARD',
-            Tagging={
-                'TagSet': [
-                    {
-                        'Key': 'EventType',
-                        'Value': 'LinkEmployeeAccessCard',
-                    },
-                ]
-            }
+            Tagging="EventType=LinkEmployeeAccessCard"
         )
         logger.info('write_s3_event() response={}'.format(response))
         event_written['PutObjectOperationCompleted'] = True
