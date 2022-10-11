@@ -165,8 +165,8 @@ def read_s3_event(
         )
         logger.debug('read_s3_event(): response={}'.format(response))
         if 'Body' in response:
-            result['JasonData'] = json.loads(
-                response['Body'].decode('utf-8')
+            result['JasonDataAsDict'] = json.loads(
+                response['Body'].read().decode('utf-8')
             )
         if 'ObjectLockMode' in response:
             result['ObjectLockMode'] = response['ObjectLockMode']
@@ -178,7 +178,7 @@ def read_s3_event(
             result['ServerSideEncryption'] = response['ServerSideEncryption']
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-    logger.info('write_s3_event() result={}'.format(result))
+    logger.info('read_s3_event() result={}'.format(result))
     return result
 
 
@@ -371,8 +371,7 @@ def handler(
     result['event-created-timestamp'] = create_timestamp
     result['event-request-id'] = confirmed_event_data['RequestId']
     return_object['body'] = json.dumps(result)
-    debug_log('return_object={}', variable_as_list=[
-              return_object, ], logger=logger)
+    debug_log('return_object={}', variable_as_list=[return_object, ], logger=logger)
     return return_object
 
 
