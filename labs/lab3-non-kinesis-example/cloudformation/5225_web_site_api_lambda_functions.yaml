@@ -14,6 +14,9 @@ Parameters:
     Description: "The S3 bucket name containing the Lambda function ZIP file"
   DynamoDbStackName:
     Type: String
+  S3EventBucketNameParam:
+    Type: String
+    Description: "The name of the S3 bucket holding Events"
 
 # Rules:
 #   set of rules
@@ -176,6 +179,93 @@ Resources:
       Runtime: "python3.8"
       Timeout: 30
 
+  
+#######################################################################################################################
+###                                                                                                                 ###
+###                                  LAMBDA FUNCTION: Link Employee to Access Card                                  ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  EmpCardLinkLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "EmpCardLinkFunctionRoleAssumeRolePolicyDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role EmpCardLinkLambdaFunction"
+      Policies:
+      - PolicyName: EmpCardLinkLambdaFunctionPolicy01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+      - PolicyName: EmpCardLinkLambdaFunctionPolicy02
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "s3:GetObjectRetention"
+            - "s3:GetObjectVersionTagging"
+            - "s3:GetObjectAttributes"
+            - "s3:PutObjectVersionTagging"
+            - "s3:GetObjectLegalHold"
+            - "s3:GetObjectVersionAttributes"
+            - "s3:PutObject"
+            - "s3:GetObjectAcl"
+            - "s3:GetObject"
+            - "s3:PutObjectRetention"
+            - "s3:GetObjectVersionAcl"
+            - "s3:GetObjectTagging"
+            - "s3:PutObjectTagging"
+            - "s3:GetObjectVersion"
+            Resource:
+              Fn::Sub:
+              - "arn:${AWS::Partition}:s3:::${S3BucketName}/*"
+              - S3BucketName: !Ref S3EventBucketNameParam
+      RoleName: EmpCardLinkLambdaFunctionRole
+
+  EmpCardLinkLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref EmpCardLinkLambdaFunction
+      RetentionInDays: 7
+
+  EmpCardLinkLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Environment:
+        Variables: 
+          DEBUG: "1"
+          S3_EVENT_BUCKET: !Ref S3EventBucketNameParam
+      Code: 
+        S3Bucket: !Ref S3SourceBucketParam
+        S3Key: "link_employee_and_access_card.zip"
+      Description: "Catch GitHub web hook calls and process request"
+      FunctionName: "EmpCardLinkLambdaFunction"
+      Handler: "link_employee_and_access_card.handler"
+      MemorySize: 128
+      Role: !GetAtt EmpCardLinkLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 30
+
 Outputs:
 
   # LAMBDA FUNCTION: Retrieve Employee Records
@@ -205,4 +295,18 @@ Outputs:
     Value: !GetAtt  ListAccessCardStatusLambdaFunction.Arn
     Export:
       Name: !Sub "${AWS::StackName}-ListAccessCardStatusLambdaFunctionArn"
+
+  # LAMBDA FUNCTION: Link Employee to Access Card
+
+  EmpCardLinkLambdaFunctionName:
+    Description: "EmpCardLinkLambdaFunction NAME"
+    Value: !Ref EmpCardLinkLambdaFunction
+    Export:
+      Name: !Sub "${AWS::StackName}-EmpCardLinkLambdaFunctionName"
+
+  EmpCardLinkLambdaFunctionArn:
+    Description: "EmpCardLinkLambdaFunction ARN"
+    Value: !GetAtt  EmpCardLinkLambdaFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-EmpCardLinkLambdaFunctionArn"
 

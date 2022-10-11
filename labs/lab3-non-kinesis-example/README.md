@@ -18,6 +18,9 @@
     - [Managing the GitHub Sync Server](#managing-the-github-sync-server)
     - [Handling the SQS Payload](#handling-the-sqs-payload)
   - [Web API Stack (AWS API Gateway)](#web-api-stack-aws-api-gateway)
+    - [Example curl commands](#example-curl-commands)
+      - [Query Access Card (GET)](#query-access-card-get)
+      - [Link an Access Card to an Employee (POST)](#link-an-access-card-to-an-employee-post)
   - [Event Infrastructure](#event-infrastructure)
     - [S3 Events Bucket Resources](#s3-events-bucket-resources)
 - [Random Thoughts](#random-thoughts)
@@ -79,6 +82,7 @@ When running commands, the following environment variables are assumed to be set
 | `export ROUTE53_PUBLIC_ZONEID="..."`        | The Route 53 Hosted Zone ID of the Public DNS Domain                                              |
 | `export ROUTE53_PUBLIC_DNSNAME="..."`       | The Route 53 Hosted Public DNS Domain Name                                                        |
 | `export EMPLOYEE_1_EMAIL="..."`             | A valid email address of a dummy employee (expect actual e-mails to be sent here)                 |
+| `export S3_EVENTS_BUCKET_NAME="..."`        | The S3 bucket name for Events                                                                     |
 
 Some of these variables, like 
 
@@ -555,17 +559,24 @@ rm -vf labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_statu
 cd labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/ && zip employee_access_card_status.zip employee_access_card_status.py && cd $OLDPWD 
 aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/employee_access_card_status/employee_access_card_status.zip s3://$ARTIFACT_S3_BUCKET_NAME/employee_access_card_status.zip
 
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/link_employee_and_access_card/link_employee_and_access_card.zip
+cd labs/lab3-non-kinesis-example/lambda_functions/link_employee_and_access_card/ && zip link_employee_and_access_card.zip link_employee_and_access_card.py && cd $OLDPWD 
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/link_employee_and_access_card/link_employee_and_access_card.zip s3://$ARTIFACT_S3_BUCKET_NAME/link_employee_and_access_card.zip
+
 aws cloudformation deploy \
     --stack-name $WEBAPI_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/5200_web_site_api_resources.yaml \
     --parameter-overrides CognitoStackNameParam="$COGNITO_STACK_NAME" \
         CognitoIssuerUrlParam="$COGNITO_ISSUER_URL" 
 
+export S3_EVENTS_BUCKET_NAME="..."
+
 aws cloudformation deploy \
     --stack-name $WEBAPI_LAMBDA_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/5225_web_site_api_lambda_functions.yaml \
     --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
         DynamoDbStackName="$DYNAMODB_STACK_NAME" \
+        S3EventBucketNameParam="$S3_EVENTS_BUCKET_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 
 
@@ -591,6 +602,17 @@ aws cloudformation deploy \
         HttpMethodParam="GET" \
     --capabilities CAPABILITY_NAMED_IAM
 
+export LAMBDA_3_ARN=`aws cloudformation describe-stacks --stack-name $WEBAPI_LAMBDA_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "EmpCardLinkLambdaFunctionArn") | {OutputValue}' | jq -r '.OutputValue'`
+aws cloudformation deploy \
+    --stack-name $WEBAPI_ROUTES_3_STACK_NAME \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/5250_web_site_api_routes_and_integrations.yaml \
+    --parameter-overrides ApiGatewayStackNameParam="$WEBAPI_STACK_NAME" \
+        LambdaFunctionArnParam="$LAMBDA_3_ARN" \
+        LambdaSourcePathParam="/access-card-app/employee/*/link-card" \
+        RouteKeyParam="/access-card-app/employee/{employeeId}/link-card" \
+        HttpMethodParam="POST" \
+    --capabilities CAPABILITY_NAMED_IAM
+
 aws cloudformation deploy \
     --stack-name $WEBAPI_DEPLOYMENT_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/5275_web_site_api_deployment.yaml \
@@ -598,6 +620,29 @@ aws cloudformation deploy \
         PublicDnsNameParam="$ROUTE53_PUBLIC_DNSNAME" \
         PublicDnsHostedZoneIdParam="$ROUTE53_PUBLIC_ZONEID" \
         ApiGatewayStackNameParam="$WEBAPI_STACK_NAME"
+```
+
+### Example curl commands
+
+The following environment variables are used:
+
+| Variable     | Content                                                        |
+|--------------|----------------------------------------------------------------|
+| `JWT_TOKEN`  | The Access Token                                               |
+| `API_DOMAIN` | The API Gateway domain, for example `internal-api.example.tld` |
+| `EMP_ID`     | An employee ID for example `100000000003`                      |
+| `CARD_ID`    | An access card ID                                              |
+
+#### Query Access Card (GET)
+
+```shell
+curl -H "Authorization: ${JWT_TOKEN}" https://$API_DOMAIN/access-card-app/employee/$EMP_ID/access-card-status
+```
+
+#### Link an Access Card to an Employee (POST)
+
+```shell
+curl -X POST -H "Authorization: ${JWT_TOKEN}" -H "Content-Type: application/json" -d "{\"CardId\": \"$CARD_ID\", \"CompleteOnboarding\": false, \"LinkedBy\": \"TEST\"}"  https://$API_DOMAIN/access-card-app/employee/$EMP_ID/link-card
 ```
 
 ## Event Infrastructure
@@ -614,7 +659,7 @@ export S3_EVENTS_BUCKET_NAME="..."
 
 aws cloudformation deploy \
     --stack-name $S3_EVENTS_STACK_NAME \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/6000_s3_events_bucket.yaml \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/1100_s3_events_bucket.yaml \
     --parameter-overrides S3EventBucketParam="$S3_EVENTS_BUCKET_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
