@@ -82,6 +82,7 @@ When running commands, the following environment variables are assumed to be set
 | `export ROUTE53_PUBLIC_ZONEID="..."`        | The Route 53 Hosted Zone ID of the Public DNS Domain                                              |
 | `export ROUTE53_PUBLIC_DNSNAME="..."`       | The Route 53 Hosted Public DNS Domain Name                                                        |
 | `export EMPLOYEE_1_EMAIL="..."`             | A valid email address of a dummy employee (expect actual e-mails to be sent here)                 |
+| `export S3_EVENTS_BUCKET_NAME="..."`        | The S3 bucket name for Events                                                                     |
 
 Some of these variables, like 
 
@@ -568,11 +569,14 @@ aws cloudformation deploy \
     --parameter-overrides CognitoStackNameParam="$COGNITO_STACK_NAME" \
         CognitoIssuerUrlParam="$COGNITO_ISSUER_URL" 
 
+export S3_EVENTS_BUCKET_NAME="..."
+
 aws cloudformation deploy \
     --stack-name $WEBAPI_LAMBDA_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/5225_web_site_api_lambda_functions.yaml \
     --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
         DynamoDbStackName="$DYNAMODB_STACK_NAME" \
+        S3EventBucketNameParam="$S3_EVENTS_BUCKET_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 
 
