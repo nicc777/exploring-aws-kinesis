@@ -17,6 +17,8 @@ Some next steps I'm thinking about (Lab 3)...
 
 I also need to add CognitoID to the DynamoDB table for any employee with a login. This is important to link the person requesting the linking of another employee to an access card for Audit purposes. With the Cognito link and the JWT that was authorized, it will be virtually impossible to dispute the event origin.
 
+Create a new index in DynamoDB with Partition Key `CognitoSubjectId` and sort key `SK`
+
 # Design Thoughts...
 
 ## Issuing of an Access Card
