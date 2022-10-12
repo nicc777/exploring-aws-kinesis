@@ -273,7 +273,8 @@ def populate_v2(employees: dict, access_cards: dict):
                 'PersonName'        : { 'S': employee_data['PersonName']},
                 'PersonSurname'     : { 'S': employee_data['PersonSurname']},
                 'PersonDepartment'  : { 'S': employee_data['PersonDepartment']},
-                'PersonStatus'      : { 'S': employee_data['PersonStatus']}
+                'PersonStatus'      : { 'S': employee_data['PersonStatus']},
+                'CognitoSubjectId'  : { 'S': 'no-login-{}'.format(PK)}
             },
             ReturnValues='NONE',
             ReturnConsumedCapacity='TOTAL',
@@ -300,7 +301,8 @@ def populate_v2(employees: dict, access_cards: dict):
                     'PersonDepartment'      : { 'S': employee_data['PersonDepartment']},
                     'PersonStatus'          : { 'S': employee_data['PersonStatus']},
                     'ScannedBuildingIdx'    : { 'S': 'null'},
-                    'ScannedStatus'         : { 'S': 'scanned-out'}
+                    'ScannedStatus'         : { 'S': 'scanned-out'},
+                    'CognitoSubjectId'      : { 'S': 'no-login-{}'.format(PK)}
                 },
                 ReturnValues='NONE',
                 ReturnConsumedCapacity='TOTAL',
