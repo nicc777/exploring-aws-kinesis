@@ -36,8 +36,8 @@ Resources:
       - AttributeDataType: String
         DeveloperOnlyAttribute: false
         Mutable: false
-        Name: employee-id
-        Required: true
+        Name: "employee-id"
+        # Required: true  # NOTE: Error from CloudFormation: "Required custom attributes are not supported currently.""
         StringAttributeConstraints: 
           MaxLength: 12
           MinLength: 12
@@ -117,7 +117,7 @@ Resources:
       UserAttributes: 
       - Name: email
         Value: !Ref Email
-      - Name: employee-id
+      - Name: "custom:employee-id"
         Value: "100000000021"
       Username: !Ref Email
       UserPoolId: !Ref CognitoAuthorizerUserPool
