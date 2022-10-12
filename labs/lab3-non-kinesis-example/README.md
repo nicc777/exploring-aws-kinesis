@@ -363,6 +363,13 @@ export COGNITO_USER_POOL_ID=`aws cloudformation describe-stacks --stack-name $CO
 export COGNITO_ISSUER_URL=`curl https://cognito-idp.${AWS_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}/.well-known/openid-configuration | jq -r ".issuer" -`
 export COGNITO_CLIENT_ID=`aws cloudformation describe-stacks --stack-name $COGNITO_STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey == "CognitoAlbUserPoolClientId") | {OutputValue}' | jq -r '.OutputValue'`
 
+# Also link our first user in DynamoDB
+export EMP_ID=`aws cognito-idp admin-get-user --user-pool-id $COGNITO_USER_POOL_ID --username "$EMPLOYEE_1_EMAIL" --output json | jq -r '.UserAttributes[] | select(.Name=="custom:employee-id") | .Value'`
+export EMP_SUB=`aws cognito-idp admin-get-user --user-pool-id $COGNITO_USER_POOL_ID --username "$EMPLOYEE_1_EMAIL" --output json | jq -r '.UserAttributes[] | select(.Name=="sub") | .Value'`
+aws dynamodb update-item --table-name "lab3-access-card-app" --key "{\"PK\": {\"S\": \"EMP#$EMP_ID\"}, \"SK\": {\"S\": \"PERSON#PERSONAL_DATA\"}}" --attribute-updates "{\"CognitoSubjectId\": {\"Value\": {\"S\": \"$EMP_SUB\"}, \"Action\": \"PUT\"}}" --return-values ALL_NEW
+aws dynamodb update-item --table-name "lab3-access-card-app" --key "{\"PK\": {\"S\": \"EMP#$EMP_ID\"}, \"SK\": {\"S\": \"PERSON#PERSONAL_DATA#ACCESS_CARD\"}}" --attribute-updates "{\"CognitoSubjectId\": {\"Value\": {\"S\": \"$EMP_SUB\"}, \"Action\": \"PUT\"}}" --return-values ALL_NEW
+
+
 # NOTE: The COGNITO_CLIENT_ID is also the AUDIENCE value fo the API Authorizer
 
 # WEB_SERVER_STACK_NAME
