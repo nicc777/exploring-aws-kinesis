@@ -13,13 +13,11 @@ Some next steps I'm thinking about (Lab 3)...
 * Create UI to view (and poll) for card linking status
 * Create Lambda function `s3_event_handler` with SNS and SQS integration from the S3 events bucket
 * Create SNS Topic and SQS queue to pass on processed event from `s3_event_handler`
-* Create Lambda function `link-employee-and-card-persist` to persist the new linked data in the DynamoDB table
+* Create Lambda function `link-employee-and-card-persist` to persist the new linked data in the DynamoDB table. Consider using step functions, as the requesting party (linked by employee) first needs to be verified. We also require the original Access Token in the payload for this!
 
 ~~I also need to add CognitoID to the DynamoDB table for any employee with a login. This is important to link the person requesting the linking of another employee to an access card for Audit purposes. With the Cognito link and the JWT that was authorized, it will be virtually impossible to dispute the event origin. At the same time, add the DynamoDB employee ID as another attribute to the relevant Cognito User.~~
 
 ~~Create a new index in DynamoDB with Partition Key `CognitoSubjectId` and sort key `SK`~~
-
-Add appropriate scope to the employee allowed to link access cards and ensure that is enforced on the API Gateway.
 
 # Design Thoughts...
 
