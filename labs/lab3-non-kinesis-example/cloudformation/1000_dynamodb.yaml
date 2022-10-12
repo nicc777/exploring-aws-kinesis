@@ -22,6 +22,8 @@ Resources:
         AttributeType: S
       - AttributeName: ScannedBuildingIdx
         AttributeType: S
+      - AttributeName: CognitoSubjectId
+        AttributeType: S
       GlobalSecondaryIndexes:
       - IndexName: "CardIssuedIdx"
         KeySchema: 
@@ -36,6 +38,14 @@ Resources:
         - AttributeName: "ScannedBuildingIdx"
           KeyType: HASH
         - AttributeName: "PK"
+          KeyType: RANGE
+        Projection: 
+          ProjectionType: "ALL"
+      - IndexName: "CognitoIdx"
+        KeySchema: 
+        - AttributeName: "CognitoSubjectId"
+          KeyType: HASH
+        - AttributeName: "SK"
           KeyType: RANGE
         Projection: 
           ProjectionType: "ALL"
