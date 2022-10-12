@@ -432,7 +432,7 @@ if __name__ == '__main__':
     
 
     employee_id = '100000000150'
-    card_id = '10000000099'
+    card_id = '100000000099'
     event = {
         "version": "2.0",
         "routeKey": "POST /access-card-app/employee/{employeeId}/link-card",

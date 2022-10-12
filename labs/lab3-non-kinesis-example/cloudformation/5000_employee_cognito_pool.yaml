@@ -32,12 +32,35 @@ Resources:
           RequireSymbols: true
           RequireUppercase: true
           TemporaryPasswordValidityDays: 1
+      Schema:
+      - AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: false
+        Name: employee-id
+        Required: true
+        StringAttributeConstraints: 
+          MaxLength: 12
+          MinLength: 12
       UserPoolName: employee-userpool
       VerificationMessageTemplate:
         DefaultEmailOption: "CONFIRM_WITH_CODE"
 
+
+  EmployeeAccessCardLinkResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties: 
+        Identifier: employee-access-card-link
+        Name: "Link Employee and Access Card Server"
+        UserPoolId: !Ref CognitoAuthorizerUserPool
+        Scopes: 
+        - ScopeName: "write"
+          ScopeDescription: "Write access"
+
+
   CognitoAuthorizerUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
+    DependsOn:
+    - "EmployeeAccessCardLinkResourceServer"
     Properties: 
       AllowedOAuthFlows: 
       - code
@@ -47,6 +70,7 @@ Resources:
       - email
       - openid
       - profile
+      - employee-access-card-link/write
       CallbackURLs: 
       - Fn::Sub:
         - "https://internal.${DomainName}:8443/callback.html"
@@ -71,6 +95,8 @@ Resources:
 
   CognitoAlbUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
+    DependsOn:
+    - "EmployeeAccessCardLinkResourceServer"
     Properties: 
       AllowedOAuthFlows: 
       - code
@@ -80,6 +106,7 @@ Resources:
       - email
       - openid
       - profile
+      - employee-access-card-link/write
       CallbackURLs: 
       - Fn::Sub:
         - "https://internal.${DomainName}:8443/oauth2/idpresponse"
@@ -108,8 +135,12 @@ Resources:
       UserAttributes: 
       - Name: email
         Value: !Ref Email
+      - Name: employee-id
+        Value: "100000000021"
       Username: !Ref Email
       UserPoolId: !Ref CognitoAuthorizerUserPool
+      
+
 
   CognitoAuthorizerUserPoolResourceServer:
     Type: AWS::Cognito::UserPoolResourceServer
