@@ -9,10 +9,10 @@ Description: >
 #   template metadata
 
 Parameters:
-  CorsTrustedDomainsParam:
-    Type: String
-    Description: "A CSV string with trusted domains for API calls. Example to add two sites: https://www.example.tld,http://localhost:5000"
-    Default: "http://localhost,http://localhost:9000,https://internal.sandybox.com"
+  # CorsTrustedDomainsParam:
+  #   Type: String
+  #   Description: "A CSV string with trusted domains for API calls. Example to add two sites: https://www.example.tld,http://localhost:5000"
+  #   Default: "http://localhost,http://localhost:9000,https://internal.sandybox.com"
   WebServerEc2AmiParam:
     Description: "Refer to https://aws.amazon.com/blogs/compute/query-for-the-latest-amazon-linux-ami-ids-using-aws-systems-manager-parameter-store/"
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
@@ -20,9 +20,9 @@ Parameters:
   VpcStackNameParam:
     Type: String
     Description: "The name of the VPC stack, in order to import values"
-  DnsStackNameParam:
-    Type: String
-    Description: "The name of the DNS stack, in order to import values"
+  # DnsStackNameParam:
+  #   Type: String
+  #   Description: "The name of the DNS stack, in order to import values"
   FirstTrustedInternetCiderParam:
     Type: String
     Description: "CIDR of a host or network from the Internet to trust for incoming traffic to the Private VPC"

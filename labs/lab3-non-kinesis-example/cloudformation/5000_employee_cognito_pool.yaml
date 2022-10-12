@@ -45,22 +45,8 @@ Resources:
       VerificationMessageTemplate:
         DefaultEmailOption: "CONFIRM_WITH_CODE"
 
-
-  EmployeeAccessCardLinkResourceServer:
-    Type: AWS::Cognito::UserPoolResourceServer
-    Properties: 
-        Identifier: employee-access-card-link
-        Name: "Link Employee and Access Card Server"
-        UserPoolId: !Ref CognitoAuthorizerUserPool
-        Scopes: 
-        - ScopeName: "write"
-          ScopeDescription: "Write access"
-
-
   CognitoAuthorizerUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
-    DependsOn:
-    - "EmployeeAccessCardLinkResourceServer"
     Properties: 
       AllowedOAuthFlows: 
       - code
@@ -70,7 +56,6 @@ Resources:
       - email
       - openid
       - profile
-      - employee-access-card-link/write
       CallbackURLs: 
       - Fn::Sub:
         - "https://internal.${DomainName}:8443/callback.html"
@@ -95,8 +80,6 @@ Resources:
 
   CognitoAlbUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
-    DependsOn:
-    - "EmployeeAccessCardLinkResourceServer"
     Properties: 
       AllowedOAuthFlows: 
       - code
@@ -106,7 +89,6 @@ Resources:
       - email
       - openid
       - profile
-      - employee-access-card-link/write
       CallbackURLs: 
       - Fn::Sub:
         - "https://internal.${DomainName}:8443/oauth2/idpresponse"
@@ -140,17 +122,6 @@ Resources:
       Username: !Ref Email
       UserPoolId: !Ref CognitoAuthorizerUserPool
       
-
-
-  CognitoAuthorizerUserPoolResourceServer:
-    Type: AWS::Cognito::UserPoolResourceServer
-    Properties: 
-      Identifier: com.apigw
-      Name: com.apigw
-      Scopes: 
-      - ScopeDescription: scope_description
-        ScopeName: scope_name
-      UserPoolId: !Ref CognitoAuthorizerUserPool
       
   CognitoAuthorizerUserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
