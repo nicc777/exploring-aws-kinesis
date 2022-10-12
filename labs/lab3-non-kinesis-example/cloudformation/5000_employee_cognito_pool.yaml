@@ -5,6 +5,9 @@ Description: Serverless patterns - Cognito User Pool
 Parameters:
   Email:
     Type: String
+  EmployeeIdParam:
+    Type: String
+    Default: "100000000021"
   CallbackUrl:
     Type: String
   PublicDnsNameParam:
@@ -118,7 +121,7 @@ Resources:
       - Name: email
         Value: !Ref Email
       - Name: "custom:employee-id"
-        Value: "100000000021"
+        Value: !Ref EmployeeIdParam
       Username: !Ref Email
       UserPoolId: !Ref CognitoAuthorizerUserPool
       
