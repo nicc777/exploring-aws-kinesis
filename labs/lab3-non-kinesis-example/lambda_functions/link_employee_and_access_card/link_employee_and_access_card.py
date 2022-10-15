@@ -268,6 +268,7 @@ def _bad_request_return_object(reason: str, logger=get_logger()):
         'isBase64Encoded': False,
     }
     logger.error('{}'.format(reason))
+    return return_object
 
 
 def _extract_authorized_requestor(event: dict, logger=get_logger())->dict:
