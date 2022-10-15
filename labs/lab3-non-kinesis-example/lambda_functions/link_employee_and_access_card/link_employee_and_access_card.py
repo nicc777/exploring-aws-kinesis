@@ -231,7 +231,7 @@ def _extract_json_body_as_dict(event: dict, logger=get_logger())->dict:
 def _validate_basic_request_data_is_valid(employee_id: str, body_data: dict, logger=get_logger())->bool:
     logger.info('Integer range validation of id "{}"'.format(employee_id))
     try:
-        if int(employee_id) < 10000000000 or int(employee_id) > 99999999999:
+        if int(employee_id) < 10000000000 or int(employee_id) > 999999999999:
             logger.error('Employee ID basic validation failed')
             return False
         if 'CardId' not in body_data:
@@ -243,10 +243,10 @@ def _validate_basic_request_data_is_valid(employee_id: str, body_data: dict, log
         if 'LinkedBy' not in body_data:
             logger.error('LinkedBy not found in request body')
             return False
-        if int(body_data['CardId']) < 10000000000 or int(body_data['CardId']) > 99999999999:
+        if int(body_data['CardId']) < 10000000000 or int(body_data['CardId']) > 999999999999:
             logger.error('CardId basic validation failed')
             return False
-        if int(body_data['LinkedBy']) < 10000000000 or int(body_data['LinkedBy']) > 99999999999:
+        if int(body_data['LinkedBy']) < 10000000000 or int(body_data['LinkedBy']) > 999999999999:
             logger.error('LinkedBy basic validation failed')
             return False
         if isinstance(body_data['CompleteOnboarding'], bool) is False:
