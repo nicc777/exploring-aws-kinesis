@@ -63,13 +63,13 @@ Resources:
       - Fn::Sub:
         - "https://internal.${DomainName}:8443/callback.html"
         - DomainName: !Ref PublicDnsNameParam
-      - "http://localhost/callback.html"
-      - "http://localhost:9000/callback.html"
       - Fn::Sub:
         - "https://internal.${DomainName}:8443/loggedout.html"
         - DomainName: !Ref PublicDnsNameParam
       - "http://localhost/loggedout.html"
       - "http://localhost:9000/loggedout.html"
+      - "http://localhost/callback.html"
+      - "http://localhost:9000/callback.html"
       ClientName: employee-cognito-client
       LogoutURLs:
       - Fn::Sub:
@@ -104,12 +104,18 @@ Resources:
       - Fn::Sub:
         - "https://internal.${DomainName}:8443/loggedout.html"
         - DomainName: !Ref PublicDnsNameParam
+      - "http://localhost/loggedout.html"
+      - "http://localhost:9000/loggedout.html"
+      - "http://localhost/callback.html"
+      - "http://localhost:9000/callback.html"
       ClientName: employee-alb-cognito-client
       GenerateSecret: true
       LogoutURLs:
       - Fn::Sub:
         - "https://internal.${DomainName}:8443/loggedout.html"
         - DomainName: !Ref PublicDnsNameParam
+      - "http://localhost/loggedout.html"
+      - "http://localhost:9000/loggedout.html"
       SupportedIdentityProviders: 
       - COGNITO
       UserPoolId: !Ref CognitoAuthorizerUserPool
