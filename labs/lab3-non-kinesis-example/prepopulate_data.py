@@ -325,6 +325,36 @@ def populate_v2(employees: dict, access_cards: dict):
                 ReturnConsumedCapacity='TOTAL',
                 ReturnItemCollectionMetrics='SIZE'
             )
+            SK = 'CARD#EVENT'
+            lock_id = '{}'.format(hashlib.sha256('{}'.format(access_card_id).encode('utf-8')).hexdigest())
+            client.put_item(
+                TableName=TABLE_NAME,
+                Item={
+                    'PK'                                : { 'S': PK                             },
+                    'SK'                                : { 'S': SK                             },
+                    'CardIdx'                           : {'S': '{}'.format(access_card_id)     },
+                    'EventType'                         : {'S': 'NewCard'                       },
+                    'EventBucketName'                   : {'S': 'n/a'                           },
+                    'EventBucketKey'                    : {'S': 'n/a'                           },
+                    'EventRequestId'                    : {'S': 'n/a'                           },
+                    'EventRequestedByEmployeeId'        : {'S': 'SYSTEM'                        },
+                    'EventTimestamp'                    : {'N': '{}'.format(now)                },
+                    'EventOutcomeDescription'           : {'S': 'Physical Card Added to Pool'   },
+                    'EventErrorMessage'                 : {'S': 'No Errors'                     },
+                    'EventCompletionStatus'             : {'S': 'Success'                       },
+                    'EventProcessorLockId'              : {'S': '{}'.format(lock_id)            },
+                    'EventProcessorStartTimestamp'      : {'N': '{}'.format(now)                },
+                    'EventProcessorExpiresTimestamp'    : {'N': '{}'.format(now)                },
+                    'EventSqsAck'                       : {'B': False                           },
+                    'EventSqsDelete'                    : {'B': False                           },
+                    'EventSqsReject'                    : {'B': False                           },
+                    'EventSqsId'                        : {'S': 'n/a'                           },
+                    'EventSqsOriginalPayloadJson'       : {'S': '{{}}'                          }
+                },
+                ReturnValues='NONE',
+                ReturnConsumedCapacity='TOTAL',
+                ReturnItemCollectionMetrics='SIZE'
+            )
         else:
             SK = 'CARD#STATUS#issued'
             client.put_item(
@@ -336,6 +366,37 @@ def populate_v2(employees: dict, access_cards: dict):
                     'CardIssuedBy'          : { 'S': 'SYSTEM'},
                     'CardIssuedTimestamp'   : { 'N': '{}'.format(access_card_data['CardIssuedTimestamp'])},
                     'LockIdentifier'        : { 'S': 'null'}
+                },
+                ReturnValues='NONE',
+                ReturnConsumedCapacity='TOTAL',
+                ReturnItemCollectionMetrics='SIZE'
+            )
+            SK = 'CARD#EVENT'
+            lock_id = '{}'.format(hashlib.sha256('{}'.format(access_card_id).encode('utf-8')).hexdigest())
+            description = 'Physical Card Added to Pool and Issued to {}'.format(access_card_data['CardIssuedTo'])
+            client.put_item(
+                TableName=TABLE_NAME,
+                Item={
+                    'PK'                                : { 'S': PK                             },
+                    'SK'                                : { 'S': SK                             },
+                    'CardIdx'                           : {'S': '{}'.format(access_card_id)     },
+                    'EventType'                         : {'S': 'NewCard+LinkCard'              },
+                    'EventBucketName'                   : {'S': 'n/a'                           },
+                    'EventBucketKey'                    : {'S': 'n/a'                           },
+                    'EventRequestId'                    : {'S': 'n/a'                           },
+                    'EventRequestedByEmployeeId'        : {'S': 'SYSTEM'                        },
+                    'EventTimestamp'                    : {'N': '{}'.format(now)                },
+                    'EventOutcomeDescription'           : {'S': '{}'.format(description)        },
+                    'EventErrorMessage'                 : {'S': 'No Errors'                     },
+                    'EventCompletionStatus'             : {'S': 'Success'                       },
+                    'EventProcessorLockId'              : {'S': '{}'.format(lock_id)            },
+                    'EventProcessorStartTimestamp'      : {'N': '{}'.format(now)                },
+                    'EventProcessorExpiresTimestamp'    : {'N': '{}'.format(now)                },
+                    'EventSqsAck'                       : {'B': False                           },
+                    'EventSqsDelete'                    : {'B': False                           },
+                    'EventSqsReject'                    : {'B': False                           },
+                    'EventSqsId'                        : {'S': 'n/a'                           },
+                    'EventSqsOriginalPayloadJson'       : {'S': '{{}}'                          }
                 },
                 ReturnValues='NONE',
                 ReturnConsumedCapacity='TOTAL',
