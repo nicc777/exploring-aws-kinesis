@@ -126,54 +126,75 @@ For this exercise, all data will be gathered in 1x DynamoDB table. Even though t
 As such, I started with a composite key design with the following structure:
 
 ```text
-+----------------------------------------------------------------------------------+----------------------------------------------------------------+
-| Primary Key                                                                      | Attributes                                                     |
-+-------------------------+--------------------------------------------------------+                                                                |
-| Partition Key (PK)      | Sort Key (ST)                                          |                                                                |
-| Name: PK                | Name: SK                                               |                                                                |
-+-------------------------+--------------------------------------------------------+----------------------------------------------------------------+
-|                         |                                                        |                                                                |
-| EMP#<<employee ID>>     | PERSON#PERSONAL_DATA                                   | - PersonName                                                   |
-|                         |                                                        | - PersonSurname                                                |
-|                         |                                                        | - PersonDepartment                                             |
-|                         |                                                        | - PersonStatus (onboarding|active|inactive)                    |
-|                         |                                                        | - EmployeeId                                                   |
-|                         |                                                        |                                                                |
-|                         | PERSON#PERSONAL_DATA#ACCESS_CARD                       | - CardIssuedTimestamp                                          |
-|                         |                                                        | - CardRevokedTimestamp                                         |
-|                         |                                                        | - CardStatus (issued|lost|stolen|expired|revoked)              |
-|                         |                                                        | - CardIssuedTo (<<employee ID>>)                               |
-|                         |                                                        | - CardIssuedBy (<<employee ID>>)                               |
-|                         |                                                        | - CardIdx (<<access card ID>>#<<timestamp>>)                   |
-|                         |                                                        | - ScannedBuildingIdx                                           |
-|                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                       |
-|                         |                                                        |                                                                |
-| CARD#<<Access card ID>> | CARD#STATUS#issued                                     | - CardIssuedTo (<<employee ID>>)                               |
-|                         |   NOTE: status in ( 'available', 'issued', 'blocked' ) | - CardIssuedBy (<<employee ID>>)                               |
-|                         |                                                        | - CardIssuedTimestamp                                          |
-|                         |                                                        |                                                                |
-|                         | CARD#EVENT#SCANNED                                     | - ScannedInTimestamp (<<timestamp>>)                           |
-|                         |                                                        | - BuildingIdxWhereScanned (<<building ID>>)                    |
-|                         |                                                        | - ScannedInEmployeeId (<<employee ID>>)                        |
-|                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                       |
-|                         |                                                        | - ScannedStatusComment (default="scanned normally")            |
-|                         |                                                        | - PersonName                                                   |
-|                         |                                                        | - PersonSurname                                                |
-|                         |                                                        |                                                                |
-+-------------------------+--------------------------------------------------------+----------------------------------------------------------------+
++----------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
+| Primary Key                                                                      | Attributes                                                                                                  |
++-------------------------+--------------------------------------------------------+                                                                                                             |
+| Partition Key (PK)      | Sort Key (ST)                                          |                                                                                                             |
+| Name: PK                | Name: SK                                               |                                                                                                             |
++-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
+|                         |                                                        |                                                                                                             |
+| EMP#<<employee ID>>     | PERSON#PERSONAL_DATA                                   | - PersonName                                                                                                |
+|                         |                                                        | - PersonSurname                                                                                             |
+|                         |                                                        | - PersonDepartment                                                                                          |
+|                         |                                                        | - PersonStatus (onboarding|active|inactive)                                                                 |
+|                         |                                                        | - EmployeeId                                                                                                |
+|                         |                                                        |                                                                                                             |
+|                         | PERSON#PERSONAL_DATA#ACCESS_CARD                       | - CardIssuedTimestamp                                                                                       |
+|                         |                                                        | - CardRevokedTimestamp                                                                                      |
+|                         |                                                        | - CardStatus (issued|lost|stolen|expired|revoked)                                                           |
+|                         |                                                        | - CardIssuedTo (<<employee ID>>)                                                                            |
+|                         |                                                        | - CardIssuedBy (<<employee ID>>)                                                                            |
+|                         |                                                        | - CardIdx (<<access card ID>>#<<timestamp>>)                                                                |
+|                         |                                                        | - ScannedBuildingIdx                                                                                        |
+|                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                                                                    |
+|                         |                                                        |                                                                                                             |
+| CARD#<<Access card ID>> | CARD#STATUS#issued                                     | - CardIssuedTo (<<employee ID>>)                                                                            |
+|                         |   NOTE: status in ( 'available', 'issued', 'blocked' ) | - CardIssuedBy (<<employee ID>>)                                                                            |
+|                         |                                                        | - CardIssuedTimestamp                                                                                       |
+|                         |                                                        |                                                                                                             |
+|                         | CARD#EVENT#SCANNED                                     | - ScannedInTimestamp (<<timestamp>>)                                                                        |
+|                         |                                                        | - BuildingIdxWhereScanned (<<building ID>>)                                                                 |
+|                         |                                                        | - ScannedInEmployeeId (<<employee ID>>)                                                                     |
+|                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                                                                    |
+|                         |                                                        | - ScannedStatusComment (default="scanned normally")                                                         |
+|                         |                                                        | - PersonName                                                                                                |
+|                         |                                                        | - PersonSurname                                                                                             |
+|                         |                                                        |                                                                                                             |
+|                         | CARD#EVENT                                             | - CardIdx (<<access card ID>>#<<timestamp>>)                                                                |
+|                         |                                                        | - EventType (LinkCard|ExpireCard|ReactivateCard|MarkCardDestroyed|MarkCardLost|MarkCardStolen|CardScanned)  |
+|                         |                                                        | - EventBucketName                                                                                           |
+|                         |                                                        | - EventBucketKey                                                                                            |
+|                         |                                                        | - EventRequestId                                                                                            |
+|                         |                                                        | - EventRequestedByEmployeeId (<<employee ID>> | SYSTEM)                                                     |
+|                         |                                                        | - EventTimestamp                                                                                            |
+|                         |                                                        | - EventOutcomeDescription                                                                                   |
+|                         |                                                        | - EventErrorMessage                                                                                         |
+|                         |                                                        | - EventCompletionStatus (Success|Error|InProgress)                                                          |
+|                         |                                                        | - EventProcessorLockId                                                                                      |
+|                         |                                                        | - EventProcessorStartTimestamp                                                                              |
+|                         |                                                        | - EventProcessorExpiresTimestamp (plus 30 minutes from start)                                               |
+|                         |                                                        | - EventSqsAck (BOOLEAN, default `false`)                                                                    |
+|                         |                                                        | - EventSqsDelete (BOOLEAN, default `false`)                                                                 |
+|                         |                                                        | - EventSqsReject (BOOLEAN, default `false`)                                                                 |
+|                         |                                                        | - EventSqsId                                                                                                |
+|                         |                                                        | - EventSqsOriginalPayloadJson                                                                               |
+|                         |                                                        |                                                                                                             |
++-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 ```
 
 Global Secondary Indexes:
 
 ```text
-+-------------------------------------------------------------------------+------------------+
-| Primary Key                                                             | Index Name       |
-+---------------------------------+---------------------------------------|                  |
-| Partition Key (PK)              | Sort Key (ST) Attribute               |                  |
-+---------------------------------+---------------------------------------+------------------+
-| CardIdx                         | PK                                    | CardIssuedIdx    |
-| ScannedBuildingIdx              | PK                                    | OccupancyIdx     |
-+---------------------------------+---------------------------------------+------------------+
++-------------------------------------------------------------------------+------------------------+
+| Primary Key                                                             | Index Name             |
++---------------------------------+---------------------------------------|                        |
+| Partition Key (PK)              | Sort Key (ST) Attribute               |                        |
++---------------------------------+---------------------------------------+------------------------+
+| CardIdx                         | PK                                    | CardIssuedIdx          |
+| ScannedBuildingIdx              | PK                                    | OccupancyIdx           |
+| CardEventIdx                    | PK                                    | EventBucketKey         |
+| CardEventProcessorLockIdx       | PK                                    | EventProcessorLockId   |
++---------------------------------+---------------------------------------+------------------------+
 ```
 
 Deploying the table can be done with the following command:

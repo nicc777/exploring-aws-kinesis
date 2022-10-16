@@ -29,15 +29,15 @@ I need to add the following attributes in DynamoDB:
     * Attribute `LinkingEventBucketKey` - A String with the event key that was consumed in the bucket
     * Attribute `CardExpiryTimestamp` - A Number with the Unix Timestamp for when the card expires (default is 1 year, which means employees have to renew their cards annually)
 
-I also need to create a new `SK` key `PERSON#PERSONAL_DATA#ACCESS_CARD#EVENT` with a structure as follow:
+I also need to create a new `SK` key `CARD#EVENT` with a structure as follow:
 
 ```json
 {
   "PK": {
-    "S": "EMP#nnnnnnnnnnnn"
+    "S": "CARD#nnnnnnnnnnnn"
   },
   "SK": {
-    "S": "PERSON#PERSONAL_DATA#ACCESS_CARD#EVENT"
+    "S": "CARD#EVENT"
   },
   "CardIdx": {
     "S": "nnnnnnnnnnnn"
@@ -95,6 +95,8 @@ I also need to create a new `SK` key `PERSON#PERSONAL_DATA#ACCESS_CARD#EVENT` wi
   }
 }
 ```
+
+Create a new Event Index
 
 # Design Thoughts...
 
