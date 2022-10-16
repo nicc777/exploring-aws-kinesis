@@ -192,7 +192,6 @@ Global Secondary Indexes:
 +---------------------------------+---------------------------------------+------------------------+
 | CardIdx                         | PK                                    | CardIssuedIdx          |
 | ScannedBuildingIdx              | PK                                    | OccupancyIdx           |
-| CardEventIdx                    | PK                                    | EventBucketKey         |
 | CardEventProcessorLockIdx       | PK                                    | EventProcessorLockId   |
 +---------------------------------+---------------------------------------+------------------------+
 ```

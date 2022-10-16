@@ -24,6 +24,8 @@ Resources:
         AttributeType: S
       - AttributeName: CognitoSubjectId
         AttributeType: S
+      - AttributeName: EventProcessorLockId
+        AttributeType: S
       GlobalSecondaryIndexes:
       - IndexName: "CardIssuedIdx"
         KeySchema: 
@@ -44,6 +46,14 @@ Resources:
       - IndexName: "CognitoIdx"
         KeySchema: 
         - AttributeName: "CognitoSubjectId"
+          KeyType: HASH
+        - AttributeName: "SK"
+          KeyType: RANGE
+        Projection: 
+          ProjectionType: "ALL"
+      - IndexName: "CardEventProcessorLockIdx"
+        KeySchema: 
+        - AttributeName: "EventProcessorLockId"
           KeyType: HASH
         - AttributeName: "SK"
           KeyType: RANGE
