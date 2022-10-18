@@ -758,7 +758,7 @@ Traceback (most recent call last):
 json.decoder.JSONDecodeError: Expecting ',' delimiter: line 6 column 18 (char 223)
 ```
 
-One what to fix this:
+One way to fix this:
 
 ```python
 def fix_up(body: str)->dict:
