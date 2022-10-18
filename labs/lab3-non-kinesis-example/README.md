@@ -23,6 +23,7 @@
       - [Link an Access Card to an Employee (POST)](#link-an-access-card-to-an-employee-post)
   - [Event Infrastructure](#event-infrastructure)
     - [S3 Events Bucket Resources](#s3-events-bucket-resources)
+    - [S3 Lambda Handler Resources](#s3-lambda-handler-resources)
 - [Random Thoughts](#random-thoughts)
 
 # Lab 3 Goals
@@ -83,6 +84,7 @@ When running commands, the following environment variables are assumed to be set
 | `export ROUTE53_PUBLIC_DNSNAME="..."`       | The Route 53 Hosted Public DNS Domain Name                                                        |
 | `export EMPLOYEE_1_EMAIL="..."`             | A valid email address of a dummy employee (expect actual e-mails to be sent here)                 |
 | `export S3_EVENTS_BUCKET_NAME="..."`        | The S3 bucket name for Events                                                                     |
+| `export S3_EVENT_HANDLER_STACK="..."`       | The CloudFormation stack name for deploying The S3 Event Lambda Handler Stack                     |
 
 Some of these variables, like 
 
@@ -688,6 +690,25 @@ aws cloudformation deploy \
     --stack-name $S3_EVENTS_STACK_NAME \
     --template-file labs/lab3-non-kinesis-example/cloudformation/1100_s3_events_bucket.yaml \
     --parameter-overrides S3EventBucketParam="$S3_EVENTS_BUCKET_NAME" \
+    --capabilities CAPABILITY_NAMED_IAM
+```
+
+### S3 Lambda Handler Resources
+
+This is essentially the Lambda function that subscribes to the SQS queue containing the S3 events. From the events, the Lambda function will determine the type of event in order to route the event to the proper final event handler Lambda function, fia a SNS topic.
+
+To deploy this stack:
+
+```shell
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/s3_event_handler/s3_event_handler.zip
+cd labs/lab3-non-kinesis-example/lambda_functions/s3_event_handler/ && zip s3_event_handler.zip s3_event_handler.py && cd $OLDPWD 
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/s3_event_handler/s3_event_handler.zip s3://$ARTIFACT_S3_BUCKET_NAME/s3_event_handler.zip
+
+aws cloudformation deploy \
+    --stack-name $S3_EVENT_HANDLER_STACK \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/6000_s3_event_handler.yaml \
+    --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
+        S3EventStackNameParam="$S3_EVENTS_STACK_NAME"  \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 
