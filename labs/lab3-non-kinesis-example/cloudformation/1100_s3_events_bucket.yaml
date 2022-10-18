@@ -138,3 +138,9 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-S3EventStoreBucketDomainName"
 
+  S3EventStoreNotificationQueueArn:
+    Description: "S3EventStoreNotificationQueue ARN"
+    Value: !GetAtt S3EventStoreNotificationQueue.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-S3EventStoreNotificationQueueArn"
+
