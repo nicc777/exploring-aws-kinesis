@@ -29,74 +29,9 @@ I need to add the following attributes in DynamoDB:
     * Attribute `LinkingEventBucketKey` - A String with the event key that was consumed in the bucket
     * Attribute `CardExpiryTimestamp` - A Number with the Unix Timestamp for when the card expires (default is 1 year, which means employees have to renew their cards annually)
 
-I also need to create a new `SK` key `CARD#EVENT` with a structure as follow:
+~~I also need to create a new `SK` key `CARD#EVENT` with a structure as follow:~~
 
-```json
-{
-  "PK": {
-    "S": "CARD#nnnnnnnnnnnn"
-  },
-  "SK": {
-    "S": "CARD#EVENT"
-  },
-  "CardIdx": {
-    "S": "nnnnnnnnnnnn"
-  },
-  "EventType": {
-    "S": "LinkCard|ExpireCard|ReactivateCard|MarkCardDestroyed|MarkCardLost|MarkCardStolen|CardScanned"
-  },
-  "EventBucketName": {
-    "S": "..."
-  },
-  "EventBucketKey": {
-    "S": "..."
-  },
-  "EventRequestId": {
-    "S": "..."
-  },
-  "EventRequestedByEmployeeId": {
-    "S": "nnnnnnnnnnnn|SYSTEM"
-  },
-  "EventTimestamp": {
-    "N": "nnnnnnnnnnnn"
-  },
-  "EventOutcomeDescription": {
-    "S": "..."
-  },
-  "EventErrorMessage": {
-    "S": "...|No Errors"
-  },
-  "EventCompletionStatus": {
-    "S": "Success|Error|InProgress"
-  },
-  "EventProcessorLockId": {
-    "S": "..."
-  },
-  "EventProcessorStartTimestamp": {
-    "N": "nnnnnnnnnnnn"
-  },
-  "EventProcessorExpiresTimestamp": {
-    "N": "nnnnnnnnnnnn - after 30 minutes if still in progress, another process can attempt to complete the event if still in queue"
-  },
-  "EventSqsAck": {
-    "B": true
-  },
-  "EventSqsDelete": {
-    "B": true
-  },
-  "EventSqsReject": {
-    "B": false
-  },
-  "EventSqsId": {
-    "S": "..."
-  },
-  "EventSqsOriginalPayloadJson": {
-    "S": "..."
-  }
-}
-```
-
-Create a new Event Index
+~~Create a new Event Index~~
 
 # Design Thoughts...
 
