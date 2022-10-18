@@ -712,6 +712,109 @@ aws cloudformation deploy \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 
+When an object is placed in the S3 bucket, the following SQS message is received in the lambda `event` (showing JSON):
+
+```json
+{
+    "Records": [
+        {
+            "messageId": "...",
+            "receiptHandle": "...",
+            "body": "...json body...",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "SentTimestamp": "1666068803307",
+                "SenderId": "...",
+                "ApproximateFirstReceiveTimestamp": "1666068803311"
+            },
+            "messageAttributes": {},
+            "md5OfBody": "a71917b7e4332a4634e4ce37756a9504",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:eu-central-1:000000000000:S3EventStoreNotificationQueue",
+            "awsRegion": "eu-central-1"
+        }
+    ]
+}
+```
+
+The `body` of the record has a string which is supposed to be convertible to JSON, but it's not. ANd example is shown below (note: `sss` is used as a string placeholder):
+
+```text
+{\n  "Type" : "Notification",\n  "MessageId" : "sss",\n  "TopicArn" : "arn:aws:sns:eu-central-1:000000000000:S3EventStoreNotification",\n  "Subject" : "Amazon S3 Notification",\n  "Message" : "{"Records":[{"eventVersion":"2.1","eventSource":"aws:s3","awsRegion":"eu-central-1","eventTime":"2022-10-18T04:53:21.959Z","eventName":"ObjectCreated:CompleteMultipartUpload","userIdentity":{"principalId":"AWS:sss"},"requestParameters":{"sourceIPAddress":"nnn.nnn.nnn.nnn"},"responseElements":{"x-amz-request-id":"sss","x-amz-id-2":"sss"},"s3":{"s3SchemaVersion":"1.0","configurationId":"sss","bucket":{"name":"lab3-events-sss","ownerIdentity":{"principalId":"A1OFXF1IHRJZE7"},"arn":"arn:aws:s3:::lab3-events-sss"},"object":{"key":"some+file.pdf","size":19292811,"eTag":"sss","versionId":"sss","sequencer":"sss"}}}]}",\n  "Timestamp" : "2022-10-18T04:53:23.266Z",\n  "SignatureVersion" : "1",\n  "Signature" : "sss",\n  "SigningCertURL" : "sss",\n  "UnsubscribeURL" : "sss"\n}'
+```
+
+The problem comes in with the `\n  "Message" : "{"Records":[{"eventVersion":"2.1"...` portion. The data in `Message` is also a string of JSON, but the quotes are not escaped. Therefore there is a JSON value within a outer JSON structure, but the JSON string is not escaped. This leads to a JSON parser error:
+
+```python
+>>> body = json.loads(event['Records'][0]['body'])
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/usr/lib/python3.10/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/usr/lib/python3.10/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/usr/lib/python3.10/json/decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 6 column 18 (char 223)
+```
+
+One what to fix this:
+
+```python
+def fix_up(body: str)->dict:
+    lines = body.split('\n')
+    raw_msg_line = lines[5]
+    raw_msg_line = raw_msg_line.replace(' ', '')
+    json_str = raw_msg_line[11:-2]
+    return json.loads(json_str)
+```
+
+THe call is done by `fix_up(body=event['Records'][0]['body'])` and the result JSON:
+
+```json
+{
+    "Records": [
+        {
+            "eventVersion": "2.1",
+            "eventSource": "aws:s3",
+            "awsRegion": "eu-central-1",
+            "eventTime": "2022-10-18T04:53:21.959Z",
+            "eventName": "ObjectCreated:CompleteMultipartUpload",
+            "userIdentity": {
+                "principalId": "AWS:sss"
+            },
+            "requestParameters": {
+                "sourceIPAddress": "81.204.143.12"
+            },
+            "responseElements": {
+                "x-amz-request-id": "sss",
+                "x-amz-id-2": "sss"
+            },
+            "s3": {
+                "s3SchemaVersion": "1.0",
+                "configurationId": "sss",
+                "bucket": {
+                    "name": "lab3-events-sss",
+                    "ownerIdentity": {
+                        "principalId": "sss"
+                    },
+                    "arn": "arn:aws:s3:::lab3-events-sss"
+                },
+                "object": {
+                    "key": "test+file.pdf",
+                    "size": 19292811,
+                    "eTag": "sss",
+                    "versionId": "sss",
+                    "sequencer": "sss"
+                }
+            }
+        }
+    ]
+}
+```
+
+From here the event type can be determined by the object key. For example, Access card to employee linking events will have keys with the structure `link_employee_and_access_card_<<identifier>>.request`. Therefore, keys matching this pattern needs to be forwarded to the lambda function called `link_employee_and_card_persist` via a SNS Topic called `link-employee-and-card-topic`.
+
 # Random Thoughts
 
 Something that occurred to me while I was designing this solution was to think about why I would still expose certain applications via EC2 - why not have everything as serverless?
