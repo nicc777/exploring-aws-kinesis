@@ -68,6 +68,32 @@ Resources:
             - "sqs:ChangeMessageVisibility"
             Resource:
               Fn::ImportValue: !Sub "${S3EventStackNameParam}-S3EventStoreNotificationQueueArn"
+      - PolicyName: S3EventLambdaFunctionPolicy03
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "s3:GetBucketObjectLockConfiguration"
+            - "s3:GetObjectAcl"
+            - "s3:GetObject"
+            - "s3:GetObjectRetention"
+            - "s3:GetObjectVersionTagging"
+            - "s3:GetObjectAttributes"
+            - "s3:GetObjectVersionAcl"
+            - "s3:GetObjectTagging"
+            - "s3:GetObjectLegalHold"
+            - "s3:GetObjectVersionAttributes"
+            - "s3:GetObjectVersion"
+            Resource:
+            - Fn::Sub: 
+              - "${BucketArn}"
+              - BucketArn: 
+                  Fn::ImportValue: !Sub "${S3EventStackNameParam}-S3EventStoreBucketDomainArn"
+            - Fn::Sub: 
+              - "${BucketArn}/*"
+              - BucketArn: 
+                  Fn::ImportValue: !Sub "${S3EventStackNameParam}-S3EventStoreBucketDomainArn"
       RoleName: S3EventLambdaFunctionRole
 
   S3EventLambdaFunctionLogGroup:
