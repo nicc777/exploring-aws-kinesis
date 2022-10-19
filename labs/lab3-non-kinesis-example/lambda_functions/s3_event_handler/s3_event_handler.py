@@ -124,6 +124,29 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 ###############################################################################
 
 
+def get_s3_object_payload(
+    s3_bucket: str,
+    s3_key: str,
+    s3_key_version_id: str,
+    client=get_client(client_name="s3"), 
+    logger=get_logger()
+)->str:
+    key_json_data = ''
+    try:
+        response = client.get_object(
+            Bucket=s3_bucket,
+            Key=s3_key,
+            VersionId=s3_key_version_id
+        )
+        logger.debug('response={}'.format(response))
+        if 'Body' in response:
+            key_json_data = response['Body'].read().decode('utf-8')
+            logger.debug('body={}'.format(key_json_data))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return key_json_data
+
+
 ###############################################################################
 ###                                                                         ###
 ###                        P R O C E S S    E V E N T                       ###
@@ -133,6 +156,18 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 
 def process_s3_record(s3_record: dict, config: dict, logger=get_logger()):
     logger.info('Processing S3 Record: {}'.format(s3_record))
+    try:
+        if 'object' in s3_record:
+            if 'size' in s3_record['object']:
+                if int(s3_record['object']['size']) < 1024:
+                    json_data = get_s3_object_payload(
+                        s3_bucket=s3_record['bucket']['name'],
+                        s3_key=s3_record['object']['key'],
+                        s3_key_version_id=s3_record['object']['versionId'],
+                        logger=logger
+                    )
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
 
 def process_message(message: dict, config: dict, logger=get_logger()):
