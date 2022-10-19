@@ -175,8 +175,15 @@ def process_message(message: dict, config: dict, logger=get_logger()):
     if 'Records' in message:
         if isinstance(message['Records'], list):
             for record in message['Records']:
-                if 's3' in record:
-                    process_s3_record(s3_record=record['s3'], config=config, logger=logger)
+                if 'eventSource' in record and 'eventName' in record:
+                    event_name = record['eventName']
+                    event_source = record['eventSource']
+                    logger.info('Received "{}" event from "{}"'.format(event_name, event_source))
+                    if event_source == 'aws:s3' and event_name == 'ObjectCreated:Put' and 's3' in record:
+                        logger.info('Processing S3 PUT Event')
+                        process_s3_record(s3_record=record['s3'], config=config, logger=logger)                        
+                    else:
+                        logger.info('Ignoring Event')
 
 
 def process_body(body: dict, config: dict, logger=get_logger()):
