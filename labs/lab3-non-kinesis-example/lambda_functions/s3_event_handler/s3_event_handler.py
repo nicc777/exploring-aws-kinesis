@@ -119,6 +119,49 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 
 ###############################################################################
 ###                                                                         ###
+###                        P R O C E S S    E V E N T                       ###
+###                                                                         ###
+###############################################################################
+
+
+def body_fix_up(body: str, logger=get_logger())->dict:
+    result = dict()
+    try:
+        lines = body.split('\n')
+        raw_msg_line = lines[5]
+        raw_msg_line = raw_msg_line.replace(' ', '')
+        json_str = raw_msg_line[11:-2]
+        result = json.loads(json_str)
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return result
+
+
+def process_body(body: dict, config: dict, logger=get_logger()):
+    logger.info('Processing Body: {}'.format(body))
+
+
+def process_event_record(event_record: dict, config: dict, logger=get_logger()):
+    body = dict()
+    if 'body' in event_record:
+        try:
+            body = json.loads(event_record['body'])
+        except:
+            logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+            body = body_fix_up(body=event_record['body'], logger=logger)
+    if len(body) > 0:
+        process_body(body=body, config=config, logger=logger)
+
+
+def process_event(event: dict, config: dict, logger=get_logger()):
+    if 'Records' in event:
+        if isinstance(event['Records'], list):
+            for record in event['Records']:
+                process_event_record(event_record=record, config=config, logger=logger)
+
+
+###############################################################################
+###                                                                         ###
 ###                         M A I N    H A N D L E R                        ###
 ###                                                                         ###
 ###############################################################################
@@ -139,6 +182,7 @@ def handler(
     logger.info('config={}'.format(config))
     
     debug_log('event={}', variable_as_list=[event], logger=logger)
+    process_event(event=event, config=config, logger=logger)
     
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
 
