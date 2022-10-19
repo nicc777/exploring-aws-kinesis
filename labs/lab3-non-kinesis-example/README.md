@@ -701,7 +701,7 @@ To deploy this stack:
 
 ```shell
 rm -vf labs/lab3-non-kinesis-example/lambda_functions/s3_event_handler/s3_event_handler.zip
-cd labs/lab3-non-kinesis-example/lambda_functions/s3_event_handler/ && zip s3_event_handler.zip s3_event_handler.py && cd $OLDPWD 
+cd labs/lab3-non-kinesis-example/lambda_functions/s3_event_handler/ && zip s3_event_handler.zip s3_event_handler.py events.json  && cd $OLDPWD 
 aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/s3_event_handler/s3_event_handler.zip s3://$ARTIFACT_S3_BUCKET_NAME/s3_event_handler.zip
 
 aws cloudformation deploy \
