@@ -157,7 +157,8 @@ def get_s3_object_payload(
 def get_routable_event(s3_key: str, config: dict, logger=get_logger())->dict:
     routable_event = dict()
     routable_event['MatchingEvent'] = False
-    routable_event['RoutingData'] = dict
+    routable_event['RoutingData'] = dict()
+    routable_event['EventType'] = ''
     matching_event = True
     matching_attributes = dict()
     for event_type, event_process_data in config.items():
@@ -177,6 +178,7 @@ def get_routable_event(s3_key: str, config: dict, logger=get_logger())->dict:
         if matching_event is True:
             routable_event['MatchingEvent'] = True
             routable_event['RoutingData'] = event_process_data['Routing']
+            routable_event['EventType'] = event_type
             break
     return routable_event
 
@@ -197,7 +199,7 @@ def process_s3_record(s3_record: dict, config: dict, logger=get_logger()):
                             logger=logger
                         )
                         if len(json_data) > 0 and len(json_data) < 10240:
-                            logger.info('Event Data Loaded. Routing Data: {}'.format(routable_event['RoutingData']))
+                            logger.info('Event "{}" data loaded. Routing Data: {}'.format(routable_event['EventType'], routable_event['RoutingData']))
                             # TODO Implement Routing
                         else:
                             logger.info('Event Data Loaded, but not routing further due to length constraint validation failure')
