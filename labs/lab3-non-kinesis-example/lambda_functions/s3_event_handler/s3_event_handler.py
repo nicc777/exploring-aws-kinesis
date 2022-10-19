@@ -124,6 +124,28 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 ###############################################################################
 
 
+def process_s3_record(s3_record: dict, config: dict, logger=get_logger()):
+    logger.info('Processing S3 Record: {}'.format(s3_record))
+
+
+def process_message(message: dict, config: dict, logger=get_logger()):
+    logger.info('Processing Message: {}'.format(message))
+    if 'Records' in message:
+        if isinstance(message['Records'], list):
+            for record in message['Records']:
+                if 's3' in record:
+                    process_s3_record(s3_record=record['s3'], config=config, logger=logger)
+
+
+def process_body(body: dict, config: dict, logger=get_logger()):
+    logger.info('Processing Body: {}'.format(body))
+    if 'Message' in body:
+        try:
+            process_message(message=json.loads(body['Message']), config=config, logger=logger)
+        except:
+            logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
 def body_fix_up(body: str, logger=get_logger())->dict:
     result = dict()
     try:
@@ -135,10 +157,6 @@ def body_fix_up(body: str, logger=get_logger())->dict:
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     return result
-
-
-def process_body(body: dict, config: dict, logger=get_logger()):
-    logger.info('Processing Body: {}'.format(body))
 
 
 def process_event_record(event_record: dict, config: dict, logger=get_logger()):
