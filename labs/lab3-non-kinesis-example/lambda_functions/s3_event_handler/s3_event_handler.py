@@ -22,6 +22,17 @@ def get_logger(level=logging.INFO):
     return logger
 
 
+def read_config(file_path: str="events.json", logger=get_logger())->dict:
+    config = dict()
+    try:
+        with open(file_path, "r") as f:
+            config = json.loads(f.read())
+            logger.debug('config from file: {}'.format(config))
+    except:
+        logger.error("EXCEPTION: {}".format(traceback.format_exc()))
+    return config
+
+
 def get_client(client_name: str, region: str='eu-central-1', boto3_clazz=boto3):
     return boto3_clazz.client(client_name, region_name=region)
 
@@ -54,7 +65,7 @@ def get_cache_ttl(logger=get_logger())->int:
     return CACHE_TTL_DEFAULT
 
 
-def refresh_environment_cache(logger=get_logger()):
+def refresh_environment_cache(config_file_path: str="events.json", logger=get_logger()):
     global cache
     now = get_utc_timestamp(with_decimal=False)
     if 'Environment' in cache:
@@ -65,6 +76,7 @@ def refresh_environment_cache(logger=get_logger()):
         'Data': {
             'CACHE_TTL': get_cache_ttl(logger=logger),
             'DEBUG': get_debug(),
+            'CONFIG': read_config(file_path=config_file_path, logger=logger)
             # Other ENVIRONMENT variables can be added here... The environment will be re-read after the CACHE_TTL 
         }
     }
@@ -117,11 +129,14 @@ def handler(
     context,
     logger=get_logger(level=logging.INFO),
     boto3_clazz=boto3,
-    run_from_main: bool=False
+    run_from_main: bool=False,
+    config_file_path: str="events.json"
 ):
-    refresh_environment_cache(logger=logger)
+    refresh_environment_cache(config_file_path=config_file_path, logger=logger)
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
         logger  = get_logger(level=logging.DEBUG)
+    config = cache['Environment']['Data']['CONFIG']
+    logger.info('config={}'.format(config))
     
     debug_log('event={}', variable_as_list=[event], logger=logger)
     

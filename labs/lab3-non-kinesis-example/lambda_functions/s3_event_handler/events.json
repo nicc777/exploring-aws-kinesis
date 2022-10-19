@@ -1,0 +1,14 @@
+{
+    "LinkAccessCardToEmployee": {
+        "S3KeyAttributes": {
+            "StartsWith": "link_employee_and_access_card_",
+            "Extension": "request"
+        },
+        "Routing": {
+            "SnsTopic": {
+                "Name": "EventProcessingLinkCardToEmployee"
+            }
+        }
+    }
+    
+}
