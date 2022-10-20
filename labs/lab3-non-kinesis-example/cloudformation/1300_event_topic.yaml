@@ -1,0 +1,54 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: This template creates the S3 bucket to hold event objects
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  EventTopicNameParam:
+    Type: String
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                    SNS TOPIC                                                    ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  EventSnsTopic:
+    Type: AWS::SNS::Topic
+    Properties: 
+      DisplayName: !Ref EventTopicNameParam
+      FifoTopic: false
+      TopicName: !Ref EventTopicNameParam
+
+
+Outputs:
+
+  EventSnsTopicName:
+    Description: "EventSnsTopic Name"
+    Value: !GetAtt EventSnsTopic.TopicName
+    Export:
+      Name: !Sub "${AWS::StackName}-EventSnsTopicName"
+
+  EventSnsTopicArn:
+    Description: "EventSnsTopic Arn"
+    Value: !GetAtt EventSnsTopic.TopicArn
+    Export:
+      Name: !Sub "${AWS::StackName}-EventSnsTopicArn"
+
