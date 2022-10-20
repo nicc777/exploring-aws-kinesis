@@ -95,6 +95,14 @@ Resources:
               - "${BucketArn}/*"
               - BucketArn: 
                   Fn::ImportValue: !Sub "${S3EventStackNameParam}-S3EventStoreBucketDomainArn"
+      - PolicyName: S3EventLambdaFunctionPolicy04
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "sns:Publish"
+            Resource: !Sub "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:*"
       RoleName: S3EventLambdaFunctionRole
 
   S3EventLambdaFunctionLogGroup:

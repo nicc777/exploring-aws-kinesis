@@ -147,6 +147,34 @@ def get_s3_object_payload(
     return key_json_data
 
 
+def publish_event_to_sns(
+    topic_name: str,
+    data: str,
+    event_type: str,
+    aws_account_id: str='000000000000',
+    client=get_client(client_name="sns"), 
+    logger=get_logger()
+):
+    try:
+        
+        response = client.publish(
+            TopicArn='arn:aws:sns:{}:{}:{}'.format(os.getenv('AWS_REGION'), aws_account_id, topic_name),
+            Message='{}'.format(data),
+            Subject='S3PutEvent',
+            MessageStructure='string',
+            MessageAttributes={
+                'EventType': {
+                    'DataType': 'String',
+                    'StringValue': '{}'.format(event_type)
+                }
+            }
+        )
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        logger.info('SNS Message for event type "{}" sent. MessageId={}'.format(event_type, response['MessageId']))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
 ###############################################################################
 ###                                                                         ###
 ###                        P R O C E S S    E V E N T                       ###
@@ -180,11 +208,12 @@ def get_routable_event(s3_key: str, config: dict, logger=get_logger())->dict:
             routable_event['RoutingData'] = event_process_data['Routing']
             routable_event['EventType'] = event_type
             break
+    debug_log(message='routable_event={}', variable_as_list=[routable_event,], logger=logger)
     return routable_event
 
 
 
-def process_s3_record(s3_record: dict, config: dict, logger=get_logger()):
+def process_s3_record(s3_record: dict, config: dict, logger=get_logger(), aws_account_id: str='000000000000'):
     logger.info('Processing S3 Record: {}'.format(s3_record))
     try:
         if 'object' in s3_record:
@@ -200,14 +229,20 @@ def process_s3_record(s3_record: dict, config: dict, logger=get_logger()):
                         )
                         if len(json_data) > 0 and len(json_data) < 10240:
                             logger.info('Event "{}" data loaded. Routing Data: {}'.format(routable_event['EventType'], routable_event['RoutingData']))
-                            # TODO Implement Routing
+                            publish_event_to_sns(
+                                topic_name=routable_event['RoutingData']['SnsTopic']['Name'],
+                                data=json_data,
+                                event_type=routable_event['EventType'],
+                                aws_account_id=aws_account_id,
+                                logger=get_logger()
+                            )
                         else:
                             logger.info('Event Data Loaded, but not routing further due to length constraint validation failure')
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
 
-def process_message(message: dict, config: dict, logger=get_logger()):
+def process_message(message: dict, config: dict, logger=get_logger(), aws_account_id: str='000000000000'):
     logger.info('Processing Message: {}'.format(message))
     if 'Records' in message:
         if isinstance(message['Records'], list):
@@ -218,16 +253,16 @@ def process_message(message: dict, config: dict, logger=get_logger()):
                     logger.info('Received "{}" event from "{}"'.format(event_name, event_source))
                     if event_source == 'aws:s3' and event_name == 'ObjectCreated:Put' and 's3' in record:
                         logger.info('Processing S3 PUT Event')
-                        process_s3_record(s3_record=record['s3'], config=config, logger=logger)                        
+                        process_s3_record(s3_record=record['s3'], config=config, logger=logger, aws_account_id=aws_account_id)
                     else:
                         logger.info('Ignoring Event')
 
 
-def process_body(body: dict, config: dict, logger=get_logger()):
+def process_body(body: dict, config: dict, logger=get_logger(), aws_account_id: str='000000000000'):
     logger.info('Processing Body: {}'.format(body))
     if 'Message' in body:
         try:
-            process_message(message=json.loads(body['Message']), config=config, logger=logger)
+            process_message(message=json.loads(body['Message']), config=config, logger=logger, aws_account_id=aws_account_id)
         except:
             logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
@@ -245,7 +280,7 @@ def body_fix_up(body: str, logger=get_logger())->dict:
     return result
 
 
-def process_event_record(event_record: dict, config: dict, logger=get_logger()):
+def process_event_record(event_record: dict, config: dict, logger=get_logger(), aws_account_id: str='000000000000'):
     body = dict()
     if 'body' in event_record:
         try:
@@ -254,14 +289,14 @@ def process_event_record(event_record: dict, config: dict, logger=get_logger()):
             logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
             body = body_fix_up(body=event_record['body'], logger=logger)
     if len(body) > 0:
-        process_body(body=body, config=config, logger=logger)
+        process_body(body=body, config=config, logger=logger, aws_account_id=aws_account_id)
 
 
-def process_event(event: dict, config: dict, logger=get_logger()):
+def process_event(event: dict, config: dict, logger=get_logger(), aws_account_id: str='000000000000'):
     if 'Records' in event:
         if isinstance(event['Records'], list):
             for record in event['Records']:
-                process_event_record(event_record=record, config=config, logger=logger)
+                process_event_record(event_record=record, config=config, logger=logger, aws_account_id=aws_account_id)
 
 
 ###############################################################################
@@ -285,8 +320,10 @@ def handler(
     config = cache['Environment']['Data']['CONFIG']
     logger.info('config={}'.format(config))
     
+    aws_account_id = context.invoked_function_arn.split(':')[4]
+
     debug_log('event={}', variable_as_list=[event], logger=logger)
-    process_event(event=event, config=config, logger=logger)
+    process_event(event=event, config=config, logger=logger, aws_account_id=aws_account_id)
     
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
 

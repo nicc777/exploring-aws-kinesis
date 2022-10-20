@@ -6,7 +6,7 @@
         },
         "Routing": {
             "SnsTopic": {
-                "Name": "EventProcessingLinkCardToEmployee"
+                "Name": "LinkAccessCardEvent"
             }
         }
     }
