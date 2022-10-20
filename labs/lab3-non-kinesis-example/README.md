@@ -23,6 +23,7 @@
       - [Link an Access Card to an Employee (POST)](#link-an-access-card-to-an-employee-post)
   - [Event Infrastructure](#event-infrastructure)
     - [S3 Events Bucket Resources](#s3-events-bucket-resources)
+    - [S3 Lambda Handler Resources](#s3-lambda-handler-resources)
 - [Random Thoughts](#random-thoughts)
 
 # Lab 3 Goals
@@ -53,36 +54,38 @@ Each of the API endpoints is services by a Lambda function.
 
 When running commands, the following environment variables are assumed to be set:
 
-| Environment Variable Example                | Description                                                                                       |
-|---------------------------------------------|---------------------------------------------------------------------------------------------------|
-| `export AWS_PROFILE="..."`                  | The AWS Credentials Profile to use                                                                |
-| `export AWS_REGION="..."`                   | The AWS Region to deploy resources to                                                             |
-| `export PARAMETERS_FILE="..."`              | The file containing the stack parameters                                                          |
-| `export DYNAMODB_STACK_NAME="..."`          | The CloudFormation stack name for deploying the DynamoDB Table                                    |
-| `export LAMBDA_STACK_NAME="..."`            | The CloudFormation stack name for deploying Lambda Functions                                      |
-| `export VPC_STACK_NAME="..."`               | The CloudFormation stack name for deploying the VPC resources                                     |
-| `export NFS_STACK_NAME="..."`               | The CloudFormation stack name for deploying a FSX Filesystem                                      |
-| `export DNS_STACK_NAME="..."`               | The CloudFormation stack name for deploying DNS and ACM                                           |
-| `export PROXY_STACK_NAME="..."`             | The CloudFormation stack name for deploying the Proxy server                                      |
-| `export GITHUB_SECRET_STACK_NAME="..."`     | The CloudFormation stack name for deploying the GitHub SSH Key in Secrets Manager                 |
-| `export GITHUB_SYNC_STACK_NAME="..."`       | The CloudFormation stack name for deploying the GitHub Sync Resources                             |
-| `export SSM_VPC_ENDPOINT_STACK_NAME="..."`  | The CloudFormation stack name for deploying The SSM VPC End Point resource                        |
-| `export WEB_SERVER_STACK_NAME="..."`        | The CloudFormation stack name for deploying The Web Server and API Gateway Resources              |
-| `export COGNITO_STACK_NAME="..."`           | The CloudFormation stack name for deploying The employee Cognito Pool                             |
-| `export WEBAPI_STACK_NAME="..."`            | The CloudFormation stack name for deploying The Website API Resources                             |
-| `export WEBAPI_LAMBDA_STACK_NAME="..."`     | The CloudFormation stack name for deploying The Website API Resources - Lambda Functions          |
-| `export WEBAPI_ROUTES_1_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations   |
-| `export WEBAPI_ROUTES_2_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations   |
-| `export WEBAPI_DEPLOYMENT_STACK_NAME="..."` | The CloudFormation stack name for deploying The Website API Resources - Deployment and DNS        |
-| `export S3_EVENTS_STACK_NAME="..."`         | The CloudFormation stack name for deploying The S3 Events Bucket                                  |
-| `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                                            |
-| `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                              |
-| `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                                |
-| `export GITHUB_AUTHORIZED_SENDERS="..."`    | CSV List of supported sender login values                                                         |
-| `export ROUTE53_PUBLIC_ZONEID="..."`        | The Route 53 Hosted Zone ID of the Public DNS Domain                                              |
-| `export ROUTE53_PUBLIC_DNSNAME="..."`       | The Route 53 Hosted Public DNS Domain Name                                                        |
-| `export EMPLOYEE_1_EMAIL="..."`             | A valid email address of a dummy employee (expect actual e-mails to be sent here)                 |
-| `export S3_EVENTS_BUCKET_NAME="..."`        | The S3 bucket name for Events                                                                     |
+| Environment Variable Example                | Description                                                                                                    |
+|---------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| `export AWS_PROFILE="..."`                  | The AWS Credentials Profile to use                                                                             |
+| `export AWS_REGION="..."`                   | The AWS Region to deploy resources to                                                                          |
+| `export PARAMETERS_FILE="..."`              | The file containing the stack parameters                                                                       |
+| `export DYNAMODB_STACK_NAME="..."`          | The CloudFormation stack name for deploying the DynamoDB Table                                                 |
+| `export LAMBDA_STACK_NAME="..."`            | The CloudFormation stack name for deploying Lambda Functions                                                   |
+| `export VPC_STACK_NAME="..."`               | The CloudFormation stack name for deploying the VPC resources                                                  |
+| `export NFS_STACK_NAME="..."`               | The CloudFormation stack name for deploying a FSX Filesystem                                                   |
+| `export DNS_STACK_NAME="..."`               | The CloudFormation stack name for deploying DNS and ACM                                                        |
+| `export PROXY_STACK_NAME="..."`             | The CloudFormation stack name for deploying the Proxy server                                                   |
+| `export GITHUB_SECRET_STACK_NAME="..."`     | The CloudFormation stack name for deploying the GitHub SSH Key in Secrets Manager                              |
+| `export GITHUB_SYNC_STACK_NAME="..."`       | The CloudFormation stack name for deploying the GitHub Sync Resources                                          |
+| `export SSM_VPC_ENDPOINT_STACK_NAME="..."`  | The CloudFormation stack name for deploying The SSM VPC End Point resource                                     |
+| `export WEB_SERVER_STACK_NAME="..."`        | The CloudFormation stack name for deploying The Web Server and API Gateway Resources                           |
+| `export COGNITO_STACK_NAME="..."`           | The CloudFormation stack name for deploying The employee Cognito Pool                                          |
+| `export WEBAPI_STACK_NAME="..."`            | The CloudFormation stack name for deploying The Website API Resources                                          |
+| `export WEBAPI_LAMBDA_STACK_NAME="..."`     | The CloudFormation stack name for deploying The Website API Resources - Lambda Functions                       |
+| `export WEBAPI_ROUTES_1_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations                |
+| `export WEBAPI_ROUTES_2_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations                |
+| `export WEBAPI_DEPLOYMENT_STACK_NAME="..."` | The CloudFormation stack name for deploying The Website API Resources - Deployment and DNS                     |
+| `export S3_EVENTS_STACK_NAME="..."`         | The CloudFormation stack name for deploying The S3 Events Bucket                                               |
+| `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                                                         |
+| `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                                           |
+| `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                                             |
+| `export GITHUB_AUTHORIZED_SENDERS="..."`    | CSV List of supported sender login values                                                                      |
+| `export ROUTE53_PUBLIC_ZONEID="..."`        | The Route 53 Hosted Zone ID of the Public DNS Domain                                                           |
+| `export ROUTE53_PUBLIC_DNSNAME="..."`       | The Route 53 Hosted Public DNS Domain Name                                                                     |
+| `export EMPLOYEE_1_EMAIL="..."`             | A valid email address of a dummy employee (expect actual e-mails to be sent here)                              |
+| `export S3_EVENTS_BUCKET_NAME="..."`        | The S3 bucket name for Events                                                                                  |
+| `export S3_EVENT_HANDLER_STACK="..."`       | The CloudFormation stack name for deploying The S3 Event Lambda Handler Stack                                  |
+| `export LINK_CARD_TOPIC_STACK="..."`        | The CloudFormation stack name for deploying The SNS Topic for handling access card linking to employee events  |
 
 Some of these variables, like 
 
@@ -192,7 +195,6 @@ Global Secondary Indexes:
 +---------------------------------+---------------------------------------+------------------------+
 | CardIdx                         | PK                                    | CardIssuedIdx          |
 | ScannedBuildingIdx              | PK                                    | OccupancyIdx           |
-| CardEventIdx                    | PK                                    | EventBucketKey         |
 | CardEventProcessorLockIdx       | PK                                    | EventProcessorLockId   |
 +---------------------------------+---------------------------------------+------------------------+
 ```
@@ -691,6 +693,134 @@ aws cloudformation deploy \
     --parameter-overrides S3EventBucketParam="$S3_EVENTS_BUCKET_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
+
+### S3 Lambda Handler Resources
+
+This is essentially the Lambda function that subscribes to the SQS queue containing the S3 events. From the events, the Lambda function will determine the type of event in order to route the event to the proper final event handler Lambda function, fia a SNS topic.
+
+To deploy this stack:
+
+```shell
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/s3_event_handler/s3_event_handler.zip
+cd labs/lab3-non-kinesis-example/lambda_functions/s3_event_handler/ && zip s3_event_handler.zip s3_event_handler.py events.json  && cd $OLDPWD 
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/s3_event_handler/s3_event_handler.zip s3://$ARTIFACT_S3_BUCKET_NAME/s3_event_handler.zip
+
+aws cloudformation deploy \
+    --stack-name $S3_EVENT_HANDLER_STACK \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/1200_s3_event_handler.yaml \
+    --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
+        S3EventStackNameParam="$S3_EVENTS_STACK_NAME"  \
+    --capabilities CAPABILITY_NAMED_IAM
+
+aws cloudformation deploy \
+    --stack-name $LINK_CARD_TOPIC_STACK \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/1300_event_topic.yaml \
+    --parameter-overrides EventTopicNameParam="LinkAccessCardEvent"
+
+```
+
+When an object is placed in the S3 bucket, the following SQS message is received in the lambda `event` (showing JSON):
+
+```json
+{
+    "Records": [
+        {
+            "messageId": "...",
+            "receiptHandle": "...",
+            "body": "...json body...",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "SentTimestamp": "1666068803307",
+                "SenderId": "...",
+                "ApproximateFirstReceiveTimestamp": "1666068803311"
+            },
+            "messageAttributes": {},
+            "md5OfBody": "a71917b7e4332a4634e4ce37756a9504",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:eu-central-1:000000000000:S3EventStoreNotificationQueue",
+            "awsRegion": "eu-central-1"
+        }
+    ]
+}
+```
+
+The `body` of the record has a string which is supposed to be convertible to JSON, but it's not. ANd example is shown below (note: `sss` is used as a string placeholder):
+
+```text
+{\n  "Type" : "Notification",\n  "MessageId" : "sss",\n  "TopicArn" : "arn:aws:sns:eu-central-1:000000000000:S3EventStoreNotification",\n  "Subject" : "Amazon S3 Notification",\n  "Message" : "{"Records":[{"eventVersion":"2.1","eventSource":"aws:s3","awsRegion":"eu-central-1","eventTime":"2022-10-18T04:53:21.959Z","eventName":"ObjectCreated:CompleteMultipartUpload","userIdentity":{"principalId":"AWS:sss"},"requestParameters":{"sourceIPAddress":"nnn.nnn.nnn.nnn"},"responseElements":{"x-amz-request-id":"sss","x-amz-id-2":"sss"},"s3":{"s3SchemaVersion":"1.0","configurationId":"sss","bucket":{"name":"lab3-events-sss","ownerIdentity":{"principalId":"A1OFXF1IHRJZE7"},"arn":"arn:aws:s3:::lab3-events-sss"},"object":{"key":"some+file.pdf","size":19292811,"eTag":"sss","versionId":"sss","sequencer":"sss"}}}]}",\n  "Timestamp" : "2022-10-18T04:53:23.266Z",\n  "SignatureVersion" : "1",\n  "Signature" : "sss",\n  "SigningCertURL" : "sss",\n  "UnsubscribeURL" : "sss"\n}'
+```
+
+The problem comes in with the `\n  "Message" : "{"Records":[{"eventVersion":"2.1"...` portion. The data in `Message` is also a string of JSON, but the quotes are not escaped. Therefore there is a JSON value within a outer JSON structure, but the JSON string is not escaped. This leads to a JSON parser error:
+
+```python
+>>> body = json.loads(event['Records'][0]['body'])
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/usr/lib/python3.10/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/usr/lib/python3.10/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/usr/lib/python3.10/json/decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 6 column 18 (char 223)
+```
+
+One way to fix this:
+
+```python
+def fix_up(body: str)->dict:
+    lines = body.split('\n')
+    raw_msg_line = lines[5]
+    raw_msg_line = raw_msg_line.replace(' ', '')
+    json_str = raw_msg_line[11:-2]
+    return json.loads(json_str)
+```
+
+THe call is done by `fix_up(body=event['Records'][0]['body'])` and the result JSON:
+
+```json
+{
+    "Records": [
+        {
+            "eventVersion": "2.1",
+            "eventSource": "aws:s3",
+            "awsRegion": "eu-central-1",
+            "eventTime": "2022-10-18T04:53:21.959Z",
+            "eventName": "ObjectCreated:CompleteMultipartUpload",
+            "userIdentity": {
+                "principalId": "AWS:sss"
+            },
+            "requestParameters": {
+                "sourceIPAddress": "81.204.143.12"
+            },
+            "responseElements": {
+                "x-amz-request-id": "sss",
+                "x-amz-id-2": "sss"
+            },
+            "s3": {
+                "s3SchemaVersion": "1.0",
+                "configurationId": "sss",
+                "bucket": {
+                    "name": "lab3-events-sss",
+                    "ownerIdentity": {
+                        "principalId": "sss"
+                    },
+                    "arn": "arn:aws:s3:::lab3-events-sss"
+                },
+                "object": {
+                    "key": "test+file.pdf",
+                    "size": 19292811,
+                    "eTag": "sss",
+                    "versionId": "sss",
+                    "sequencer": "sss"
+                }
+            }
+        }
+    ]
+}
+```
+
+From here the event type can be determined by the object key. For example, Access card to employee linking events will have keys with the structure `link_employee_and_access_card_<<identifier>>.request`. Therefore, keys matching this pattern needs to be forwarded to the lambda function called `link_employee_and_card_persist` via a SNS Topic called `link-employee-and-card-topic`.
 
 # Random Thoughts
 

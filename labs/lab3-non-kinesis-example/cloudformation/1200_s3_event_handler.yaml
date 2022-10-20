@@ -1,0 +1,156 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: This template creates the S3 bucket to hold event objects
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  S3SourceBucketParam:
+    Type: String
+    Description: "The S3 bucket name containing the Lambda function ZIP file"
+  S3EventStackNameParam:
+    Type: String
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                 Lambda Function                                                 ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  S3EventLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "S3EventFunctionRoleAssumeRolePolicyDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role for S3EventLambdaFunction"
+      Policies:
+      - PolicyName: S3EventLambdaFunctionPolicy01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+      - PolicyName: S3EventLambdaFunctionPolicy02
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "sqs:ReceiveMessage"
+            - "sqs:DeleteMessage"
+            - "sqs:GetQueueAttributes"
+            - "sqs:ChangeMessageVisibility"
+            Resource:
+              Fn::ImportValue: !Sub "${S3EventStackNameParam}-S3EventStoreNotificationQueueArn"
+      - PolicyName: S3EventLambdaFunctionPolicy03
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "s3:GetBucketObjectLockConfiguration"
+            - "s3:GetObjectAcl"
+            - "s3:GetObject"
+            - "s3:GetObjectRetention"
+            - "s3:GetObjectVersionTagging"
+            - "s3:GetObjectAttributes"
+            - "s3:GetObjectVersionAcl"
+            - "s3:GetObjectTagging"
+            - "s3:GetObjectLegalHold"
+            - "s3:GetObjectVersionAttributes"
+            - "s3:GetObjectVersion"
+            - "s3:ListBucket"
+            Resource:
+            - Fn::Sub: 
+              - "${BucketArn}"
+              - BucketArn: 
+                  Fn::ImportValue: !Sub "${S3EventStackNameParam}-S3EventStoreBucketDomainArn"
+            - Fn::Sub: 
+              - "${BucketArn}/*"
+              - BucketArn: 
+                  Fn::ImportValue: !Sub "${S3EventStackNameParam}-S3EventStoreBucketDomainArn"
+      - PolicyName: S3EventLambdaFunctionPolicy04
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "sns:Publish"
+            Resource: !Sub "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:*"
+      RoleName: S3EventLambdaFunctionRole
+
+  S3EventLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref S3EventLambdaFunction
+      RetentionInDays: 7
+
+  S3EventLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Environment:
+        Variables: 
+          DEBUG: "1"
+      Code: 
+        S3Bucket: !Ref S3SourceBucketParam
+        S3Key: "s3_event_handler.zip"
+      Description: "Start the GitHub Sync Server if required"
+      FunctionName: "S3EventLambdaFunction"
+      Handler: "s3_event_handler.handler"
+      MemorySize: 128
+      Role: !GetAtt S3EventLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 30
+
+  S3EventLambdaFunctionEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      Enabled: true
+      EventSourceArn:
+        Fn::ImportValue: !Sub "${S3EventStackNameParam}-S3EventStoreNotificationQueueArn"
+      FunctionName: !GetAtt S3EventLambdaFunction.Arn
+
+
+
+# Outputs:
+
+#   S3EventStoreBucketDomainName:
+#     Description: "Bucket DomainName"
+#     Value: !GetAtt S3EventStoreBucket.DomainName
+#     Export:
+#       Name: !Sub "${AWS::StackName}-S3EventStoreBucketDomainName"
+
