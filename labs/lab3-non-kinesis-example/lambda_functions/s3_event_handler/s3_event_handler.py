@@ -138,10 +138,10 @@ def get_s3_object_payload(
             Key=s3_key,
             VersionId=s3_key_version_id
         )
-        logger.debug('response={}'.format(response))
+        debug_log('response={}', variable_as_list=[response,], logger=logger)
         if 'Body' in response:
             key_json_data = response['Body'].read().decode('utf-8')
-            logger.debug('body={}'.format(key_json_data))
+            debug_log('body={}', variable_as_list=[key_json_data,], logger=logger)
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     return key_json_data
@@ -322,7 +322,7 @@ def handler(
     
     aws_account_id = context.invoked_function_arn.split(':')[4]
 
-    debug_log('event={}', variable_as_list=[event], logger=logger)
+    debug_log('event={}', variable_as_list=[event,], logger=logger)
     process_event(event=event, config=config, logger=logger, aws_account_id=aws_account_id)
     
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
