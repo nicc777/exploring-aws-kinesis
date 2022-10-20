@@ -10,8 +10,8 @@ Some next steps I'm thinking about (Lab 3)...
 * ~~Create S3 Events bucket~~
 * ~~Create Lambda function `link-employee-and-card` with API end-point. Persist events in directory `/employee-access-card-link-events`~~
 * ~~Create a UI to link an access card to a person busy onboarding.~~
-* Create Lambda function `s3_event_handler` with SNS and SQS integration from the S3 events bucket
-* Create SNS Topic and SQS queue to pass on processed event from `s3_event_handler`
+* ~~Create Lambda function `s3_event_handler` with SNS and SQS integration from the S3 events bucket~~
+* Create SQS queue to pass on processed event from `s3_event_handler`
 * Create Lambda function `link-employee-and-card-persist` to persist the new linked data in the DynamoDB table. Consider using step functions, as the requesting party (linked by employee) first needs to be verified. We also require the original Access Token in the payload for this! For authorization we can add an optional attribute in DynamoDB to indicate which users are authorized to do this action. These permission fields are in themselves complex object as the permission requires a start and end date for which that permission is valid, so that the event can be authorized by ensuring the event timestamp falls within this range.
 * Create UI to view (and poll) for card linking status 
 
