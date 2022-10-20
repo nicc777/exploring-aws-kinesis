@@ -706,7 +706,7 @@ aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/s3_event_handler/s3_eve
 
 aws cloudformation deploy \
     --stack-name $S3_EVENT_HANDLER_STACK \
-    --template-file labs/lab3-non-kinesis-example/cloudformation/6000_s3_event_handler.yaml \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/1200_s3_event_handler.yaml \
     --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
         S3EventStackNameParam="$S3_EVENTS_STACK_NAME"  \
     --capabilities CAPABILITY_NAMED_IAM
