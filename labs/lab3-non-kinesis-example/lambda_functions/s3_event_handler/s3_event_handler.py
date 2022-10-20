@@ -317,6 +317,8 @@ def handler(
     refresh_environment_cache(config_file_path=config_file_path, logger=logger)
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
         logger  = get_logger(level=logging.DEBUG)
+    logging.getLogger('boto').setLevel(logging.CRITICAL)
+    logging.getLogger('botocore').setLevel(logging.CRITICAL)
     config = cache['Environment']['Data']['CONFIG']
     logger.info('config={}'.format(config))
     
