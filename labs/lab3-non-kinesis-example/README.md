@@ -86,6 +86,7 @@ When running commands, the following environment variables are assumed to be set
 | `export S3_EVENTS_BUCKET_NAME="..."`        | The S3 bucket name for Events                                                                                  |
 | `export S3_EVENT_HANDLER_STACK="..."`       | The CloudFormation stack name for deploying The S3 Event Lambda Handler Stack                                  |
 | `export LINK_CARD_TOPIC_STACK="..."`        | The CloudFormation stack name for deploying The SNS Topic for handling access card linking to employee events  |
+| `export LINK_CARD_QUEUE_STACK="..."`        | The CloudFormation stack name for deploying The SQS Queue for handling access card linking to employee events  |
 
 Some of these variables, like 
 
@@ -717,6 +718,12 @@ aws cloudformation deploy \
     --template-file labs/lab3-non-kinesis-example/cloudformation/1300_event_topic.yaml \
     --parameter-overrides EventTopicNameParam="LinkAccessCardEvent"
 
+aws cloudformation deploy \
+    --stack-name $LINK_CARD_QUEUE_STACK \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/1400_event_sqs_queue.yaml \
+    --parameter-overrides QueueNameParam="LinkAccessCardEvent" \
+        SubscribedSnsTopicStackName="$LINK_CARD_TOPIC_STACK" \
+    --capabilities CAPABILITY_NAMED_IAM
 ```
 
 When an object is placed in the S3 bucket, the following SQS message is received in the lambda `event` (showing JSON):

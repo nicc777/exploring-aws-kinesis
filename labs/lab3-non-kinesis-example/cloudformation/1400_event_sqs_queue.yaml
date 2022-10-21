@@ -1,0 +1,122 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: This template creates the S3 bucket to hold event objects
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  QueueNameParam:
+    Type: String
+  SubscribedSnsTopicStackName:
+    Type: String
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                    SQS QUEUE                                                    ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  EventDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: 
+        Fn::Sub:
+        - "${QN}DeadLetter"
+        - QN: !Ref QueueNameParam
+      VisibilityTimeout: 60
+
+  EventQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: !Ref QueueNameParam
+      RedriveAllowPolicy:
+        redrivePermission: "allowAll"
+      RedrivePolicy:
+        deadLetterTargetArn : !GetAtt EventDeadLetterQueue.Arn
+        maxReceiveCount : 3
+      VisibilityTimeout: 60
+
+  SnsToSqsPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Sid: "Allow SNS publish to SQS"
+          Effect: Allow
+          Principal:
+            Service: "sns.amazonaws.com"
+          Resource: !GetAtt EventQueue.Arn
+          Action: SQS:SendMessage
+          Condition:
+            ArnEquals:
+              aws:SourceArn:
+                Fn::ImportValue: !Sub "${SubscribedSnsTopicStackName}-EventSnsTopicArn"
+      Queues:
+      - Ref: EventQueue
+
+  EventSnsTopicSubscription:
+    Type: AWS::SNS::Subscription
+    Properties: 
+      DeliveryPolicy:
+        healthyRetryPolicy:
+          numRetries: 60
+          minDelayTarget: 10
+          maxDelayTarget: 60
+          numMinDelayRetries: 20
+          numMaxDelayRetries: 40
+          numNoDelayRetries: 0
+          backoffFunction: linear
+      Endpoint:
+        Fn::GetAtt:
+        - EventQueue
+        - Arn
+      Protocol: "sqs"
+      RawMessageDelivery: true
+      TopicArn:
+        Fn::ImportValue: !Sub "${SubscribedSnsTopicStackName}-EventSnsTopicArn"
+
+Outputs:
+
+  EventQueueName:
+    Description: "EventQueue Name"
+    Value: !GetAtt EventQueue.QueueName
+    Export:
+      Name: !Sub "${AWS::StackName}-EventQueueName"
+
+  EventQueueArn:
+    Description: "EventQueue Arn"
+    Value: !GetAtt EventQueue.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-EventQueueArn"
+
+  EventQueueQueueUrl:
+    Description: "EventQueue QueueUrl"
+    Value: !GetAtt EventQueue.QueueUrl
+    Export:
+      Name: !Sub "${AWS::StackName}-EventQueueQueueUrl"
+
+
+
