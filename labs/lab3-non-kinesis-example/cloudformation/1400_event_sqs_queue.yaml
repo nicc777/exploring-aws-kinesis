@@ -84,7 +84,7 @@ Resources:
         healthyRetryPolicy:
           numRetries: 100
           minDelayTarget: 10
-          maxDelayTarget: 600
+          maxDelayTarget: 300
           numMinDelayRetries: 3
           numMaxDelayRetries: 20
           numNoDelayRetries: 0
