@@ -54,39 +54,41 @@ Each of the API endpoints is services by a Lambda function.
 
 When running commands, the following environment variables are assumed to be set:
 
-| Environment Variable Example                | Description                                                                                                    |
-|---------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| `export AWS_PROFILE="..."`                  | The AWS Credentials Profile to use                                                                             |
-| `export AWS_REGION="..."`                   | The AWS Region to deploy resources to                                                                          |
-| `export PARAMETERS_FILE="..."`              | The file containing the stack parameters                                                                       |
-| `export DYNAMODB_STACK_NAME="..."`          | The CloudFormation stack name for deploying the DynamoDB Table                                                 |
-| `export LAMBDA_STACK_NAME="..."`            | The CloudFormation stack name for deploying Lambda Functions                                                   |
-| `export VPC_STACK_NAME="..."`               | The CloudFormation stack name for deploying the VPC resources                                                  |
-| `export NFS_STACK_NAME="..."`               | The CloudFormation stack name for deploying a FSX Filesystem                                                   |
-| `export DNS_STACK_NAME="..."`               | The CloudFormation stack name for deploying DNS and ACM                                                        |
-| `export PROXY_STACK_NAME="..."`             | The CloudFormation stack name for deploying the Proxy server                                                   |
-| `export GITHUB_SECRET_STACK_NAME="..."`     | The CloudFormation stack name for deploying the GitHub SSH Key in Secrets Manager                              |
-| `export GITHUB_SYNC_STACK_NAME="..."`       | The CloudFormation stack name for deploying the GitHub Sync Resources                                          |
-| `export SSM_VPC_ENDPOINT_STACK_NAME="..."`  | The CloudFormation stack name for deploying The SSM VPC End Point resource                                     |
-| `export WEB_SERVER_STACK_NAME="..."`        | The CloudFormation stack name for deploying The Web Server and API Gateway Resources                           |
-| `export COGNITO_STACK_NAME="..."`           | The CloudFormation stack name for deploying The employee Cognito Pool                                          |
-| `export WEBAPI_STACK_NAME="..."`            | The CloudFormation stack name for deploying The Website API Resources                                          |
-| `export WEBAPI_LAMBDA_STACK_NAME="..."`     | The CloudFormation stack name for deploying The Website API Resources - Lambda Functions                       |
-| `export WEBAPI_ROUTES_1_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations                |
-| `export WEBAPI_ROUTES_2_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations                |
-| `export WEBAPI_DEPLOYMENT_STACK_NAME="..."` | The CloudFormation stack name for deploying The Website API Resources - Deployment and DNS                     |
-| `export S3_EVENTS_STACK_NAME="..."`         | The CloudFormation stack name for deploying The S3 Events Bucket                                               |
-| `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                                                         |
-| `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                                           |
-| `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                                             |
-| `export GITHUB_AUTHORIZED_SENDERS="..."`    | CSV List of supported sender login values                                                                      |
-| `export ROUTE53_PUBLIC_ZONEID="..."`        | The Route 53 Hosted Zone ID of the Public DNS Domain                                                           |
-| `export ROUTE53_PUBLIC_DNSNAME="..."`       | The Route 53 Hosted Public DNS Domain Name                                                                     |
-| `export EMPLOYEE_1_EMAIL="..."`             | A valid email address of a dummy employee (expect actual e-mails to be sent here)                              |
-| `export S3_EVENTS_BUCKET_NAME="..."`        | The S3 bucket name for Events                                                                                  |
-| `export S3_EVENT_HANDLER_STACK="..."`       | The CloudFormation stack name for deploying The S3 Event Lambda Handler Stack                                  |
-| `export LINK_CARD_TOPIC_STACK="..."`        | The CloudFormation stack name for deploying The SNS Topic for handling access card linking to employee events  |
-| `export LINK_CARD_QUEUE_STACK="..."`        | The CloudFormation stack name for deploying The SQS Queue for handling access card linking to employee events  |
+| Environment Variable Example                | Description                                                                                                          |
+|---------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| `export AWS_PROFILE="..."`                  | The AWS Credentials Profile to use                                                                                   |
+| `export AWS_REGION="..."`                   | The AWS Region to deploy resources to                                                                                |
+| `export PARAMETERS_FILE="..."`              | The file containing the stack parameters                                                                             |
+| `export DYNAMODB_STACK_NAME="..."`          | The CloudFormation stack name for deploying the DynamoDB Table                                                       |
+| `export LAMBDA_STACK_NAME="..."`            | The CloudFormation stack name for deploying Lambda Functions                                                         |
+| `export VPC_STACK_NAME="..."`               | The CloudFormation stack name for deploying the VPC resources                                                        |
+| `export NFS_STACK_NAME="..."`               | The CloudFormation stack name for deploying a FSX Filesystem                                                         |
+| `export DNS_STACK_NAME="..."`               | The CloudFormation stack name for deploying DNS and ACM                                                              |
+| `export PROXY_STACK_NAME="..."`             | The CloudFormation stack name for deploying the Proxy server                                                         |
+| `export GITHUB_SECRET_STACK_NAME="..."`     | The CloudFormation stack name for deploying the GitHub SSH Key in Secrets Manager                                    |
+| `export GITHUB_SYNC_STACK_NAME="..."`       | The CloudFormation stack name for deploying the GitHub Sync Resources                                                |
+| `export SSM_VPC_ENDPOINT_STACK_NAME="..."`  | The CloudFormation stack name for deploying The SSM VPC End Point resource                                           |
+| `export WEB_SERVER_STACK_NAME="..."`        | The CloudFormation stack name for deploying The Web Server and API Gateway Resources                                 |
+| `export COGNITO_STACK_NAME="..."`           | The CloudFormation stack name for deploying The employee Cognito Pool                                                |
+| `export WEBAPI_STACK_NAME="..."`            | The CloudFormation stack name for deploying The Website API Resources                                                |
+| `export WEBAPI_LAMBDA_STACK_NAME="..."`     | The CloudFormation stack name for deploying The Website API Resources - Lambda Functions                             |
+| `export WEBAPI_ROUTES_1_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations                      |
+| `export WEBAPI_ROUTES_2_STACK_NAME="..."`   | The CloudFormation stack name for deploying The Website API Resources - Routes and Integrations                      |
+| `export WEBAPI_DEPLOYMENT_STACK_NAME="..."` | The CloudFormation stack name for deploying The Website API Resources - Deployment and DNS                           |
+| `export S3_EVENTS_STACK_NAME="..."`         | The CloudFormation stack name for deploying The S3 Events Bucket                                                     |
+| `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                                                               |
+| `export EC2_KEYPAIR_KEY_NAME="..."`         | A pre-existing EC2 Key Pair Key Name                                                                                 |
+| `export SUPPORTED_REPOSITORIES="..."`       | CSV List of supported repositories                                                                                   |
+| `export GITHUB_AUTHORIZED_SENDERS="..."`    | CSV List of supported sender login values                                                                            |
+| `export ROUTE53_PUBLIC_ZONEID="..."`        | The Route 53 Hosted Zone ID of the Public DNS Domain                                                                 |
+| `export ROUTE53_PUBLIC_DNSNAME="..."`       | The Route 53 Hosted Public DNS Domain Name                                                                           |
+| `export EMPLOYEE_1_EMAIL="..."`             | A valid email address of a dummy employee (expect actual e-mails to be sent here)                                    |
+| `export S3_EVENTS_BUCKET_NAME="..."`        | The S3 bucket name for Events                                                                                        |
+| `export S3_EVENT_HANDLER_STACK="..."`       | The CloudFormation stack name for deploying The S3 Event Lambda Handler Stack                                        |
+| `export LINK_CARD_TOPIC_STACK="..."`        | The CloudFormation stack name for deploying The SNS Topic for handling access card linking to employee events        |
+| `export LINK_CARD_QUEUE_STACK="..."`        | The CloudFormation stack name for deploying The SQS Queue for handling access card linking to employee events        |
+| `export LINK_CARD_LAMBDA_STACK="..."`       | The CloudFormation stack name for deploying The Lambda Function for handling access card linking to employee events  |
+| `export LINK_CARD_LAMBDA_NAME="..."`        | The file name portion of the Lambda function. The source directory, ZIP file etc. will derive from this value        |
 
 Some of these variables, like 
 
@@ -724,6 +726,11 @@ aws cloudformation deploy \
     --parameter-overrides QueueNameParam="LinkAccessCardEvent" \
         SubscribedSnsTopicStackName="$LINK_CARD_TOPIC_STACK" \
     --capabilities CAPABILITY_NAMED_IAM
+
+export LINK_CARD_LAMBDA_NAME="event_processor_link_access_card_to_employee"
+rm -vf labs/lab3-non-kinesis-example/lambda_functions/$LINK_CARD_LAMBDA_NAME/$LINK_CARD_LAMBDA_NAME.zip
+cd labs/lab3-non-kinesis-example/lambda_functions/$LINK_CARD_LAMBDA_NAME/ && zip $LINK_CARD_LAMBDA_NAME.zip $LINK_CARD_LAMBDA_NAME.py  && cd $OLDPWD 
+aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/$LINK_CARD_LAMBDA_NAME/$LINK_CARD_LAMBDA_NAME.zip s3://$ARTIFACT_S3_BUCKET_NAME/$LINK_CARD_LAMBDA_NAME.zip
 ```
 
 When an object is placed in the S3 bucket, the following SQS message is received in the lambda `event` (showing JSON):
