@@ -85,8 +85,8 @@ Resources:
           numRetries: 20
           minDelayTarget: 10
           maxDelayTarget: 60
-          numMinDelayRetries: 3
-          numMaxDelayRetries: 20
+          numMinDelayRetries: 20
+          numMaxDelayRetries: 40
           numNoDelayRetries: 0
           backoffFunction: linear
       Endpoint:
