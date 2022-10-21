@@ -82,9 +82,9 @@ Resources:
     Properties: 
       DeliveryPolicy:
         healthyRetryPolicy:
-          numRetries: 100
+          numRetries: 20
           minDelayTarget: 10
-          maxDelayTarget: 300
+          maxDelayTarget: 60
           numMinDelayRetries: 3
           numMaxDelayRetries: 20
           numNoDelayRetries: 0
