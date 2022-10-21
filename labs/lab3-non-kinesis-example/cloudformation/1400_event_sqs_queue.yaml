@@ -77,6 +77,26 @@ Resources:
       Queues:
       - Ref: EventQueue
 
+  EventSnsTopicSubscription:
+    Type: AWS::SNS::Subscription
+    Properties: 
+      DeliveryPolicy:
+        healthyRetryPolicy:
+          numRetries: 100
+          minDelayTarget: 10
+          maxDelayTarget: 600
+          numMinDelayRetries: 3
+          numMaxDelayRetries: 20
+          numNoDelayRetries: 0
+          backoffFunction: linear
+      Endpoint:
+        Fn::GetAtt:
+        - EventQueue
+        - Arn
+      Protocol: "sqs"
+      RawMessageDelivery: true
+      TopicArn:
+        Fn::ImportValue: !Sub "${SubscribedSnsTopicStackName}-EventSnsTopicArn"
 
 Outputs:
 
