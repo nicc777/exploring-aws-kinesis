@@ -78,13 +78,25 @@ Resources:
       - Ref: EventQueue
 
 
-# Outputs:
+Outputs:
 
-#   EventSnsTopicName:
-#     Description: "EventSnsTopic Name"
-#     Value: !GetAtt EventSnsTopic.TopicName
-#     Export:
-#       Name: !Sub "${AWS::StackName}-EventSnsTopicName"
+  EventQueueName:
+    Description: "EventQueue Name"
+    Value: !GetAtt EventQueue.QueueName
+    Export:
+      Name: !Sub "${AWS::StackName}-EventQueueName"
+
+  EventQueueArn:
+    Description: "EventQueue Arn"
+    Value: !GetAtt EventQueue.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-EventQueueArn"
+
+  EventQueueQueueUrl:
+    Description: "EventQueue QueueUrl"
+    Value: !GetAtt EventQueue.QueueUrl
+    Export:
+      Name: !Sub "${AWS::StackName}-EventQueueQueueUrl"
 
 
 
