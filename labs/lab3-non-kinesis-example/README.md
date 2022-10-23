@@ -731,6 +731,16 @@ export LINK_CARD_LAMBDA_NAME="event_processor_link_access_card_to_employee"
 rm -vf labs/lab3-non-kinesis-example/lambda_functions/$LINK_CARD_LAMBDA_NAME/$LINK_CARD_LAMBDA_NAME.zip
 cd labs/lab3-non-kinesis-example/lambda_functions/$LINK_CARD_LAMBDA_NAME/ && zip $LINK_CARD_LAMBDA_NAME.zip $LINK_CARD_LAMBDA_NAME.py  && cd $OLDPWD 
 aws s3 cp labs/lab3-non-kinesis-example/lambda_functions/$LINK_CARD_LAMBDA_NAME/$LINK_CARD_LAMBDA_NAME.zip s3://$ARTIFACT_S3_BUCKET_NAME/$LINK_CARD_LAMBDA_NAME.zip
+
+aws cloudformation deploy \
+    --stack-name $LINK_CARD_LAMBDA_STACK \
+    --template-file labs/lab3-non-kinesis-example/cloudformation/1500_event_lambda_function.yaml \
+    --parameter-overrides LambdaFunctionNameParam="Lab3EventProcessorLinkAccessCardToEmployee" \
+        S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
+        EventSqsQueueStackName="$LINK_CARD_QUEUE_STACK" \
+        LambdaFunctionSourceFileName="$LINK_CARD_LAMBDA_NAME" \
+        DynamoDbStackName="$DYNAMODB_STACK_NAME" \
+    --capabilities CAPABILITY_NAMED_IAM
 ```
 
 When an object is placed in the S3 bucket, the following SQS message is received in the lambda `event` (showing JSON):
