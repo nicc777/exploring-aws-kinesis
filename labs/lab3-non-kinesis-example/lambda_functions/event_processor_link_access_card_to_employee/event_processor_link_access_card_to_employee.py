@@ -112,6 +112,40 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 ###                                                                         ###
 ###############################################################################
 
+
+def process_event_record_body(event_data: dict, logger=get_logger()):
+    logger.info('Processing event_data={}'.format(event_data))
+    # TODO complete
+
+
+def extract_event_record(event_record, logger=get_logger())->dict:
+    try:        
+        event_data = json.loads(event_record['body'])
+        debug_log(message='event_data={}', variable_as_list=[event_data,], logger=logger)
+        return event_data
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return None
+
+
+def process_events(event: str, logger=get_logger()):
+    if event is None:
+        logger.error('event was None')
+        return
+    if isinstance(event, dict) is False:
+        logger.error('event expected to be a dict but was {}'.format(type(event)))
+        return
+    try:
+        for event_record in event['Records']:
+            logger.info('Processing event_record={}'.format(event_record))
+            event_data = extract_event_record(event_record=event_record, logger=logger)
+            if event_data is not None:
+                process_event_record_body(event_data=event_data, logger=logger)
+            else:
+                logger.error('event_data was None - cannot process this record')
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
     
 def handler(
     event,
