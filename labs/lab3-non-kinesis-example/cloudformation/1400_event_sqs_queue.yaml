@@ -56,7 +56,7 @@ Resources:
       RedrivePolicy:
         deadLetterTargetArn : !GetAtt EventDeadLetterQueue.Arn
         maxReceiveCount : 3
-      VisibilityTimeout: 60
+      VisibilityTimeout: 300
 
   SnsToSqsPolicy:
     Type: AWS::SQS::QueuePolicy
