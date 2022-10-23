@@ -111,6 +111,9 @@ Resources:
     Properties: 
       Architectures: 
       - "arm64"
+      Environment:
+        Variables: 
+          DEBUG: "1"
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: !Sub "${LambdaFunctionSourceFileName}.zip"
