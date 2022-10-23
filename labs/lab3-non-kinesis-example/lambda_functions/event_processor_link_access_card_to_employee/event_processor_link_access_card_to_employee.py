@@ -114,7 +114,37 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 
 
 def process_event_record_body(event_data: dict, logger=get_logger()):
+    """
+        Example event_data dict:
+
+            {
+                "EmployeeId": "10000000103",
+                "CardId": "10000000189",
+                "CompleteOnboarding": false,
+                "LinkedBy": {
+                    "Username": "username@example.tld",
+                    "CognitoId": "aa77e5bd-244c-4120-b0d0-85b059b5003f"
+                },
+                "LinkedTimestamp": 1665834703,
+                "RequestId": "20837024a2a1a0375c23c3fc427e912ac9c3bd8239d939e0dec4b836633f9eba"
+            }
+    """
     logger.info('Processing event_data={}'.format(event_data))
+
+    # 1) Validate message structure
+
+    # 2) Ensure the LinkedBy identity has sufficient permissions for this actions
+
+    # 3) Ensure card is currently in the correct state
+
+    # 4) Ensure person is currently in correct state
+
+    # 5) DynamoDB - Upsert employee record
+
+    # 6) DynamoDB - Upsert card record ( SK => CARD#STATUS#issued )
+
+    # 7) DynamoDB - Upsert event audit record ( SK => CARD#EVENT )
+
     # TODO complete
 
 
