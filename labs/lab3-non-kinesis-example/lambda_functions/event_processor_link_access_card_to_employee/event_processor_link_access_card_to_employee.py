@@ -118,7 +118,7 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     # TODO complete
 
 
-def extract_event_record(event_record, logger=get_logger())->dict:
+def extract_event_record(event_record: str, logger=get_logger())->dict:
     try:        
         event_data = json.loads(event_record['body'])
         debug_log(message='event_data={}', variable_as_list=[event_data,], logger=logger)
@@ -128,7 +128,7 @@ def extract_event_record(event_record, logger=get_logger())->dict:
     return None
 
 
-def process_events(event: str, logger=get_logger()):
+def process_events(event: dict, logger=get_logger()):
     if event is None:
         logger.error('event was None')
         return
@@ -159,6 +159,8 @@ def handler(
         logger  = get_logger(level=logging.DEBUG)
     
     debug_log('event={}', variable_as_list=[event], logger=logger)
+
+    process_events(event=event, logger=logger)
     
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
 
