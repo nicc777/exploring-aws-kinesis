@@ -108,7 +108,7 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 
 ###############################################################################
 ###                                                                         ###
-###                     H E L P E R    F U N C T I O N S                    ###
+###                 V A L I D A T I O N    F U N C T I O N S                ###
 ###                                                                         ###
 ###############################################################################
 
