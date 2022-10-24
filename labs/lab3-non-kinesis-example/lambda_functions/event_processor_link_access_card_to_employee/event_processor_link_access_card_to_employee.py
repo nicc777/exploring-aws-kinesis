@@ -108,6 +108,143 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 
 ###############################################################################
 ###                                                                         ###
+###                     H E L P E R    F U N C T I O N S                    ###
+###                                                                         ###
+###############################################################################
+
+
+
+
+
+def validate_employee_id(dirty_data: str, logger=get_logger())->bool:
+    if dirty_data is None:
+        logger.error('EmployeeId is None')
+        return False
+    if isinstance(dirty_data, str) is False:
+        logger.error('EmployeeId is not a str')
+        return False
+    try:                                                        
+        if int(dirty_data) < 10000000000 or int(dirty_data) > 99999999999:
+            logger.error('EmployeeId is out of numerical range')
+            return False
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return True
+
+
+def validate_card_id(dirty_data: str, logger=get_logger())->bool:
+    if dirty_data is None:
+        logger.error('CardId is None')
+        return False
+    if isinstance(dirty_data, str) is False:
+        logger.error('CardId is not a str')
+        return False
+    try:                                                        
+        if int(dirty_data) < 10000000000 or int(dirty_data) > 99999999999:
+            logger.error('CardId is out of numerical range')
+            return False
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return True
+
+
+def validate_complete_onboarding(dirty_data: str, logger=get_logger())->bool:
+    if dirty_data is None:
+        logger.error('CompleteOnboarding is None')
+        return False
+    if isinstance(dirty_data, bool) is False:
+        logger.error('CompleteOnboarding is not a bool')
+        return False
+    return True
+
+
+def validate_linked_by(dirty_data: dict, logger=get_logger())->bool:
+    if dirty_data is None:
+        logger.error('LinkedBy is None')
+        return False
+    if isinstance(dirty_data, dict) is False:
+        logger.error('LinkedBy is not a str')
+        return False
+    try:                                                        
+        if 'Username' not in dirty_data or 'CognitoId' not in dirty_data:
+            logger.error('LinkedBy does not contain expected keys Username and/or CognitoId')
+            return False
+
+        if dirty_data['Username'] is None:
+            logger.error('LinkedBy Username is None')
+            return False
+        if isinstance(dirty_data['Username'], str) is False:
+            logger.error('LinkedBy Username must be a str')
+            return False
+        if len(dirty_data['Username']) < 12 or len(dirty_data['Username']) > 128:
+            logger.error('LinkedBy Username invalid length')
+            return False
+
+        if dirty_data['CognitoId'] is None:
+            logger.error('LinkedBy CognitoId is None')
+            return False
+        if isinstance(dirty_data['CognitoId'], str) is False:
+            logger.error('LinkedBy CognitoId must be a str')
+            return False
+        if len(dirty_data['CognitoId']) < 12 or len(dirty_data['CognitoId']) > 128:
+            logger.error('LinkedBy CognitoId invalid length')
+            return False
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return True
+
+
+def validate_linked_timestamp(dirty_data: str, logger=get_logger())->bool:
+    if dirty_data is None:
+        logger.error('LinkedTimestamp is None')
+        return False
+    if isinstance(dirty_data, int) is False:
+        logger.error('LinkedTimestamp is not a bool')
+        return False
+    if dirty_data < 0:
+        logger.error('LinkedTimestamp is not a positive integer')
+        return False
+    return True
+
+
+def validate_request_id(dirty_data: str, logger=get_logger())->bool:
+    if dirty_data is None:
+        logger.error('RequestId is None')
+        return False
+    if isinstance(dirty_data, str) is False:
+        logger.error('RequestId is not a str')
+        return False
+    if len(dirty_data) < 10 or len(dirty_data) > 256:
+        logger.error('RequestId invalid length')
+        return False
+    return True
+
+
+def validate_record_structure_and_data(event_data: dict, logger=get_logger())->bool:
+    FIELD_VALIDATOR_FUNCTIONS = {
+        'EmployeeId': validate_employee_id, 
+        'CardId': validate_card_id, 
+        'CompleteOnboarding': validate_complete_onboarding, 
+        'LinkedBy': validate_linked_by, 
+        'LinkedTimestamp': validate_linked_timestamp,  
+        'RequestId': validate_request_id,
+    }
+    if event_data is None:
+        logger.error('event_data is None')
+        return False
+    if isinstance(event_data, dict) is False:
+        logger.error('event_data is not a dict')
+        return False
+    for key in ( 'EmployeeId', 'CardId', 'CompleteOnboarding', 'LinkedBy', 'LinkedTimestamp', 'RequestId'):
+        if key not in event_data:
+            logger.error('Expected key "{}" was not present'.format(key))
+            if FIELD_VALIDATOR_FUNCTIONS[key](dirty_data=event_data[key], logger=logger) is False:
+                return False
+    return True
+
+
+###############################################################################
+###                                                                         ###
 ###                         M A I N    H A N D L E R                        ###
 ###                                                                         ###
 ###############################################################################
@@ -132,6 +269,9 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     logger.info('Processing event_data={}'.format(event_data))
 
     # 1) Validate message structure
+    if validate_record_structure_and_data(event_data=event_data, logger=logger) is False:
+        logger.error('Record validation failed. Not processing the record any further.')
+        return
 
     # 2) Ensure the LinkedBy identity has sufficient permissions for this actions
 
