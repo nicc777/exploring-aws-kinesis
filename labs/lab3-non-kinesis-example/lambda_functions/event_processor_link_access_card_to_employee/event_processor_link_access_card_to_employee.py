@@ -113,9 +113,6 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 ###############################################################################
 
 
-
-
-
 def validate_employee_id(dirty_data: str, logger=get_logger())->bool:
     if dirty_data is None:
         logger.error('EmployeeId is None')
