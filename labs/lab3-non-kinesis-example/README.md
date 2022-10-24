@@ -144,6 +144,7 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        | - PersonDepartment                                                                                          |
 |                         |                                                        | - PersonStatus (onboarding|active|inactive)                                                                 |
 |                         |                                                        | - EmployeeId                                                                                                |
+|                         |                                                        | - CognitoSubjectId                                                                                          |
 |                         |                                                        |                                                                                                             |
 |                         | PERSON#PERSONAL_DATA#ACCESS_CARD                       | - CardIssuedTimestamp                                                                                       |
 |                         |                                                        | - CardRevokedTimestamp                                                                                      |
@@ -153,6 +154,12 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        | - CardIdx (<<access card ID>>#<<timestamp>>)                                                                |
 |                         |                                                        | - ScannedBuildingIdx                                                                                        |
 |                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                                                                    |
+|                         |                                                        | - CognitoSubjectId                                                                                          |
+|                         |                                                        |                                                                                                             |
+|                         | PERSON#PERSONAL_DATA#PERMISSIONS                       | - SystemPermissions (CSV string with allowed permissions for system administration, default="basic,public") |
+|                         |                                                        | - CardIdx (<<access card ID>>#<<timestamp>>)                                                                |
+|                         |                                                        | - ScannedBuildingIdx                                                                                        |
+|                         |                                                        | - CognitoSubjectId                                                                                          |
 |                         |                                                        |                                                                                                             |
 | CARD#<<Access card ID>> | CARD#STATUS#issued                                     | - CardIssuedTo (<<employee ID>>)                                                                            |
 |                         |   NOTE: status in ( 'available', 'issued', 'blocked' ) | - CardIssuedBy (<<employee ID>>)                                                                            |
@@ -199,6 +206,7 @@ Global Secondary Indexes:
 | CardIdx                         | PK                                    | CardIssuedIdx          |
 | ScannedBuildingIdx              | PK                                    | OccupancyIdx           |
 | CardEventProcessorLockIdx       | PK                                    | EventProcessorLockId   |
+| CognitoSubjectId                | PK                                    | CognitoIdx             |
 +---------------------------------+---------------------------------------+------------------------+
 ```
 
