@@ -272,6 +272,8 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     if validate_record_structure_and_data(event_data=event_data, logger=logger) is False:
         logger.error('Record validation failed. Not processing the record any further.')
         return
+    else:
+        logger.info('Validation passed')
 
     # 2) Ensure the LinkedBy identity has sufficient permissions for this actions
 
