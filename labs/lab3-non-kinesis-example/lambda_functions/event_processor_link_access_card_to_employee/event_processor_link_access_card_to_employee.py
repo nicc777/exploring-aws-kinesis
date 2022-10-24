@@ -9,6 +9,10 @@ from inspect import getframeinfo, stack
 # Other imports here...
 
 
+# Required user permissions for this function. The "LinkedBy" user must have any one of the permissions listed here
+REQUIRED_PERMISSIONS = ('admin', 'link_access_card_to_employee')
+
+
 def get_logger(level=logging.INFO):
     logger = logging.getLogger()
     for h in logger.handlers:
