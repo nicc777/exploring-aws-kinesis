@@ -310,20 +310,21 @@ def populate_v2(employees: dict, access_cards: dict):
             )
 
         SK = 'PERSON#PERSONAL_DATA#PERMISSIONS'
-        client.put_item(
-            TableName=TABLE_NAME,
-            Item={
-                'PK'                    : { 'S': PK},
-                'SK'                    : { 'S': SK},
-                'CardIdx'               : { 'S': employee_data['CardIdx']},
-                'ScannedBuildingIdx'    : { 'S': 'null'},
-                'CognitoSubjectId'      : { 'S': 'no-login-{}'.format(PK)},
-                'SystemPermissions'     : { 'S': 'basic,public'}
-            },
-            ReturnValues='NONE',
-            ReturnConsumedCapacity='TOTAL',
-            ReturnItemCollectionMetrics='SIZE'
-        )
+        if 'CardIdx' in employee_data and employee_data['PersonStatus'] == 'active':
+            client.put_item(
+                TableName=TABLE_NAME,
+                Item={
+                    'PK'                    : { 'S': PK},
+                    'SK'                    : { 'S': SK},
+                    'CardIdx'               : { 'S': employee_data['CardIdx']},
+                    'ScannedBuildingIdx'    : { 'S': 'null'},
+                    'CognitoSubjectId'      : { 'S': 'no-login-{}'.format(PK)},
+                    'SystemPermissions'     : { 'S': 'basic,public'}
+                },
+                ReturnValues='NONE',
+                ReturnConsumedCapacity='TOTAL',
+                ReturnItemCollectionMetrics='SIZE'
+            )
 
     # Access Cards
     for access_card_id, access_card_data in access_cards.items():
