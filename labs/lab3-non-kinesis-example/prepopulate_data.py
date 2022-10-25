@@ -310,7 +310,7 @@ def populate_v2(employees: dict, access_cards: dict):
             )
 
         if 'CardIdx' in employee_data and employee_data['PersonStatus'] == 'active':
-            SK = 'PERSON#PERSONAL_DATA#PERMISSIONS'
+            SK = 'PERSON#PERSONAL_DATA#PERMISSIONS#{}'.format(now)
             client.put_item(
                 TableName=TABLE_NAME,
                 Item={
