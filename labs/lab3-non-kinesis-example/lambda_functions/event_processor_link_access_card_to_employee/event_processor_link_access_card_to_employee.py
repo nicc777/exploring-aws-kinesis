@@ -251,8 +251,17 @@ def validate_record_structure_and_data(event_data: dict, logger=get_logger())->b
 ###############################################################################
 
 
-def db_get_user_by_cognito_id():
-    pass
+def db_get_user_permissions_by_cognito_id(
+    cognito_id: str,
+    client=get_client(client_name='dynamodb', region='eu-central-1'),
+    logger=get_logger()
+)->tuple:
+    permissions = list()
+    try:
+        pass
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return tuple(permissions)
 
 
 ###############################################################################
@@ -260,6 +269,21 @@ def db_get_user_by_cognito_id():
 ###                         M A I N    H A N D L E R                        ###
 ###                                                                         ###
 ###############################################################################
+
+
+def user_has_permissions(event_data: dict, logger:get_logger())->bool:
+    user_permissions = db_get_user_permissions_by_cognito_id(
+        cognito_id=event_data['LinkedBy']['CognitoId'],
+        logger=logger
+    )
+    permission_match = False
+    for p in user_permissions:
+        if p in REQUIRED_PERMISSIONS:
+            permission_match = True
+    if permission_match is False:
+        logger.error('User {} does not have permission to link access cards'.format(event_data['LinkedBy']['Username']))
+        return False
+    return True
 
 
 def process_event_record_body(event_data: dict, logger=get_logger()):
@@ -288,6 +312,8 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
         logger.info('Validation passed')
 
     # 2) Ensure the LinkedBy identity has sufficient permissions for this actions
+    if user_has_permissions(event_data=event_data, logger=logger) is False:
+        return
 
     # 3) Ensure card is currently in the correct state
 
