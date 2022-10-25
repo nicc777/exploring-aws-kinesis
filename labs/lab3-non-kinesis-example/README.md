@@ -160,6 +160,8 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        | - CardIdx (<<access card ID>>#<<timestamp>>)                                                                |
 |                         |                                                        | - ScannedBuildingIdx                                                                                        |
 |                         |                                                        | - CognitoSubjectId                                                                                          |
+|                         |                                                        | - StartTimestamp                                                                                            |
+|                         |                                                        | - EndTimestamp                                                                                              |
 |                         |                                                        |                                                                                                             |
 | CARD#<<Access card ID>> | CARD#STATUS#issued                                     | - CardIssuedTo (<<employee ID>>)                                                                            |
 |                         |   NOTE: status in ( 'available', 'issued', 'blocked' ) | - CardIssuedBy (<<employee ID>>)                                                                            |
