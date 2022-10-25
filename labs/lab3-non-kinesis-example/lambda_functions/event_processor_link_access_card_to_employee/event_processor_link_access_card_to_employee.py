@@ -258,7 +258,121 @@ def db_get_user_permissions_by_cognito_id(
 )->tuple:
     permissions = list()
     try:
-        pass
+        response = client.query(
+            TableName='lab3-access-card-app',
+            Select='ALL_ATTRIBUTES',
+            Limit=2,
+            ConsistentRead=True,
+            ReturnConsumedCapacity='TOTAL',
+            KeyConditionExpression='PK = :pk and begins_with(SK, :sk)',
+            ExpressionAttributeValues={
+                ':pk': {'S': 'EMP#{}'.format(employee_id), },
+                ':sk': {'S': 'PERSON#PERSONAL_DATA', }
+            }
+        )
+
+        response = client.scan(
+            TableName='string',
+            IndexName='string',
+            AttributesToGet=[
+                'string',
+            ],
+            Limit=123,
+            Select='ALL_ATTRIBUTES'|'ALL_PROJECTED_ATTRIBUTES'|'SPECIFIC_ATTRIBUTES'|'COUNT',
+            ScanFilter={
+                'string': {
+                    'AttributeValueList': [
+                        {
+                            'S': 'string',
+                            'N': 'string',
+                            'B': b'bytes',
+                            'SS': [
+                                'string',
+                            ],
+                            'NS': [
+                                'string',
+                            ],
+                            'BS': [
+                                b'bytes',
+                            ],
+                            'M': {
+                                'string': {'... recursive ...'}
+                            },
+                            'L': [
+                                {'... recursive ...'},
+                            ],
+                            'NULL': True|False,
+                            'BOOL': True|False
+                        },
+                    ],
+                    'ComparisonOperator': 'EQ'|'NE'|'IN'|'LE'|'LT'|'GE'|'GT'|'BETWEEN'|'NOT_NULL'|'NULL'|'CONTAINS'|'NOT_CONTAINS'|'BEGINS_WITH'
+                }
+            },
+            ConditionalOperator='AND'|'OR',
+            ExclusiveStartKey={
+                'string': {
+                    'S': 'string',
+                    'N': 'string',
+                    'B': b'bytes',
+                    'SS': [
+                        'string',
+                    ],
+                    'NS': [
+                        'string',
+                    ],
+                    'BS': [
+                        b'bytes',
+                    ],
+                    'M': {
+                        'string': {'... recursive ...'}
+                    },
+                    'L': [
+                        {'... recursive ...'},
+                    ],
+                    'NULL': True|False,
+                    'BOOL': True|False
+                }
+            },
+            ReturnConsumedCapacity='INDEXES'|'TOTAL'|'NONE',
+            TotalSegments=123,
+            Segment=123,
+            ProjectionExpression='string',
+            FilterExpression='string',
+            ExpressionAttributeNames={
+                'string': 'string'
+            },
+            ExpressionAttributeValues={
+                'string': {
+                    'S': 'string',
+                    'N': 'string',
+                    'B': b'bytes',
+                    'SS': [
+                        'string',
+                    ],
+                    'NS': [
+                        'string',
+                    ],
+                    'BS': [
+                        b'bytes',
+                    ],
+                    'M': {
+                        'string': {'... recursive ...'}
+                    },
+                    'L': [
+                        {'... recursive ...'},
+                    ],
+                    'NULL': True|False,
+                    'BOOL': True|False
+                }
+            },
+            ConsistentRead=True|False
+        )
+
+        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        if 'Items' in response:
+            if len(response['Items']) > 0:
+                for item in response['Items']:
+                    pass
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     return tuple(permissions)

@@ -156,9 +156,7 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                                                                    |
 |                         |                                                        | - CognitoSubjectId                                                                                          |
 |                         |                                                        |                                                                                                             |
-|                         | PERSON#PERSONAL_DATA#PERMISSIONS                       | - SystemPermissions (CSV string with allowed permissions for system administration, default="basic,public") |
-|                         |                                                        | - CardIdx (<<access card ID>>#<<timestamp>>)                                                                |
-|                         |                                                        | - ScannedBuildingIdx                                                                                        |
+|                         | PERSON#PERSONAL_DATA#PERMISSIONS#<<timestamp>>         | - SystemPermissions (CSV string with allowed permissions for system administration, default="basic,public") |
 |                         |                                                        | - CognitoSubjectId                                                                                          |
 |                         |                                                        | - StartTimestamp                                                                                            |
 |                         |                                                        | - EndTimestamp                                                                                              |
@@ -175,7 +173,7 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        | - PersonName                                                                                                |
 |                         |                                                        | - PersonSurname                                                                                             |
 |                         |                                                        |                                                                                                             |
-|                         | CARD#EVENT                                             | - CardIdx (<<access card ID>>#<<timestamp>>)                                                                |
+|                         | CARD#EVENT#<<timestamp>>                               | - CardIdx (<<access card ID>>#<<timestamp>>)                                                                |
 |                         |                                                        | - EventType (LinkCard|ExpireCard|ReactivateCard|MarkCardDestroyed|MarkCardLost|MarkCardStolen|CardScanned)  |
 |                         |                                                        | - EventBucketName                                                                                           |
 |                         |                                                        | - EventBucketKey                                                                                            |
@@ -205,10 +203,10 @@ Global Secondary Indexes:
 +---------------------------------+---------------------------------------|                        |
 | Partition Key (PK)              | Sort Key (ST) Attribute               |                        |
 +---------------------------------+---------------------------------------+------------------------+
-| CardIdx                         | PK                                    | CardIssuedIdx          |
+| CardIdx                         | SK                                    | CardIssuedIdx          |
 | ScannedBuildingIdx              | PK                                    | OccupancyIdx           |
-| CardEventProcessorLockIdx       | PK                                    | EventProcessorLockId   |
-| CognitoSubjectId                | PK                                    | CognitoIdx             |
+| EventProcessorLockId            | SK                                    | EventProcessorLockIdx  |
+| CognitoSubjectId                | SK                                    | CognitoIdx             |
 +---------------------------------+---------------------------------------+------------------------+
 ```
 
