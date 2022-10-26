@@ -269,7 +269,25 @@ TODO
 
 ## Lambda Function(s) for Linking an employee ID, Access Card and Building ID with an initial default building status of `INSIDE`
 
-TODO
+The implementation of the final linking is done in `labs/lab3-non-kinesis-example/lambda_functions/event_processor_link_access_card_to_employee/event_processor_link_access_card_to_employee.py`.
+
+The basic structure of the event:
+
+```json
+{
+    "EmployeeId": "10000000103",
+    "CardId": "10000000189",
+    "CompleteOnboarding": false,
+    "LinkedBy": {
+        "Username": "username@example.tld",
+        "CognitoId": "aa77e5bd-244c-4120-b0d0-85b059b5003f"
+    },
+    "LinkedTimestamp": 1665834703,
+    "RequestId": "20837024a2a1a0375c23c3fc427e912ac9c3bd8239d939e0dec4b836633f9eba"
+}
+```
+
+TODO - Add the building ID....
 
 ## Lambda Function Deployment
 
