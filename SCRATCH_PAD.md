@@ -33,7 +33,7 @@ I need to add the following attributes in DynamoDB:
 
 ~~Create a new Event Index~~
 
-Add building ID of physically where the employee is when receiving the access card, as the building ID (occupancy) needs to be also updated.
+Add building ID of physically where the employee is when receiving the access card, as the building ID (occupancy) needs to be also updated. In the UI, add the Build ID selection.
 
 > _**2022-10-24**_ - remember to re-create the DynamoDB table, now with permissions, and then also create the cognito stack as well as the rest to activate the initial user. Afterwards, the GitHub integration and web site stacks can be deleted again.
 
