@@ -292,10 +292,10 @@ TODO - Add the building ID....
 
 Values to set (basic also on the example data above):
 
-| Field Name | Value                 | Example Data       |
-|------------|-----------------------|--------------------|
-| `PK`       | `EMP#<<employee ID>>` | `EMP#10000000103`  |
-| `SK`       |                       |                    |
+| Field Name | Value                 | Example Data                         |
+|------------|-----------------------|--------------------------------------|
+| `PK`       | The employee ID       | `EMP#10000000103`                    |
+| `SK`       | The type of record    | `PERSON#PERSONAL_DATA#ACCESS_CARD`   |
 
 
 ## Lambda Function Deployment
