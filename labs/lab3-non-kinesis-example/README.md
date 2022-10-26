@@ -283,11 +283,20 @@ The basic structure of the event:
         "CognitoId": "aa77e5bd-244c-4120-b0d0-85b059b5003f"
     },
     "LinkedTimestamp": 1665834703,
-    "RequestId": "20837024a2a1a0375c23c3fc427e912ac9c3bd8239d939e0dec4b836633f9eba"
+    "RequestId": "20837024a2a1a0375c23c3fc427e912ac9c3bd8239d939e0dec4b836633f9eba",
+    "BuildingId": "building001"
 }
 ```
 
 TODO - Add the building ID....
+
+Values to set (basic also on the example data above):
+
+| Field Name | Value                 | Example Data       |
+|------------|-----------------------|--------------------|
+| `PK`       | `EMP#<<employee ID>>` | `EMP#10000000103`  |
+| `SK`       |                       |                    |
+
 
 ## Lambda Function Deployment
 
