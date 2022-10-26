@@ -154,7 +154,6 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        | - CardIdx (<<access card ID>>#<<timestamp>>)                                                                |
 |                         |                                                        | - ScannedBuildingIdx                                                                                        |
 |                         |                                                        | - ScannedStatus (scanned-in|scanned-out)                                                                    |
-|                         |                                                        | - CognitoSubjectId                                                                                          |
 |                         |                                                        |                                                                                                             |
 |                         | PERSON#PERSONAL_DATA#PERMISSIONS#<<timestamp>>         | - SystemPermissions (CSV string with allowed permissions for system administration, default="basic,public") |
 |                         |                                                        | - CognitoSubjectId                                                                                          |
@@ -282,7 +281,7 @@ The basic structure of the event:
         "Username": "username@example.tld",
         "CognitoId": "aa77e5bd-244c-4120-b0d0-85b059b5003f"
     },
-    "LinkedTimestamp": 1665834703,
+    "LinkedTimestamp": v,
     "RequestId": "20837024a2a1a0375c23c3fc427e912ac9c3bd8239d939e0dec4b836633f9eba",
     "BuildingId": "building001"
 }
@@ -292,10 +291,19 @@ TODO - Add the building ID....
 
 Values to set (basic also on the example data above):
 
-| Field Name | Value                 | Example Data                         |
-|------------|-----------------------|--------------------------------------|
-| `PK`       | The employee ID       | `EMP#10000000103`                    |
-| `SK`       | The type of record    | `PERSON#PERSONAL_DATA#ACCESS_CARD`   |
+| Field Name             | Value                                                    | Example Data                         |
+|------------------------|----------------------------------------------------------|--------------------------------------|
+| `PK`                   | The employee ID                                          | `EMP#10000000103`                    |
+| `SK`                   | The type of record                                       | `PERSON#PERSONAL_DATA#ACCESS_CARD`   |
+| `CardIssuedTimestamp`  | The event timestamp                                      | `1665834703`                         |
+| `CardRevokedTimestamp` | Not Required                                             | `-1`                                 |
+| `CardStatus`           | One of issued|lost|stolen|expired|revoked                | `issued`                             |
+| `CardIssuedTo`         | An employee ID                                           | `10000000103`                        |
+| `CardIssuedBy`         | An employee ID, lookup from `CognitoId`                  | `10000000021`                        |
+| `CardIdx`              | The Access Card ID                                       | `10000000189`                        |
+| `ScannedBuildingIdx`   | The building in which the employee now receives the card | `building001`                        |
+| `ScannedStatus`        | One of scanned-in|scanned-out                            | `scanned-in`                         |
+
 
 
 ## Lambda Function Deployment
