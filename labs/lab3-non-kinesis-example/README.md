@@ -312,7 +312,7 @@ If the value of `CompleteOnboarding` is `True`, the `SK` of `PERSON#PERSONAL_DAT
 | `SK`                   | The type of record                  | `PERSON#PERSONAL_DATA` | Filter            |
 | `PersonStatus`         | One of (onboarding|active|inactive) | `active`               | Field to Update   |
 
-Other fields retain their value.
+Other fields retain their values.
 
 ## Lambda Function Deployment
 
