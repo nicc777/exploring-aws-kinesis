@@ -304,7 +304,15 @@ Values to set (basic also on the example data above):
 | `ScannedBuildingIdx`   | The building in which the employee now receives the card | `building001`                        |
 | `ScannedStatus`        | One of scanned-in|scanned-out                            | `scanned-in`                         |
 
+If the value of `CompleteOnboarding` is `True`, the `SK` of `PERSON#PERSONAL_DATA` for the employee must also be updated:
 
+| Field Name             | Value                               | Example Data           | Update Field Role |
+|------------------------|-------------------------------------|------------------------|-------------------|
+| `PK`                   | The employee ID                     | `EMP#10000000103`      | Filter            |
+| `SK`                   | The type of record                  | `PERSON#PERSONAL_DATA` | Filter            |
+| `PersonStatus`         | One of (onboarding|active|inactive) | `active`               | Field to Update   |
+
+Other fields retain their value.
 
 ## Lambda Function Deployment
 
