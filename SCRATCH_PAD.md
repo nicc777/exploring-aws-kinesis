@@ -60,3 +60,4 @@ API Entry point and validation
 * Validate the access card can be issued (based on several rules - see below)
 * Create a command event and put the object in the S3 event bucket
 
+TODO Nothing else yet...
