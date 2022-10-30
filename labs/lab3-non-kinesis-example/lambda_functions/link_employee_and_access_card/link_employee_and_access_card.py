@@ -356,6 +356,7 @@ def handler(
     s3_body['LinkedBy'] = requestor_data
     s3_body['LinkedTimestamp'] = create_timestamp
     s3_body['RequestId'] = request_id
+    s3_body['Campus'] = body_data['Campus']
 
     # Does this event already exist?
     check_event = read_s3_event(
