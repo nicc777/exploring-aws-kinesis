@@ -221,6 +221,19 @@ def validate_request_id(dirty_data: str, logger=get_logger())->bool:
     return True
 
 
+def validate_campus(dirty_data: str, logger=get_logger())->bool:
+    if dirty_data is None:
+        logger.error('RequestId is None')
+        return False
+    if isinstance(dirty_data, str) is False:
+        logger.error('RequestId is not a str')
+        return False
+    if len(dirty_data) < 3 or len(dirty_data) > 128:
+        logger.error('RequestId invalid length')
+        return False
+    return True
+
+
 def validate_record_structure_and_data(event_data: dict, logger=get_logger())->bool:
     FIELD_VALIDATOR_FUNCTIONS = {
         'EmployeeId': validate_employee_id, 
@@ -229,6 +242,7 @@ def validate_record_structure_and_data(event_data: dict, logger=get_logger())->b
         'LinkedBy': validate_linked_by, 
         'LinkedTimestamp': validate_linked_timestamp,  
         'RequestId': validate_request_id,
+        'Campus': validate_campus,
     }
     if event_data is None:
         logger.error('event_data is None')
@@ -413,7 +427,8 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
                     "CognitoId": "aa77e5bd-244c-4120-b0d0-85b059b5003f"
                 },
                 "LinkedTimestamp": 1665834703,
-                "RequestId": "20837024a2a1a0375c23c3fc427e912ac9c3bd8239d939e0dec4b836633f9eba"
+                "RequestId": "20837024a2a1a0375c23c3fc427e912ac9c3bd8239d939e0dec4b836633f9eba",
+                "Campus": "campus02"
             }
     """
     logger.info('Processing event_data={}'.format(event_data))
