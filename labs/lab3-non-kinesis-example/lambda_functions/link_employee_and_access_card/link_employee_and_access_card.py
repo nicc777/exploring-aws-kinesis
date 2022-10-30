@@ -492,9 +492,19 @@ if __name__ == '__main__':
         "pathParameters": {
             "employeeId": "100000000003"
         },
-        "body": '{{"CardId": "{}", "CompleteOnboarding": false, "LinkedBy": "TEST"}}'.format(card_id),
+        "body": '{{"CardId": "{}", "CompleteOnboarding": false, "LinkedBy": "TEST", "Campus": "campus01"}}'.format(card_id),
         "isBase64Encoded": False
     }
+
+    """
+        Revised body:
+            {
+                "CardId":"10000000189",
+                "CompleteOnboarding":true,
+                "LinkedBy":"100000000021",
+                "Campus":"campus02"
+            }
+    """
 
     result1 = handler(event=event, context=None, logger=logger, run_from_main=True)
     print('------------------------------------------------------------------------------------------------------------------------')
