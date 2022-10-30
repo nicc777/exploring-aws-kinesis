@@ -252,6 +252,15 @@ def _validate_basic_request_data_is_valid(employee_id: str, body_data: dict, log
         if isinstance(body_data['CompleteOnboarding'], bool) is False:
             logger.error('CompleteOnboarding basic validation failed')
             return False
+        if 'Campus' not in body_data:
+            logger.error('Campus not found in request body')
+            return False
+        if isinstance(body_data['Campus'], str) is False:
+            logger.error('Campus value must be a string')
+            return False
+        if len(body_data['Campus']) < 3 or len(body_data['Campus']) > 128:
+            logger.error('Campus value has unexpected length')
+            return False
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
         return False
