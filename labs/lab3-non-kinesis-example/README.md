@@ -287,8 +287,6 @@ The basic structure of the event:
 }
 ```
 
-TODO - Add the building ID....
-
 Values to set (basic also on the example data above):
 
 | Field Name             | Value                                                    | Example Data                         |
