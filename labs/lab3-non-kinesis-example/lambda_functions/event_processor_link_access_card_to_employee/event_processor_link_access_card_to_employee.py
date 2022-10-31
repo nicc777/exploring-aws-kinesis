@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 import sys
 from inspect import getframeinfo, stack
+from decimal import Decimal
 # Other imports here...
 
 
@@ -258,6 +259,36 @@ def validate_record_structure_and_data(event_data: dict, logger=get_logger())->b
     return True
 
 
+def process_permission_record_and_extract_permissions_if_current_at_the_time_of_event(permission_record: dict, event_timestamp: Decimal, logger=get_logger())->list:
+    """
+        permission_record={
+            'PK'                    : 'EMP#100000000021',
+            'SK'                    : 'PERSON#PERSONAL_DATA#PERMISSIONS#1666679226',
+            'CardIdx'               : '100000000087',
+            'CognitoSubjectId'      : 'bbba18b6-7c46-4652-a2a4-f7b014af42ce',
+            'EndTimestamp'          : '-1',                                             # Decimal
+            'ScannedBuildingIdx'    : '???',
+            'StartTimestamp'        : '1234567890',                                     # Decimal
+            'SystemPermissions'     : 'aa,bb,cc,...',
+        }
+    """
+    permissions = list()
+    try:
+        record_is_active_at_time_of_event = False
+        if permission_record['EndTimestamp'].compare(Decimal('-1')) == Decimal(0):
+            # Still active permission - check StartTimestamp < event_timestamp
+            if permission_record['StartTimestamp'].compare(event_timestamp) == Decimal(-1):
+                record_is_active_at_time_of_event = True
+        elif permission_record['EndTimestamp'].compare(Decimal('-1')) != Decimal(0):
+            # No longer active permission - check StartTimestamp < event_timestamp AND EndTimestamp > event_timestamp
+            if permission_record['StartTimestamp'].compare(event_timestamp) == Decimal(-1) and permission_record['EndTimestamp'].compare(event_timestamp) == Decimal(1):
+                record_is_active_at_time_of_event = True
+        if record_is_active_at_time_of_event is True:
+            permissions = permission_record['SystemPermissions']
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return permissions
+
 ###############################################################################
 ###                                                                         ###
 ###                      A W S    I N T E G R A T I O N                     ###
@@ -268,125 +299,66 @@ def validate_record_structure_and_data(event_data: dict, logger=get_logger())->b
 def db_get_user_permissions_by_cognito_id(
     cognito_id: str,
     client=get_client(client_name='dynamodb', region='eu-central-1'),
-    logger=get_logger()
+    logger=get_logger(),
+    next_token: dict=None
 )->tuple:
     permissions = list()
     try:
-        response = client.query(
-            TableName='lab3-access-card-app',
-            Select='ALL_ATTRIBUTES',
-            Limit=2,
-            ConsistentRead=True,
-            ReturnConsumedCapacity='TOTAL',
-            KeyConditionExpression='PK = :pk and begins_with(SK, :sk)',
-            ExpressionAttributeValues={
-                ':pk': {'S': 'EMP#{}'.format(employee_id), },
-                ':sk': {'S': 'PERSON#PERSONAL_DATA', }
-            }
-        )
-
-        response = client.scan(
-            TableName='string',
-            IndexName='string',
-            AttributesToGet=[
-                'string',
-            ],
-            Limit=123,
-            Select='ALL_ATTRIBUTES'|'ALL_PROJECTED_ATTRIBUTES'|'SPECIFIC_ATTRIBUTES'|'COUNT',
-            ScanFilter={
-                'string': {
-                    'AttributeValueList': [
-                        {
-                            'S': 'string',
-                            'N': 'string',
-                            'B': b'bytes',
-                            'SS': [
-                                'string',
-                            ],
-                            'NS': [
-                                'string',
-                            ],
-                            'BS': [
-                                b'bytes',
-                            ],
-                            'M': {
-                                'string': {'... recursive ...'}
-                            },
-                            'L': [
-                                {'... recursive ...'},
-                            ],
-                            'NULL': True|False,
-                            'BOOL': True|False
-                        },
-                    ],
-                    'ComparisonOperator': 'EQ'|'NE'|'IN'|'LE'|'LT'|'GE'|'GT'|'BETWEEN'|'NOT_NULL'|'NULL'|'CONTAINS'|'NOT_CONTAINS'|'BEGINS_WITH'
-                }
-            },
-            ConditionalOperator='AND'|'OR',
-            ExclusiveStartKey={
-                'string': {
-                    'S': 'string',
-                    'N': 'string',
-                    'B': b'bytes',
-                    'SS': [
-                        'string',
-                    ],
-                    'NS': [
-                        'string',
-                    ],
-                    'BS': [
-                        b'bytes',
-                    ],
-                    'M': {
-                        'string': {'... recursive ...'}
+        response = dict()
+        if next_token is not None:
+            response = client.query(
+                TableName='lab3-access-card-app',
+                IndexName='CognitoIdx',
+                Select='ALL_ATTRIBUTES',
+                Limit=10,
+                ConsistentRead=False,
+                KeyConditions={
+                    'CognitoSubjectId': {
+                        'AttributeValueList': [{'S': '{}'.format(cognito_id),},],
+                        'ComparisonOperator': 'EQ'
                     },
-                    'L': [
-                        {'... recursive ...'},
-                    ],
-                    'NULL': True|False,
-                    'BOOL': True|False
-                }
-            },
-            ReturnConsumedCapacity='INDEXES'|'TOTAL'|'NONE',
-            TotalSegments=123,
-            Segment=123,
-            ProjectionExpression='string',
-            FilterExpression='string',
-            ExpressionAttributeNames={
-                'string': 'string'
-            },
-            ExpressionAttributeValues={
-                'string': {
-                    'S': 'string',
-                    'N': 'string',
-                    'B': b'bytes',
-                    'SS': [
-                        'string',
-                    ],
-                    'NS': [
-                        'string',
-                    ],
-                    'BS': [
-                        b'bytes',
-                    ],
-                    'M': {
-                        'string': {'... recursive ...'}
+                    'SK': {
+                        'AttributeValueList': [
+                            {'S': 'PERSON#PERSONAL_DATA#PERMISSIONS#',},],
+                        'ComparisonOperator': 'BEGINS_WITH'
+                    }
+                },
+                ExclusiveStartKey=next_token
+            )
+        else:
+            response = client.query(
+                TableName='lab3-access-card-app',
+                IndexName='CognitoIdx',
+                Select='ALL_ATTRIBUTES',
+                Limit=10,
+                ConsistentRead=False,
+                KeyConditions={
+                    'CognitoSubjectId': {
+                        'AttributeValueList': [{'S': '{}'.format(cognito_id),},],
+                        'ComparisonOperator': 'EQ'
                     },
-                    'L': [
-                        {'... recursive ...'},
-                    ],
-                    'NULL': True|False,
-                    'BOOL': True|False
+                    'SK': {
+                        'AttributeValueList': [
+                            {'S': 'PERSON#PERSONAL_DATA#PERMISSIONS#',},],
+                        'ComparisonOperator': 'BEGINS_WITH'
+                    }
                 }
-            },
-            ConsistentRead=True|False
-        )
+            )
 
         logger.debug('response={}'.format(json.dumps(response, default=str)))
         if 'Items' in response:
             if len(response['Items']) > 0:
                 for item in response['Items']:
-                    pass
+                    record = dict()
+                    for key, data in item.items():
+                        for data_key, data_value in data.items():
+                            if data_key.lower() == 's':
+                                record[key] = data_value
+                            if data_key.lower() == 'n':
+                                record[key] = Decimal(data_value)
+                            if data_key.lower() == 'bool':
+                                record[key] = data_value
+                    permissions.append(record)
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     return tuple(permissions)
@@ -399,19 +371,22 @@ def db_get_user_permissions_by_cognito_id(
 ###############################################################################
 
 
-def user_has_permissions(event_data: dict, logger:get_logger())->bool:
-    user_permissions = db_get_user_permissions_by_cognito_id(
+def user_has_permissions(event_data: dict, event_timestamp: Decimal, logger:get_logger())->bool:
+    user_permission_records = db_get_user_permissions_by_cognito_id(
         cognito_id=event_data['LinkedBy']['CognitoId'],
         logger=logger
     )
-    permission_match = False
-    for p in user_permissions:
-        if p in REQUIRED_PERMISSIONS:
-            permission_match = True
-    if permission_match is False:
-        logger.error('User {} does not have permission to link access cards'.format(event_data['LinkedBy']['Username']))
-        return False
-    return True
+    final_active_permissions = list()
+    for permission_record in user_permission_records:
+        active_permissions_from_record = process_permission_record_and_extract_permissions_if_current_at_the_time_of_event(permission_record=permission_record, event_timestamp=event_timestamp, logger=logger)
+        for active_permission in active_permissions_from_record:
+            if active_permission not in final_active_permissions:
+                final_active_permissions.append(active_permission)
+    logger.info('Final active permissions at the time of event: {}'.format(final_active_permissions))
+    for required_permission in REQUIRED_PERMISSIONS:
+        if required_permission in final_active_permissions:
+            return True
+    return False
 
 
 def process_event_record_body(event_data: dict, logger=get_logger()):
@@ -439,9 +414,11 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
         return
     else:
         logger.info('Validation passed')
+    event_timestamp = Decimal(event_data['LinkedTimestamp'])
 
     # 2) Ensure the LinkedBy identity has sufficient permissions for this actions
-    if user_has_permissions(event_data=event_data, logger=logger) is False:
+    if user_has_permissions(event_data=event_data, event_timestamp=event_timestamp, logger=logger) is False:
+        logger.error('Linking user did not have the required permissions at the time of event')
         return
 
     # 3) Ensure card is currently in the correct state
