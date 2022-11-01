@@ -333,19 +333,23 @@ def populate_v2(employees: dict, access_cards: dict):
     for access_card_id, access_card_data in access_cards.items():
         PK = 'CARD#{}'.format(access_card_id)
         if access_card_data['CardIssuedTo'] == 'not-issued':
-            SK = 'CARD#STATUS#available'
+            SK = 'CARD#STATUS'
             client.put_item(
                 TableName=TABLE_NAME,
                 Item={
-                    'PK'                : { 'S': PK},
-                    'SK'                : { 'S': SK},
-                    'LockIdentifier'    : { 'S': 'null'}
+                    'PK'                    : { 'S': PK             },
+                    'SK'                    : { 'S': SK             },
+                    'LockIdentifier'        : { 'S': 'null'         },
+                    'IsAvailableForIssue'   : { 'BOOL': True        },
+                    'CardIssuedTo'          : { 'S': 'no-one'       },
+                    'CardIssuedBy'          : { 'S': 'not-issued'   },
+                    'CardIssuedTimestamp'   : { 'N': '-1'           }
                 },
                 ReturnValues='NONE',
                 ReturnConsumedCapacity='TOTAL',
                 ReturnItemCollectionMetrics='SIZE'
             )
-            SK = 'CARD#EVENT'
+            SK = 'CARD#EVENT#{}'.format(now)
             lock_id = '{}'.format(hashlib.sha256('{}'.format(access_card_id).encode('utf-8')).hexdigest())
             client.put_item(
                 TableName=TABLE_NAME,
@@ -376,22 +380,23 @@ def populate_v2(employees: dict, access_cards: dict):
                 ReturnItemCollectionMetrics='SIZE'
             )
         else:
-            SK = 'CARD#STATUS#issued'
+            SK = 'CARD#STATUS'
             client.put_item(
                 TableName=TABLE_NAME,
                 Item={
-                    'PK'                    : { 'S': PK},
-                    'SK'                    : { 'S': SK},
-                    'CardIssuedTo'          : { 'S': access_card_data['CardIssuedTo']},
-                    'CardIssuedBy'          : { 'S': 'SYSTEM'},
-                    'CardIssuedTimestamp'   : { 'N': '{}'.format(access_card_data['CardIssuedTimestamp'])},
-                    'LockIdentifier'        : { 'S': 'null'}
+                    'PK'                    : { 'S': PK                                                     },
+                    'SK'                    : { 'S': SK                                                     },
+                    'CardIssuedTo'          : { 'S': access_card_data['CardIssuedTo']                       },
+                    'CardIssuedBy'          : { 'S': 'SYSTEM'                                               },
+                    'CardIssuedTimestamp'   : { 'N': '{}'.format(access_card_data['CardIssuedTimestamp'])   },
+                    'LockIdentifier'        : { 'S': 'null'                                                 },
+                    'IsAvailableForIssue'   : { 'BOOL': False                                               }
                 },
                 ReturnValues='NONE',
                 ReturnConsumedCapacity='TOTAL',
                 ReturnItemCollectionMetrics='SIZE'
             )
-            SK = 'CARD#EVENT'
+            SK = 'CARD#EVENT#{}'.format(now)
             lock_id = '{}'.format(hashlib.sha256('{}'.format(access_card_id).encode('utf-8')).hexdigest())
             description = 'Physical Card Added to Pool and Issued to {}'.format(access_card_data['CardIssuedTo'])
             client.put_item(
@@ -421,14 +426,6 @@ def populate_v2(employees: dict, access_cards: dict):
                 ReturnValues='NONE',
                 ReturnConsumedCapacity='TOTAL',
                 ReturnItemCollectionMetrics='SIZE'
-            )
-            SK = 'CARD#STATUS#available'
-            client.delete_item(
-                TableName=TABLE_NAME,
-                Key={
-                    'PK'    : { 'S': PK},
-                    'SK'    : { 'S': SK}
-                }
             )
 
 
