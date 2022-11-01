@@ -280,6 +280,7 @@ def populate_v2(employees: dict, access_cards: dict):
             ReturnConsumedCapacity='TOTAL',
             ReturnItemCollectionMetrics='SIZE'
         )
+        print('Created person {}'.format(employee_id))
 
         # Issues Access Card
         if employee_data['PersonStatus'] == 'active':
@@ -308,6 +309,7 @@ def populate_v2(employees: dict, access_cards: dict):
                 ReturnConsumedCapacity='TOTAL',
                 ReturnItemCollectionMetrics='SIZE'
             )
+            print('   Person {} is now ACTIVE'.format(employee_id))
 
         if 'CardIdx' in employee_data and employee_data['PersonStatus'] == 'active':
             SK = 'PERSON#PERSONAL_DATA#PERMISSIONS#{}'.format(now)
@@ -327,6 +329,7 @@ def populate_v2(employees: dict, access_cards: dict):
                 ReturnConsumedCapacity='TOTAL',
                 ReturnItemCollectionMetrics='SIZE'
             )
+            print('   Created permissions for person {}'.format(employee_id))
             
 
     # Access Cards
@@ -337,18 +340,20 @@ def populate_v2(employees: dict, access_cards: dict):
             client.put_item(
                 TableName=TABLE_NAME,
                 Item={
-                    'PK'                    : { 'S': PK             },
-                    'SK'                    : { 'S': SK             },
-                    'LockIdentifier'        : { 'S': 'null'         },
-                    'IsAvailableForIssue'   : { 'BOOL': True        },
-                    'CardIssuedTo'          : { 'S': 'no-one'       },
-                    'CardIssuedBy'          : { 'S': 'not-issued'   },
-                    'CardIssuedTimestamp'   : { 'N': '-1'           }
+                    'PK'                    : { 'S': PK                             },
+                    'SK'                    : { 'S': SK                             },
+                    'CardIdx'               : { 'S': '{}'.format(access_card_id)    },
+                    'LockIdentifier'        : { 'S': 'null'                         },
+                    'IsAvailableForIssue'   : { 'BOOL': True                        },
+                    'CardIssuedTo'          : { 'S': 'no-one'                       },
+                    'CardIssuedBy'          : { 'S': 'not-issued'                   },
+                    'CardIssuedTimestamp'   : { 'N': '-1'                           }
                 },
                 ReturnValues='NONE',
                 ReturnConsumedCapacity='TOTAL',
                 ReturnItemCollectionMetrics='SIZE'
             )
+            print('Updated status for card {} to not-issued'.format(access_card_id))
             SK = 'CARD#EVENT#{}'.format(now)
             lock_id = '{}'.format(hashlib.sha256('{}'.format(access_card_id).encode('utf-8')).hexdigest())
             client.put_item(
@@ -379,6 +384,7 @@ def populate_v2(employees: dict, access_cards: dict):
                 ReturnConsumedCapacity='TOTAL',
                 ReturnItemCollectionMetrics='SIZE'
             )
+            print('   Created event for card {}'.format(access_card_id))
         else:
             SK = 'CARD#STATUS'
             client.put_item(
@@ -386,6 +392,7 @@ def populate_v2(employees: dict, access_cards: dict):
                 Item={
                     'PK'                    : { 'S': PK                                                     },
                     'SK'                    : { 'S': SK                                                     },
+                    'CardIdx'               : { 'S': '{}'.format(access_card_id)                            },
                     'CardIssuedTo'          : { 'S': access_card_data['CardIssuedTo']                       },
                     'CardIssuedBy'          : { 'S': 'SYSTEM'                                               },
                     'CardIssuedTimestamp'   : { 'N': '{}'.format(access_card_data['CardIssuedTimestamp'])   },
@@ -396,6 +403,7 @@ def populate_v2(employees: dict, access_cards: dict):
                 ReturnConsumedCapacity='TOTAL',
                 ReturnItemCollectionMetrics='SIZE'
             )
+            print('Updated status for card {} to issued'.format(access_card_id))
             SK = 'CARD#EVENT#{}'.format(now)
             lock_id = '{}'.format(hashlib.sha256('{}'.format(access_card_id).encode('utf-8')).hexdigest())
             description = 'Physical Card Added to Pool and Issued to {}'.format(access_card_data['CardIssuedTo'])
@@ -427,6 +435,7 @@ def populate_v2(employees: dict, access_cards: dict):
                 ReturnConsumedCapacity='TOTAL',
                 ReturnItemCollectionMetrics='SIZE'
             )
+            print('   Created event for card {}'.format(access_card_id))
 
 
 def create_employees(total_qty: int=200, active: int=100, access_cards: dict=copy.deepcopy(create_access_cards()))->tuple:
