@@ -488,6 +488,38 @@ def handler(
 ###############################################################################
 
 
+TEST_EVENTS = {
+    'BasicTest01': {
+        'Records': [
+            {
+                'messageId': 'a6c2cb8a-3bf0-4257-8786-49c684d3040e', 
+                'receiptHandle': 'abc', 
+                'body': '{"EmployeeId": "100000000104", "CardId": "10000000189", "CompleteOnboarding": true, "LinkedBy": {"Username": "nicc777@gmail.com", "CognitoId": "bbba18b6-7c46-4652-a2a4-f7b014af42ce"}, "LinkedTimestamp": 1667149409, "RequestId": "04e0ea3a3ffef1f6c242a284166e707aae2dd573387718e188a32c0f57483f2f", "Campus": "campus02"}', 
+                'attributes': {
+                    'ApproximateReceiveCount': '1', 
+                    'SentTimestamp': '1667297326109', 
+                    'SenderId': 'abc', 
+                    'ApproximateFirstReceiveTimestamp': '1667297326119'
+                }, 
+                'messageAttributes': {
+                    'EventType': {
+                        'stringValue': 'LinkAccessCardToEmployee', 
+                        'stringListValues': [], 
+                        'binaryListValues': [], 
+                        'dataType': 'String'
+                    }
+                }, 
+                'md5OfMessageAttributes': 'cc3477bbe92dc4262d5566531ab0ac7e', 
+                'md5OfBody': '36fde7ecbfcc4c2ab12953d44d8319cc', 
+                'eventSource': 'aws:sqs', 
+                'eventSourceARN': 'arn:aws:sqs:eu-central-1:012345678901:LinkAccessCardEvent', 
+                'awsRegion': 'eu-central-1'
+            }
+        ]
+    }
+}
+
+
 if __name__ == '__main__':
     logger = logging.getLogger("my_lambda")
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(funcName)s:%(lineno)d -  %(levelname)s - %(message)s')
@@ -504,4 +536,4 @@ if __name__ == '__main__':
         logger.setLevel(logging.DEBUG)
     else:    
         logger.setLevel(logging.INFO)
-    handler(event={}, context=None, logger=logger, run_from_main=True)
+    handler(event=TEST_EVENTS['BasicTest01'], context=None, logger=logger, run_from_main=True)
