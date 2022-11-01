@@ -273,6 +273,8 @@ def process_permission_record_and_extract_permissions_if_current_at_the_time_of_
         }
     """
     permissions = list()
+    debug_log(message='permission_record={}', variable_as_list=[permission_record,], logger=logger)
+    debug_log(message='event_timestamp={}', variable_as_list=[event_timestamp,], logger=logger)
     try:
         record_is_active_at_time_of_event = False
         if permission_record['EndTimestamp'].compare(Decimal('-1')) == Decimal(0):
@@ -284,7 +286,7 @@ def process_permission_record_and_extract_permissions_if_current_at_the_time_of_
             if permission_record['StartTimestamp'].compare(event_timestamp) == Decimal(-1) and permission_record['EndTimestamp'].compare(event_timestamp) == Decimal(1):
                 record_is_active_at_time_of_event = True
         if record_is_active_at_time_of_event is True:
-            permissions = permission_record['SystemPermissions']
+            permissions = permission_record['SystemPermissions'].split(',')
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     return permissions
@@ -358,6 +360,7 @@ def db_get_user_permissions_by_cognito_id(
                                 record[key] = Decimal(data_value)
                             if data_key.lower() == 'bool':
                                 record[key] = data_value
+                    debug_log(message='record={}', variable_as_list=[record,], logger=logger)
                     permissions.append(record)
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
@@ -376,6 +379,7 @@ def user_has_permissions(event_data: dict, event_timestamp: Decimal, logger:get_
         cognito_id=event_data['LinkedBy']['CognitoId'],
         logger=logger
     )
+    debug_log(message='user_permission_records={}', variable_as_list=[user_permission_records,], logger=logger)
     final_active_permissions = list()
     for permission_record in user_permission_records:
         active_permissions_from_record = process_permission_record_and_extract_permissions_if_current_at_the_time_of_event(permission_record=permission_record, event_timestamp=event_timestamp, logger=logger)
