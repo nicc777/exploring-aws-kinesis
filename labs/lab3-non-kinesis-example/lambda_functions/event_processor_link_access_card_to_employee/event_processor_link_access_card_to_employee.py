@@ -379,6 +379,46 @@ def db_get_user_permissions_by_cognito_id(
     return tuple(permissions)
 
 
+def get_card_issued_status(
+    card_id: str,
+    client=get_client(client_name='dynamodb', region='eu-central-1'),
+    logger=get_logger()
+)->dict:
+    card_status_data = dict()
+    try:
+        response = client.query(
+            TableName='lab3-access-card-app',
+            IndexName='CardIssuedIdx',
+            Select='ALL_ATTRIBUTES',
+            Limit=1,
+            ConsistentRead=False,
+            KeyConditions={
+                'CardIdx': {
+                    'AttributeValueList': [{'S': '{}'.format(card_id),},],
+                    'ComparisonOperator': 'EQ'
+                },
+                'SK': {
+                    'AttributeValueList': [{'S': 'CARD#STATUS',},],
+                    'ComparisonOperator': 'BEGINS_WITH'
+                }
+            }
+        )
+        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        for item in response['Items']:
+            for key, data in item.items():
+                for data_key, data_value in data.items():
+                    if data_key.lower() == 's':
+                        card_status_data[key] = data_value
+                    if data_key.lower() == 'n':
+                        card_status_data[key] = Decimal(data_value)
+                    if data_key.lower() == 'bool':
+                        card_status_data[key] = data_value
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log(message='card_status_data={}', variable_as_list=[card_status_data,], logger=logger)
+    return card_status_data
+
+
 ###############################################################################
 ###                                                                         ###
 ###                         M A I N    H A N D L E R                        ###
@@ -403,6 +443,23 @@ def user_has_permissions(event_data: dict, event_timestamp: Decimal, logger:get_
         if required_permission in final_active_permissions:
             return True
     return False
+
+
+def card_is_in_correct_state(
+    event_data: dict,
+    logger=get_logger()
+)->bool:
+    card_state = get_card_issued_status(
+        card_id=event_data['CardId'],
+        logger=get_logger()
+    )
+    if 'IsAvailableForIssue' in card_state:
+        logger.info('Card status: {}'.format(card_state['IsAvailableForIssue']))
+        if isinstance(card_state['IsAvailableForIssue'], bool):
+            return card_state['IsAvailableForIssue']
+    logger.warning('Unable to determine card status - assuming not available for issue')
+    return False
+
 
 
 def process_event_record_body(event_data: dict, logger=get_logger()):
@@ -438,6 +495,9 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
         return
 
     # 3) Ensure card is currently in the correct state
+    if card_is_in_correct_state(event_data=event_data, logger=get_logger()) is False:
+        logger.error('Card is not available for issue')
+        return
 
     # 4) Ensure person is currently in correct state
 
