@@ -7,6 +7,7 @@ from datetime import datetime
 import sys
 from inspect import getframeinfo, stack
 from decimal import Decimal
+import copy
 # Other imports here...
 
 
@@ -574,7 +575,10 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     if employee_current_status == 'inactive':
         logger.error('Employee is in-active - can not link card')
         return
-    logger.info('Employee status test passed')
+    final_employee_status = copy.deepcopy(employee_current_status)
+    if employee_current_status == 'onboarding' and event_data['CompleteOnboarding'] is True:
+        final_employee_status = 'active'
+    logger.info('Employee status test passed - Final employee status: {}'.format(final_employee_status))
 
     # 5) DynamoDB - Upsert employee record
 
