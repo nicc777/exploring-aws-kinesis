@@ -279,12 +279,24 @@ def process_permission_record_and_extract_permissions_if_current_at_the_time_of_
         record_is_active_at_time_of_event = False
         if permission_record['EndTimestamp'].compare(Decimal('-1')) == Decimal(0):
             # Still active permission - check StartTimestamp < event_timestamp
+            logger.info('Processing still active permission. Ensuring permission start timestamp {} is before the event timestamp {}'.format(str(permission_record['StartTimestamp']), str(event_timestamp)))
             if permission_record['StartTimestamp'].compare(event_timestamp) == Decimal(-1):
                 record_is_active_at_time_of_event = True
+                logger.info('Found a valid permission in the event time range')
+            else:
+                logger.info('Found an invalid permission in the event time range')
         elif permission_record['EndTimestamp'].compare(Decimal('-1')) != Decimal(0):
             # No longer active permission - check StartTimestamp < event_timestamp AND EndTimestamp > event_timestamp
+            logger.info('Processing now in-active permission. Ensuring permission start timestamp {} is before the event timestamp {} and the the end timestamp {} is after'.format(
+                str(permission_record['StartTimestamp']), 
+                str(event_timestamp)),
+                str(permission_record['EndTimestamp'])
+            )
             if permission_record['StartTimestamp'].compare(event_timestamp) == Decimal(-1) and permission_record['EndTimestamp'].compare(event_timestamp) == Decimal(1):
                 record_is_active_at_time_of_event = True
+                logger.info('Found a valid permission in the event time range')
+            else:
+                logger.info('Found an invalid permission in the event time range')
         if record_is_active_at_time_of_event is True:
             permissions = permission_record['SystemPermissions'].split(',')
     except:
