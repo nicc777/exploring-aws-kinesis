@@ -386,6 +386,7 @@ def get_card_issued_status(
 )->dict:
     card_status_data = dict()
     try:
+        logger.info('Retrieving card status from cognito')
         response = client.query(
             TableName='lab3-access-card-app',
             IndexName='CardIssuedIdx',
@@ -449,10 +450,14 @@ def card_is_in_correct_state(
     event_data: dict,
     logger=get_logger()
 )->bool:
-    card_state = get_card_issued_status(
-        card_id=event_data['CardId'],
-        logger=get_logger()
-    )
+    card_state = dict()
+    try:
+        card_state = get_card_issued_status(
+            card_id=event_data['CardId'],
+            logger=logger
+        )
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     if 'IsAvailableForIssue' in card_state:
         logger.info('Card status: {}'.format(card_state['IsAvailableForIssue']))
         if isinstance(card_state['IsAvailableForIssue'], bool):
@@ -493,11 +498,13 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     if user_has_permissions(event_data=event_data, event_timestamp=event_timestamp, logger=logger) is False:
         logger.error('Linking user did not have the required permissions at the time of event')
         return
+    logger.info('Permission test passed')
 
     # 3) Ensure card is currently in the correct state
-    if card_is_in_correct_state(event_data=event_data, logger=get_logger()) is False:
+    if card_is_in_correct_state(event_data=event_data, logger=logger) is False:
         logger.error('Card is not available for issue')
         return
+    logger.info('Card status test passed')
 
     # 4) Ensure person is currently in correct state
 
