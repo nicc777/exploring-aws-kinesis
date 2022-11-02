@@ -476,16 +476,16 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
         Example event_data dict:
 
             {
-                "EmployeeId": "10000000103",
-                "CardId": "10000000189",
-                "CompleteOnboarding": false,
+                "EmployeeId": "100000000103", 
+                "CardId": "100000000139", 
+                "CompleteOnboarding": true, 
                 "LinkedBy": {
-                    "Username": "username@example.tld",
-                    "CognitoId": "aa77e5bd-244c-4120-b0d0-85b059b5003f"
-                },
-                "LinkedTimestamp": 1665834703,
-                "RequestId": "20837024a2a1a0375c23c3fc427e912ac9c3bd8239d939e0dec4b836633f9eba",
-                "Campus": "campus02"
+                    "Username": "some_user@example.tld", 
+                    "CognitoId": "fe8c1444-8404-4365-bf70-0c4d30313c8d"
+                }, 
+                "LinkedTimestamp": 1667369409, 
+                "RequestId": "c85c616418716a95c81c14d7c033cba157694129c86f9e188668b210f14023b9", 
+                "Campus": "campus03"
             }
     """
     logger.info('Processing event_data={}'.format(event_data))
