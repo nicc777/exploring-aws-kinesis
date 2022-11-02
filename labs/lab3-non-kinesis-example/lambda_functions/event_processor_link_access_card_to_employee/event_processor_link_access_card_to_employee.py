@@ -498,7 +498,7 @@ TEST_EVENTS = {
             {
                 'messageId': 'a6c2cb8a-3bf0-4257-8786-49c684d3040e', 
                 'receiptHandle': 'abc', 
-                'body': '{"EmployeeId": "100000000104", "CardId": "10000000189", "CompleteOnboarding": true, "LinkedBy": {"Username": "nicc777@gmail.com", "CognitoId": "bbba18b6-7c46-4652-a2a4-f7b014af42ce"}, "LinkedTimestamp": 1667149409, "RequestId": "04e0ea3a3ffef1f6c242a284166e707aae2dd573387718e188a32c0f57483f2f", "Campus": "campus02"}', 
+                'body': '{"EmployeeId": "100000000104", "CardId": "10000000189", "CompleteOnboarding": true, "LinkedBy": {"Username": "nicc777@gmail.com", "CognitoId": "fe8c1444-8404-4365-bf70-0c4d30313c8d"}, "LinkedTimestamp": 1667149409, "RequestId": "04e0ea3a3ffef1f6c242a284166e707aae2dd573387718e188a32c0f57483f2f", "Campus": "campus02"}', 
                 'attributes': {
                     'ApproximateReceiveCount': '1', 
                     'SentTimestamp': '1667297326109', 
