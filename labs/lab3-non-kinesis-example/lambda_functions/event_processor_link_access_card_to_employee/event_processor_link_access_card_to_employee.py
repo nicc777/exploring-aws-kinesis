@@ -384,10 +384,6 @@ def get_card_issued_status(
     client=get_client(client_name='dynamodb', region='eu-central-1'),
     logger=get_logger()
 )->dict:
-    """
-        Cognito:    100000000189
-        Here        10000000189
-    """
     card_status_data = dict()
     try:
         logger.info('Retrieving card status from cognito for card {}'.format(card_id))
@@ -422,6 +418,46 @@ def get_card_issued_status(
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     debug_log(message='card_status_data={}', variable_as_list=[card_status_data,], logger=logger)
     return card_status_data
+
+
+def get_employee_profile(
+    employee_id: str,
+    client=get_client(client_name='dynamodb', region='eu-central-1'),
+    logger=get_logger()
+)->dict:
+    employee_profile = dict()
+    try:
+        logger.info('Retrieving card status from cognito for card {}'.format(employee_id))
+        response = client.query(
+            TableName='lab3-access-card-app',
+            Select='ALL_ATTRIBUTES',
+            Limit=1,
+            ConsistentRead=False,
+            KeyConditions={
+                'PK': {
+                    'AttributeValueList': [{'S': 'EMP#{}'.format(employee_id),},],
+                    'ComparisonOperator': 'EQ'
+                },
+                'SK': {
+                    'AttributeValueList': [{'S': 'PERSON#PERSONAL_DATA',},],
+                    'ComparisonOperator': 'BEGINS_WITH'
+                }
+            }
+        )
+        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        for item in response['Items']:
+            for key, data in item.items():
+                for data_key, data_value in data.items():
+                    if data_key.lower() == 's':
+                        employee_profile[key] = data_value
+                    if data_key.lower() == 'n':
+                        employee_profile[key] = Decimal(data_value)
+                    if data_key.lower() == 'bool':
+                        employee_profile[key] = data_value
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log(message='employee_profile={}', variable_as_list=[employee_profile,], logger=logger)
+    return employee_profile
 
 
 ###############################################################################
@@ -470,6 +506,26 @@ def card_is_in_correct_state(
     return False
 
 
+def employee_is_in_correct_state(
+    event_data: dict,
+    logger=get_logger()
+)->str:
+    employee_profile = dict()
+    try:
+        employee_profile = get_employee_profile(
+            employee_id=event_data['EmployeeId'],
+            logger=logger
+        )
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    if 'PersonStatus' in employee_profile:
+        logger.info('Employee status: {}'.format(employee_profile['PersonStatus']))
+        if isinstance(employee_profile['PersonStatus'], str):
+            if employee_profile['PersonStatus'] in ('onboarding', 'active'):
+                return employee_profile['PersonStatus']
+    logger.warning('Unable to determine employee status - assuming not active or onboarding')
+    return 'inactive'
+
 
 def process_event_record_body(event_data: dict, logger=get_logger()):
     """
@@ -511,6 +567,14 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     logger.info('Card status test passed')
 
     # 4) Ensure person is currently in correct state
+    employee_current_status = employee_is_in_correct_state(
+        event_data=event_data,
+        logger=logger
+    )
+    if employee_current_status == 'inactive':
+        logger.error('Employee is in-active - can not link card')
+        return
+    logger.info('Employee status test passed')
 
     # 5) DynamoDB - Upsert employee record
 
