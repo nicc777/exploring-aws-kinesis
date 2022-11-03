@@ -160,9 +160,12 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        | - StartTimestamp                                                                                            |
 |                         |                                                        | - EndTimestamp                                                                                              |
 |                         |                                                        |                                                                                                             |
-| CARD#<<Access card ID>> | CARD#STATUS#issued                                     | - CardIssuedTo (<<employee ID>>)                                                                            |
-|                         |   NOTE: status in ( 'available', 'issued', 'blocked' ) | - CardIssuedBy (<<employee ID>>)                                                                            |
+| CARD#<<Access card ID>> | CARD#STATUS                                            | - CardIssuedTo (<<employee ID>>)                                                                            |
+|                         |                                                        | - CardIssuedBy (<<employee ID>>)                                                                            |
 |                         |                                                        | - CardIssuedTimestamp                                                                                       |
+|                         |                                                        | - CardIdx                                                                                                   |
+|                         |                                                        | - IsAvailableForIssue (BOOL)                                                                                |
+|                         |                                                        | - LockIdentifier                                                                                            |
 |                         |                                                        |                                                                                                             |
 |                         | CARD#EVENT#SCANNED                                     | - ScannedInTimestamp (<<timestamp>>)                                                                        |
 |                         |                                                        | - BuildingIdxWhereScanned (<<building ID>>)                                                                 |

@@ -360,7 +360,7 @@ def db_get_user_permissions_by_cognito_id(
                 }
             )
 
-        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
         if 'Items' in response:
             if len(response['Items']) > 0:
                 for item in response['Items']:
@@ -405,7 +405,7 @@ def get_card_issued_status(
                 }
             }
         )
-        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
         for item in response['Items']:
             for key, data in item.items():
                 for data_key, data_value in data.items():
@@ -445,7 +445,7 @@ def get_employee_profile(
                 }
             }
         )
-        logger.debug('response={}'.format(json.dumps(response, default=str)))
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
         for item in response['Items']:
             for key, data in item.items():
                 for data_key, data_value in data.items():
@@ -459,6 +459,26 @@ def get_employee_profile(
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     debug_log(message='employee_profile={}', variable_as_list=[employee_profile,], logger=logger)
     return employee_profile
+
+
+def delete_dynamodb_record(
+    key: dict,
+    client=get_client(client_name='dynamodb', region='eu-central-1'),
+    logger=get_logger()
+)->bool:
+    try:
+        logger.info('Deleting record with key {}'.format(key))
+        response = client.delete_item(
+            TableName='lab3-access-card-app',
+            Key=key,
+            ReturnValues='NONE',
+            ReturnConsumedCapacity='TOTAL'
+        )
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        return True
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return False
 
 
 ###############################################################################
@@ -528,6 +548,27 @@ def employee_is_in_correct_state(
     return 'inactive'
 
 
+def create_dynamodb_key(pk_val: str, sk_val: str)->dict:
+    key = dict()
+    key['PK'] = dict()
+    key['SK'] = dict()
+    key['PK']['S'] = '{}'.format(pk_val)
+    key['SK']['S'] = '{}'.format(sk_val)
+    return key
+
+
+def action_delete_existing_employee_access_card_record(event_data: dict, event_timestamp: Decimal, logger:get_logger())->bool:
+    key = create_dynamodb_key(
+        pk_val='EMP#{}'.format(event_data['EmployeeId']), 
+        sk_val='PERSON#PERSONAL_DATA#ACCESS_CARD'
+    )
+    result = delete_dynamodb_record(
+        key=key,
+        logger=logger
+    )
+    return result
+
+
 def process_event_record_body(event_data: dict, logger=get_logger()):
     """
         Example event_data dict:
@@ -580,7 +621,30 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
         final_employee_status = 'active'
     logger.info('Employee status test passed - Final employee status: {}'.format(final_employee_status))
 
-    # 5) DynamoDB - Upsert employee record 
+    required_actions_completed_counter = 0
+    required_actions_completed_qty = 9
+    progress = 0
+    step_nr = 0
+    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
+    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
+    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Update Employee Status - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
+    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Card Link Event Record - [PK=CARD#{}] [SK=CARD#EVENT#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
+    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
+    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create New Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
+    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
+    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create New Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
+    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Card Scanned Event Record - [PK=CARD#{}] [SK=CARD#EVENT#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
+    
+
+    # 5) DynamoDB - Upsert employee record
+    step_nr += 1
+    if action_delete_existing_employee_access_card_record(event_data=event_data, event_timestamp=event_timestamp, logger=logger) is True:
+        required_actions_completed_counter += 1
+        progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
+        logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Delete Existing Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
+    else:
+        logger.error('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Delete Existing Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
+        logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
 
     # 6) DynamoDB - Upsert card record ( SK => CARD#STATUS#issued )
 
