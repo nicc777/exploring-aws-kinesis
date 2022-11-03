@@ -681,13 +681,18 @@ def action_delete_existing_employee_access_card_record(event_data: dict, logger=
         logger=logger
     )
 
-def action_create_employee_access_card_record(event_data: dict, event_timestamp: Decimal, final_employee_status: str, logger=get_logger())->bool:
+def action_create_employee_access_card_record(
+    event_data: dict, 
+    event_timestamp: Decimal, 
+    final_employee_status: str, 
+    linking_user_employee_record: dict,
+    target_employee_record :dict,
+    logger=get_logger()
+)->bool:
     key = create_dynamodb_key(
         pk_val='EMP#{}'.format(event_data['EmployeeId']), 
         sk_val='PERSON#PERSONAL_DATA#ACCESS_CARD'
     )
-    linking_user_employee_record = get_employee_record_from_cognito_id(cognito_id=event_data['LinkedBy']['CognitoId'],logger=logger)
-    target_employee_record = get_employee_record_from_employee_id(employee_id=event_data['EmployeeId'],logger=logger)
     record_data = {
         'CardIssuedTimestamp'   : { 'N': '{}'.format(str(event_timestamp))                                  },
         'CardRevokedTimestamp'  : { 'N': '0'                                                                },
@@ -710,8 +715,7 @@ def action_create_employee_access_card_record(event_data: dict, event_timestamp:
     )
 
 
-def action_update_employee_status(event_data: dict, final_status: str)->bool:
-    target_employee_record = get_employee_record_from_employee_id(employee_id=event_data['EmployeeId'],logger=logger)
+def action_update_employee_status(event_data: dict, final_status: str, target_employee_record :dict, logger=get_logger())->bool:
     key = create_dynamodb_key(
         pk_val='{}'.format(target_employee_record['PK']), 
         sk_val='{}'.format(target_employee_record['SK'])
@@ -722,6 +726,42 @@ def action_update_employee_status(event_data: dict, final_status: str)->bool:
         'PersonDepartment'  : { 'S': '{}'.format(target_employee_record['PersonDepartment'])},
         'PersonStatus'      : { 'S': '{}'.format(final_status)},
         'CognitoSubjectId'  : { 'S': '{}'.format(target_employee_record['CognitoSubjectId'])}
+    }
+    return create_dynamodb_record(
+        key=key,
+        record_data=record_data,
+        logger=logger
+    )
+
+
+def action_create_card_link_event_record(event_data: dict, event_timestamp: Decimal, linking_user_employee_record: dict, logger=get_logger())->bool:
+    key = create_dynamodb_key(
+        pk_val='CARD#{}'.format(event_data['CardId']), 
+        sk_val='CARD#EVENT#{}'.format(str(event_timestamp))
+    )
+    sqs_event_source_id = 'SQS QUEUE "{}" With Event ID "{}"'.format(
+        event_data['EventSourceArn'],
+        event_data['EventId']
+    )
+    record_data = {
+        'CardIdx'                           : { 'S': '{}'.format(event_data['CardId'])                                  },
+        'EventType'                         : { 'S': 'LinkCard'                                                         },
+        'EventBucketName'                   : { 'S': 'TODO - unknown'                                                   },
+        'EventBucketKey'                    : { 'S': 'TODO - unknown'                                                   },
+        'EventRequestId'                    : { 'S': 'TODO - unknown'                                                   },
+        'EventRequestedByEmployeeId'        : { 'S': '{}'.format(linking_user_employee_record['PK'].replace('EMP#','')) },
+        'EventTimestamp'                    : { 'N': '{}'.format(str(event_timestamp))                                  },
+        'EventOutcomeDescription'           : { 'S': 'Card Linked Successfully'                                         },
+        'EventErrorMessage'                 : { 'S': 'No Errors'                                                        },
+        'EventCompletionStatus'             : { 'S': 'Success'                                                          },
+        'EventProcessorLockId'              : { 'S': 'None'                                                             },
+        'EventProcessorStartTimestamp'      : { 'N': '0'                                                                },
+        'EventProcessorExpiresTimestamp'    : { 'N': '0'                                                                },
+        'EventSqsAck'                       : { 'BOOL': True                                                            },
+        'EventSqsDelete'                    : { 'BOOL': True                                                            },
+        'EventSqsReject'                    : { 'BOOL': False                                                           },
+        'EventSqsId'                        : { 'S': '{}'.format(sqs_event_source_id)                                   },
+        'EventSqsOriginalPayloadJson'       : { 'S': '{}'.format(json.dumps(event_data))                                }
     }
     return create_dynamodb_record(
         key=key,
@@ -744,7 +784,9 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
                 }, 
                 "LinkedTimestamp": 1667369409, 
                 "RequestId": "c85c616418716a95c81c14d7c033cba157694129c86f9e188668b210f14023b9", 
-                "Campus": "campus03"
+                "Campus": "campus03",
+                "EventSourceArn": "arn:aws:sqs:eu-central-1:012345678901:LinkAccessCardEvent",
+                "EventId": "a6c2cb8a-3bf0-4257-8786-49c684d3040e"
             }
     """
     logger.info('Processing event_data={}'.format(event_data))
@@ -782,27 +824,33 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
         final_employee_status = 'active'
     logger.info('Employee status test passed - Final employee status: {}'.format(final_employee_status))
 
+    # 5) Get required current records
+    linking_user_employee_record = get_employee_record_from_cognito_id(cognito_id=event_data['LinkedBy']['CognitoId'],logger=logger)
+    target_employee_record = get_employee_record_from_employee_id(employee_id=event_data['EmployeeId'],logger=logger)
+
+    # 6) Log intensions
     required_actions_completed_counter = 0
     required_actions_completed_qty = 9
     progress = 0
     step_nr = 0
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
-    
     if event_data['CompleteOnboarding'] is True:
         logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Update Employee Status - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
     else:
         required_actions_completed_qty -= 1
-
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Card Link Event Record - [PK=CARD#{}] [SK=CARD#EVENT#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
+
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
+
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create New Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create New Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Card Scanned Event Record - [PK=CARD#{}] [SK=CARD#EVENT#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
     
+    
 
-    # 5) DynamoDB Actions
+    # 7) DynamoDB Actions
     step_nr += 1
     if action_delete_existing_employee_access_card_record(event_data=event_data, logger=logger) is True:
         required_actions_completed_counter += 1
@@ -814,7 +862,7 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
 
 
     step_nr += 1
-    if action_create_employee_access_card_record(event_data=event_data, event_timestamp=event_timestamp, final_employee_status=final_employee_status, logger=logger) is True:
+    if action_create_employee_access_card_record(event_data=event_data, event_timestamp=event_timestamp, final_employee_status=final_employee_status, linking_user_employee_record=linking_user_employee_record, target_employee_record=target_employee_record, logger=logger) is True:
         required_actions_completed_counter += 1
         progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
         logger.info('REQUIRED ACTION - COMPLETE - [employee={}] [card={}] - Create Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
@@ -826,7 +874,7 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     
     if event_data['CompleteOnboarding'] is True:
         step_nr += 1
-        if action_update_employee_status(event_data=event_data, final_status=final_employee_status) is True:
+        if action_update_employee_status(event_data=event_data, final_status=final_employee_status, target_employee_record=target_employee_record, logger=logger) is True:
             required_actions_completed_counter += 1
             progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
             logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Update Employee Status - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
@@ -835,12 +883,24 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
             logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
 
 
+    step_nr += 1
+    if action_create_card_link_event_record(event_data=event_data, event_timestamp=event_timestamp, linking_user_employee_record=linking_user_employee_record, logger=logger) is True:
+        required_actions_completed_counter += 1
+        progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
+        logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Create Card Link Event Record - [PK=CARD#{}] [SK=CARD#EVENT#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
+    else:
+        logger.info('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Create Card Link Event Record - [PK=CARD#{}] [SK=CARD#EVENT#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
+        logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
+
+
     # TODO complete
 
 
 def extract_event_record(event_record: str, logger=get_logger())->dict:
     try:        
         event_data = json.loads(event_record['body'])
+        event_data['EventSourceArn'] = event_record['eventSourceARN']
+        event_data['EventId'] = event_record['messageId']
         debug_log(message='event_data={}', variable_as_list=[event_data,], logger=logger)
         return event_data
     except:
