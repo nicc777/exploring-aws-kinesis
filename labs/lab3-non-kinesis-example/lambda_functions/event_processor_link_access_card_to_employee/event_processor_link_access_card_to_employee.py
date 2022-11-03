@@ -481,6 +481,120 @@ def delete_dynamodb_record(
     return False
 
 
+def create_dynamodb_record(
+    key: dict,
+    record_data: dict,
+    client=get_client(client_name='dynamodb', region='eu-central-1'),
+    logger=get_logger()
+)->bool:
+    try:
+        logger.info('Creating record with key {}'.format(key))
+        final_record_data = {**key, **record_data}
+        response = client.put_item(
+            TableName='lab3-access-card-app',
+            Item=final_record_data,
+            ReturnValues='NONE',
+            ReturnConsumedCapacity='TOTAL',
+            ReturnItemCollectionMetrics='SIZE'
+        )
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        return True
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return False
+
+
+def get_employee_record_from_cognito_id(
+    cognito_id: str,
+    client=get_client(client_name='dynamodb', region='eu-central-1'),
+    logger=get_logger()
+)->dict:
+    employee_record = dict()
+    try:
+        response = client.query(
+            TableName='lab3-access-card-app',
+            IndexName='CognitoIdx',
+            Select='ALL_ATTRIBUTES',
+            Limit=10,
+            ConsistentRead=False,
+            KeyConditions={
+                'CognitoSubjectId': {
+                    'AttributeValueList': [{'S': '{}'.format(cognito_id),},],
+                    'ComparisonOperator': 'EQ'
+                },
+                'SK': {
+                    'AttributeValueList': [
+                        {'S': 'PERSON#PERSONAL_DATA',},],
+                    'ComparisonOperator': 'EQ'
+                }
+            }
+        )
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        if 'Items' in response:
+            if len(response['Items']) > 0:
+                for item in response['Items']:
+                    record = dict()
+                    for key, data in item.items():
+                        for data_key, data_value in data.items():
+                            if data_key.lower() == 's':
+                                record[key] = data_value
+                            if data_key.lower() == 'n':
+                                record[key] = Decimal(data_value)
+                            if data_key.lower() == 'bool':
+                                record[key] = data_value
+                    debug_log(message='record={}', variable_as_list=[record,], logger=logger)
+                    employee_record = copy.deepcopy(record)
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log(message='employee_record={}', variable_as_list=[employee_record,], logger=logger)
+    return employee_record
+
+
+def get_employee_record_from_employee_id(
+    employee_id: str,
+    client=get_client(client_name='dynamodb', region='eu-central-1'),
+    logger=get_logger()
+)->dict:
+    employee_record = dict()
+    try:
+        response = client.query(
+            TableName='lab3-access-card-app',
+            Select='ALL_ATTRIBUTES',
+            Limit=10,
+            ConsistentRead=False,
+            KeyConditions={
+                'PK': {
+                    'AttributeValueList': [{'S': 'EMP#{}'.format(employee_id),},],
+                    'ComparisonOperator': 'EQ'
+                },
+                'SK': {
+                    'AttributeValueList': [
+                        {'S': 'PERSON#PERSONAL_DATA',},],
+                    'ComparisonOperator': 'EQ'
+                }
+            }
+        )
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        if 'Items' in response:
+            if len(response['Items']) > 0:
+                for item in response['Items']:
+                    record = dict()
+                    for key, data in item.items():
+                        for data_key, data_value in data.items():
+                            if data_key.lower() == 's':
+                                record[key] = data_value
+                            if data_key.lower() == 'n':
+                                record[key] = Decimal(data_value)
+                            if data_key.lower() == 'bool':
+                                record[key] = data_value
+                    debug_log(message='record={}', variable_as_list=[record,], logger=logger)
+                    employee_record = copy.deepcopy(record)
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log(message='employee_record={}', variable_as_list=[employee_record,], logger=logger)
+    return employee_record
+
+
 ###############################################################################
 ###                                                                         ###
 ###                         M A I N    H A N D L E R                        ###
@@ -557,16 +671,43 @@ def create_dynamodb_key(pk_val: str, sk_val: str)->dict:
     return key
 
 
-def action_delete_existing_employee_access_card_record(event_data: dict, event_timestamp: Decimal, logger:get_logger())->bool:
+def action_delete_existing_employee_access_card_record(event_data: dict, logger=get_logger())->bool:
     key = create_dynamodb_key(
         pk_val='EMP#{}'.format(event_data['EmployeeId']), 
         sk_val='PERSON#PERSONAL_DATA#ACCESS_CARD'
     )
-    result = delete_dynamodb_record(
+    return delete_dynamodb_record(
         key=key,
         logger=logger
     )
-    return result
+
+def action_create_employee_access_card_record(event_data: dict, event_timestamp: Decimal, final_employee_status: str, logger=get_logger())->bool:
+    key = create_dynamodb_key(
+        pk_val='EMP#{}'.format(event_data['EmployeeId']), 
+        sk_val='PERSON#PERSONAL_DATA#ACCESS_CARD'
+    )
+    linking_user_employee_record = get_employee_record_from_cognito_id(cognito_id=event_data['LinkedBy']['CognitoId'],logger=logger)
+    target_employee_record = get_employee_record_from_employee_id(employee_id=event_data['EmployeeId'],logger=logger)
+    record_data = {
+        'CardIssuedTimestamp'   : { 'N': '{}'.format(str(event_timestamp))    },
+        'CardRevokedTimestamp'  : { 'N': '0'},
+        'CardStatus'            : { 'S': 'issued'},
+        'CardIssuedTo'          : { 'S': '{}'.format(event_data['EmployeeId'])},
+        'CardIssuedBy'          : { 'S': '{}'.format(linking_user_employee_record['PK'].replace('EMP#',''))},
+        'CardIdx'               : { 'S': '{}'.format(event_data['CardId'])},
+        'PersonName'            : { 'S': '{}'.format(target_employee_record['PersonName'])},
+        'PersonSurname'         : { 'S': '{}'.format(target_employee_record['PersonSurname'])},
+        'PersonDepartment'      : { 'S': '{}'.format(target_employee_record['PersonDepartment'])},
+        'PersonStatus'          : { 'S': '{}'.format(final_employee_status)},
+        'ScannedBuildingIdx'    : { 'S': '{}'.format(event_data['Campus'])},
+        'ScannedStatus'         : { 'S': 'scanned-in'},
+        'CognitoSubjectId'      : { 'S': '{}'.format(target_employee_record['CognitoSubjectId'])}
+    }
+    return create_dynamodb_record(
+        key=key,
+        record_data=record_data,
+        logger=logger
+    )
 
 
 def process_event_record_body(event_data: dict, logger=get_logger()):
@@ -627,7 +768,9 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     step_nr = 0
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
+    
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Update Employee Status - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
+
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Card Link Event Record - [PK=CARD#{}] [SK=CARD#EVENT#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create New Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
@@ -636,9 +779,9 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Card Scanned Event Record - [PK=CARD#{}] [SK=CARD#EVENT#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
     
 
-    # 5) DynamoDB - Upsert employee record
+    # 5) DynamoDB Actions
     step_nr += 1
-    if action_delete_existing_employee_access_card_record(event_data=event_data, event_timestamp=event_timestamp, logger=logger) is True:
+    if action_delete_existing_employee_access_card_record(event_data=event_data, logger=logger) is True:
         required_actions_completed_counter += 1
         progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
         logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Delete Existing Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
@@ -646,10 +789,16 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
         logger.error('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Delete Existing Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
         logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
 
-    # 6) DynamoDB - Upsert card record ( SK => CARD#STATUS#issued )
 
-    # 7) DynamoDB - Upsert event audit record ( SK => CARD#EVENT )
-
+    step_nr += 1
+    if action_create_employee_access_card_record(event_data=event_data, event_timestamp=event_timestamp, final_employee_status=final_employee_status, logger=logger) is True:
+        required_actions_completed_counter += 1
+        progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
+        logger.info('REQUIRED ACTION - COMPLETE - [employee={}] [card={}] - Create Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
+    else:
+        logger.info('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Create Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
+        logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
+    
     # TODO complete
 
 
