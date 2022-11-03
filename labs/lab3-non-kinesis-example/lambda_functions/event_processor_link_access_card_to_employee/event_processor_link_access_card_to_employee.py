@@ -580,7 +580,7 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
         final_employee_status = 'active'
     logger.info('Employee status test passed - Final employee status: {}'.format(final_employee_status))
 
-    # 5) DynamoDB - Upsert employee record
+    # 5) DynamoDB - Upsert employee record 
 
     # 6) DynamoDB - Upsert card record ( SK => CARD#STATUS#issued )
 
