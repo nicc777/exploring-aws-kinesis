@@ -943,7 +943,6 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create New Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Card Scanned Event Record - [PK=CARD#{}] [SK=CARD#EVENT#SCAN{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
     
-    
 
     # 7) DynamoDB Actions
 
