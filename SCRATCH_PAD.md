@@ -12,7 +12,7 @@ Some next steps I'm thinking about (Lab 3)...
 * ~~Create a UI to link an access card to a person busy onboarding.~~
 * ~~Create Lambda function `s3_event_handler` with SNS and SQS integration from the S3 events bucket~~
 * ~~Create SQS queue to pass on processed event from `s3_event_handler`~~
-* Create Lambda function `link-employee-and-card-persist` to persist the new linked data in the DynamoDB table. Consider using step functions, as the requesting party (linked by employee) first needs to be verified. We also require the original Access Token in the payload for this! For authorization we can add an optional attribute in DynamoDB to indicate which users are authorized to do this action. These permission fields are in themselves complex object as the permission requires a start and end date for which that permission is valid, so that the event can be authorized by ensuring the event timestamp falls within this range.
+* ~~Create Lambda function `link-employee-and-card-persist` to persist the new linked data in the DynamoDB table. Consider using step functions, as the requesting party (linked by employee) first needs to be verified. We also require the original Access Token in the payload for this! For authorization we can add an optional attribute in DynamoDB to indicate which users are authorized to do this action. These permission fields are in themselves complex object as the permission requires a start and end date for which that permission is valid, so that the event can be authorized by ensuring the event timestamp falls within this range.~~
 * Create UI to view (and poll) for card linking status 
 
 ~~I also need to add CognitoID to the DynamoDB table for any employee with a login. This is important to link the person requesting the linking of another employee to an access card for Audit purposes. With the Cognito link and the JWT that was authorized, it will be virtually impossible to dispute the event origin. At the same time, add the DynamoDB employee ID as another attribute to the relevant Cognito User.~~
@@ -32,6 +32,12 @@ I need to add the following attributes in DynamoDB:
 ~~I also need to create a new `SK` key `CARD#EVENT` with a structure as follow:~~
 
 ~~Create a new Event Index~~
+
+~~Add building ID of physically where the employee is when receiving the access card, as the building ID (occupancy) needs to be also updated. In the UI, add the Build ID selection.~~
+
+~~_**2022-10-24**_ - remember to re-create the DynamoDB table, now with permissions, and then also create the cognito stack as well as the rest to activate the initial user. Afterwards, the GitHub integration and web site stacks can be deleted again.~~
+
+> _**2022-11-03**_: I need to add the bucket name and key name to the data stored in the S3 data file so that it can be used in the event records when events are finally processed
 
 # Design Thoughts...
 
@@ -56,3 +62,4 @@ API Entry point and validation
 * Validate the access card can be issued (based on several rules - see below)
 * Create a command event and put the object in the S3 event bucket
 
+TODO Nothing else yet...

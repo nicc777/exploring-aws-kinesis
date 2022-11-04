@@ -252,6 +252,15 @@ def _validate_basic_request_data_is_valid(employee_id: str, body_data: dict, log
         if isinstance(body_data['CompleteOnboarding'], bool) is False:
             logger.error('CompleteOnboarding basic validation failed')
             return False
+        if 'Campus' not in body_data:
+            logger.error('Campus not found in request body')
+            return False
+        if isinstance(body_data['Campus'], str) is False:
+            logger.error('Campus value must be a string')
+            return False
+        if len(body_data['Campus']) < 3 or len(body_data['Campus']) > 128:
+            logger.error('Campus value has unexpected length')
+            return False
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
         return False
@@ -347,6 +356,7 @@ def handler(
     s3_body['LinkedBy'] = requestor_data
     s3_body['LinkedTimestamp'] = create_timestamp
     s3_body['RequestId'] = request_id
+    s3_body['Campus'] = body_data['Campus']
 
     # Does this event already exist?
     check_event = read_s3_event(
@@ -492,9 +502,19 @@ if __name__ == '__main__':
         "pathParameters": {
             "employeeId": "100000000003"
         },
-        "body": '{{"CardId": "{}", "CompleteOnboarding": false, "LinkedBy": "TEST"}}'.format(card_id),
+        "body": '{{"CardId": "{}", "CompleteOnboarding": false, "LinkedBy": "TEST", "Campus": "campus01"}}'.format(card_id),
         "isBase64Encoded": False
     }
+
+    """
+        Revised body:
+            {
+                "CardId":"10000000189",
+                "CompleteOnboarding":true,
+                "LinkedBy":"100000000021",
+                "Campus":"campus02"
+            }
+    """
 
     result1 = handler(event=event, context=None, logger=logger, run_from_main=True)
     print('------------------------------------------------------------------------------------------------------------------------')

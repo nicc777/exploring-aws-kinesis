@@ -1,0 +1,149 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: This template creates the S3 bucket to hold event objects
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  LambdaFunctionNameParam:
+    Type: String
+  S3SourceBucketParam:
+    Type: String
+  EventSqsQueueStackName:
+    Type: String
+  LambdaFunctionSourceFileName:
+    Type: String
+  DynamoDbStackName:
+    Type: String
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                 LAMBDA FUNCTION                                                 ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  EventLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "EventLambdaFunctionRoleAssumeRolePolicyDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role EventLambdaFunction"
+      Policies:
+      - PolicyName: EventLambdaFunctionPolicy01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+      - PolicyName: EventLambdaFunctionPolicy02
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "sqs:ReceiveMessage"
+            - "sqs:DeleteMessage"
+            - "sqs:GetQueueAttributes"
+            - "sqs:ChangeMessageVisibility"
+            Resource:
+              Fn::ImportValue: !Sub "${EventSqsQueueStackName}-EventQueueArn"
+      - PolicyName: EmployeeRecordsQueryLambdaFunctionPolicy02
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "dynamodb:PutItem"
+            - "dynamodb:GetItem"
+            - "dynamodb:Scan"
+            - "dynamodb:Query"
+            - "dynamodb:UpdateItem"
+            Resource:
+              - Fn::Sub:
+                - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
+                - TableName: 
+                    Fn::ImportValue: !Sub "${DynamoDbStackName}-AccessCardAppTableName"
+              - Fn::Sub:
+                - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}/index/*"
+                - TableName: 
+                    Fn::ImportValue: !Sub "${DynamoDbStackName}-AccessCardAppTableName"
+      RoleName: EventLambdaFunctionRole
+
+  EventLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref EventLambdaFunction
+      RetentionInDays: 7
+
+  EventLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Environment:
+        Variables: 
+          DEBUG: "1"
+      Code: 
+        S3Bucket: !Ref S3SourceBucketParam
+        S3Key: !Sub "${LambdaFunctionSourceFileName}.zip"
+      Description: "Event Processing Lambda Function"
+      FunctionName: !Ref LambdaFunctionNameParam
+      Handler: !Sub "${LambdaFunctionSourceFileName}.handler"
+      MemorySize: 128
+      Role: !GetAtt EventLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 300
+
+  EventLambdaFunctionEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      Enabled: true
+      EventSourceArn:
+        Fn::ImportValue: !Sub "${EventSqsQueueStackName}-EventQueueArn"
+      FunctionName: !GetAtt EventLambdaFunction.Arn
+
+  
+
+# Outputs:
+
+#   EventQueueName:
+#     Description: "EventQueue Name"
+#     Value: !GetAtt EventQueue.QueueName
+#     Export:
+#       Name: !Sub "${AWS::StackName}-EventQueueName"
+
+
+
+
