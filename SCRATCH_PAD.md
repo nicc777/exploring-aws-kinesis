@@ -21,8 +21,8 @@ Some next steps I'm thinking about (Lab 3)...
 
 I need to add the following attributes in DynamoDB:
 
-* For `SK` keys `PERSON#PERSONAL_DATA`:
-    * Attribute `Permissions` containing JSON String that defined the permissions for a person in context of the Access Card application actions. For example, to allow linking of an access card.
+* ~~For `SK` keys `PERSON#PERSONAL_DATA`:~~
+    * ~~Attribute `Permissions` containing JSON String that defined the permissions for a person in context of the Access Card application actions. For example, to allow linking of an access card.~~
 * For `SK` keys `PERSON#PERSONAL_DATA#ACCESS_CARD`:
     * Attribute `LinkingEventRequestId` - A String containing the calculated request ID
     * Attribute `LinkingEventBucket` - A String with the event bucket name
