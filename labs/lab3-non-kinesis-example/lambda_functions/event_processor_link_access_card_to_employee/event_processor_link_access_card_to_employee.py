@@ -812,6 +812,27 @@ def action_delete_existing_card_scanned_status_record(event_data: dict, logger=g
     )
 
 
+def action_create_new_card_scanned_status_record(event_data: dict, target_employee_record :dict, event_timestamp: Decimal, logger=get_logger())->bool:
+    key = create_dynamodb_key(
+        pk_val='CARD#{}'.format(event_data['CardId']),
+        sk_val='CARD#EVENT#SCANNED'
+    )
+    record_data = {
+        'PersonName'                : { 'S': '{}'.format(target_employee_record['PersonName'])      },
+        'PersonSurname'             : { 'S': '{}'.format(target_employee_record['PersonSurname'])   },
+        'ScannedInTimestamp'        : { 'N': '{}'.format(str(event_timestamp))                      },
+        'BuildingIdxWhereScanned'   : { 'S': '{}'.format(event_data['Campus'])                      },
+        'ScannedInEmployeeId'       : { 'S': '{}'.format(event_data['EmployeeId'])                  },
+        'ScannedStatus'             : { 'S': 'scanned-in'                                           },
+        'ScannedStatusComment'      : { 'S': 'Card Issued'                                          }
+    }
+    return create_dynamodb_record(
+        key=key,
+        record_data=record_data,
+        logger=logger
+    )
+
+
 def process_event_record_body(event_data: dict, logger=get_logger()):
     """
         Example event_data dict:
@@ -883,7 +904,6 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create New Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create New Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
 
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Card Scanned Event Record - [PK=CARD#{}] [SK=CARD#EVENT#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
