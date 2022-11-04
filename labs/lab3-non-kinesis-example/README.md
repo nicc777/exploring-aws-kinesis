@@ -175,8 +175,8 @@ As such, I started with a composite key design with the following structure:
 |                         |                                                        | - PersonName                                                                                                |
 |                         |                                                        | - PersonSurname                                                                                             |
 |                         |                                                        |                                                                                                             |
-|                         | CARD#EVENT#<<timestamp>>                               | - CardIdx (<<access card ID>>#<<timestamp>>)                                                                |
-|                         |                                                        | - EventType (LinkCard|ExpireCard|ReactivateCard|MarkCardDestroyed|MarkCardLost|MarkCardStolen|CardScanned)  |
+|                         | CARD#EVENT#<<type>>#<<timestamp>>                      | - CardIdx (<<access card ID>>#<<timestamp>>)                                                                |
+|                         |    (types: LINK | SCAN | UNLINK | MAINT)               | - EventType (LinkCard|ExpireCard|ReactivateCard|MarkCardDestroyed|MarkCardLost|MarkCardStolen|CardScanned)  |
 |                         |                                                        | - EventBucketName                                                                                           |
 |                         |                                                        | - EventBucketKey                                                                                            |
 |                         |                                                        | - EventRequestId                                                                                            |
