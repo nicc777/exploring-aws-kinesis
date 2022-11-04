@@ -1042,7 +1042,7 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
 
     # STEP #9
     step_nr += 1
-    if action_create_new_card_scanned_status_record(event_data=event_data, target_employee_record=target_employee_record, event_timestamp=event_timestamp, logger=logger) is True:
+    if action_create_card_scanned_event_record(event_data=event_data, event_timestamp=event_timestamp, linking_user_employee_record=linking_user_employee_record, logger=logger) is True:
         required_actions_completed_counter += 1
         progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
         logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Create Card Scanned Event Record - [PK=CARD#{}] [SK=CARD#EVENT#SCAN#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
