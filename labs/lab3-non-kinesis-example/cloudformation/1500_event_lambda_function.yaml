@@ -84,6 +84,7 @@ Resources:
             - "dynamodb:Scan"
             - "dynamodb:Query"
             - "dynamodb:UpdateItem"
+            - "dynamodb:DeleteItem"
             Resource:
               - Fn::Sub:
                 - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
