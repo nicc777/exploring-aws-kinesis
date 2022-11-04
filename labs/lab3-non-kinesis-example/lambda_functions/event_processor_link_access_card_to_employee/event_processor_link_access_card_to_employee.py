@@ -746,9 +746,9 @@ def action_create_card_link_event_record(event_data: dict, event_timestamp: Deci
     record_data = {
         'CardIdx'                           : { 'S': '{}'.format(event_data['CardId'])                                  },
         'EventType'                         : { 'S': 'LinkCard'                                                         },
-        'EventBucketName'                   : { 'S': 'TODO - unknown'                                                   },
-        'EventBucketKey'                    : { 'S': 'TODO - unknown'                                                   },
-        'EventRequestId'                    : { 'S': 'TODO - unknown'                                                   },
+        'EventBucketName'                   : { 'S': '{}'.format(event_data['EventBucket'])                             },
+        'EventBucketKey'                    : { 'S': '{}'.format(event_data['EventBucketKey'])                          },
+        'EventRequestId'                    : { 'S': '{}'.format(event_data['RequestId'])                               },
         'EventRequestedByEmployeeId'        : { 'S': '{}'.format(linking_user_employee_record['PK'].replace('EMP#','')) },
         'EventTimestamp'                    : { 'N': '{}'.format(str(event_timestamp))                                  },
         'EventOutcomeDescription'           : { 'S': 'Card Linked Successfully'                                         },
@@ -845,9 +845,9 @@ def action_create_card_scanned_event_record(event_data: dict, event_timestamp: D
     record_data = {
         'CardIdx'                           : { 'S': '{}'.format(event_data['CardId'])                                  },
         'EventType'                         : { 'S': 'CardScanned'                                                      },
-        'EventBucketName'                   : { 'S': 'TODO - unknown'                                                   },
-        'EventBucketKey'                    : { 'S': 'TODO - unknown'                                                   },
-        'EventRequestId'                    : { 'S': 'TODO - unknown'                                                   },
+        'EventBucketName'                   : { 'S': '{}'.format(event_data['EventBucket'])                             },
+        'EventBucketKey'                    : { 'S': '{}'.format(event_data['EventBucketKey'])                          },
+        'EventRequestId'                    : { 'S': '{}'.format(event_data['RequestId'])                               },
         'EventRequestedByEmployeeId'        : { 'S': '{}'.format(linking_user_employee_record['PK'].replace('EMP#','')) },
         'EventTimestamp'                    : { 'N': '{}'.format(str(event_timestamp))                                  },
         'EventOutcomeDescription'           : { 'S': 'Card Scanned Successfully'                                        },
@@ -885,7 +885,9 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
                 "RequestId": "c85c616418716a95c81c14d7c033cba157694129c86f9e188668b210f14023b9", 
                 "Campus": "campus03",
                 "EventSourceArn": "arn:aws:sqs:eu-central-1:012345678901:LinkAccessCardEvent",
-                "EventId": "a6c2cb8a-3bf0-4257-8786-49c684d3040e"
+                "EventId": "a6c2cb8a-3bf0-4257-8786-49c684d3040e",
+                "EventBucket": "lab3-events-khjidgf", 
+                "EventBucketKey": "link_employee_and_access_card_10021.request"
             }
     """
     logger.info('Processing event_data={}'.format(event_data))
@@ -1040,7 +1042,7 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
 
     # STEP #9
     step_nr += 1
-    if action_create_new_card_scanned_status_record(event_data=event_data, target_employee_record=target_employee_record, event_timestamp=event_timestamp, logger=logger) is True:
+    if action_create_card_scanned_event_record(event_data=event_data, event_timestamp=event_timestamp, linking_user_employee_record=linking_user_employee_record, logger=logger) is True:
         required_actions_completed_counter += 1
         progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
         logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Create Card Scanned Event Record - [PK=CARD#{}] [SK=CARD#EVENT#SCAN#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
@@ -1114,7 +1116,7 @@ TEST_EVENTS = {
             {
                 'messageId': 'a6c2cb8a-3bf0-4257-8786-49c684d3040e', 
                 'receiptHandle': 'abc', 
-                'body': '{"EmployeeId": "100000000104", "CardId": "100000000139", "CompleteOnboarding": true, "LinkedBy": {"Username": "nicc777@gmail.com", "CognitoId": "fe8c1444-8404-4365-bf70-0c4d30313c8d"}, "LinkedTimestamp": 1667367563, "RequestId": "04e0ea3a3ffef1f6c242a284166e707aae2dd573387718e188a32c0f57483f2f", "Campus": "campus02"}',  
+                'body': '{"EmployeeId": "100000000113", "CardId": "100000000097", "CompleteOnboarding": true, "LinkedBy": {"Username": "nicc777@gmail.com", "CognitoId": "fe8c1444-8404-4365-bf70-0c4d30313c8d"}, "LinkedTimestamp": 1667367563, "RequestId": "04e0ea3a3ffef1f6c242a284166e707aae2dd573387718e188a32c0f57483f2f", "Campus": "campus02", "EventBucket": "lab3-events-khjidgf", "EventBucketKey": "link_employee_and_access_card_10021.request"}',
                 'attributes': {
                     'ApproximateReceiveCount': '1', 
                     'SentTimestamp': '1667297326109', 

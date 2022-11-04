@@ -227,6 +227,10 @@ def process_s3_record(s3_record: dict, config: dict, logger=get_logger(), aws_ac
                             s3_key_version_id=s3_record['object']['versionId'],
                             logger=logger
                         )
+                        json_data_dict = json.loads(json_data)
+                        json_data_dict['EventBucket'] = s3_record['bucket']['name']
+                        json_data_dict['EventBucketKey'] = s3_record['object']['key']
+                        json_data = json.dumps(json_data_dict)
                         if len(json_data) > 0 and len(json_data) < 10240:
                             logger.info('Event "{}" data loaded. Routing Data: {}'.format(routable_event['EventType'], routable_event['RoutingData']))
                             publish_event_to_sns(
