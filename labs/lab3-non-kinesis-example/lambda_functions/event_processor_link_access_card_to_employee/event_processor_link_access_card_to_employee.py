@@ -801,6 +801,17 @@ def action_create_new_card_status_record(event_data: dict, event_timestamp: Deci
     )
 
 
+def action_delete_existing_card_scanned_status_record(event_data: dict, logger=get_logger())->bool:
+    key = create_dynamodb_key(
+        pk_val='CARD#{}'.format(event_data['CardId']), 
+        sk_val='CARD#EVENT#SCANNED'
+    )
+    return delete_dynamodb_record(
+        key=key,
+        logger=logger
+    )
+
+
 def process_event_record_body(event_data: dict, logger=get_logger()):
     """
         Example event_data dict:
@@ -871,10 +882,10 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Card Link Event Record - [PK=CARD#{}] [SK=CARD#EVENT#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create New Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
 
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create New Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
+
     logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Card Scanned Event Record - [PK=CARD#{}] [SK=CARD#EVENT#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
     
     
@@ -948,6 +959,17 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
         logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Create New Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
     else:
         logger.info('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Create New Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
+        logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
+
+
+    # STEP #7
+    step_nr += 1
+    if action_delete_existing_card_scanned_status_record(event_data=event_data, logger=logger) is True:
+        required_actions_completed_counter += 1
+        progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
+        logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Delete Existing Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
+    else:
+        logger.info('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Delete Existing Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
         logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
 
 
