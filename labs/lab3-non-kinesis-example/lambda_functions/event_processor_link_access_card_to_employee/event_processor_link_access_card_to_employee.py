@@ -671,28 +671,31 @@ def create_dynamodb_key(pk_val: str, sk_val: str)->dict:
     return key
 
 
-def action_delete_existing_employee_access_card_record(event_data: dict, logger=get_logger())->bool:
-    key = create_dynamodb_key(
-        pk_val='EMP#{}'.format(event_data['EmployeeId']), 
-        sk_val='PERSON#PERSONAL_DATA#ACCESS_CARD'
-    )
+def action_delete_existing_employee_access_card_record(
+    key: dict,
+    event_data: dict=dict(),
+    event_timestamp: Decimal=Decimal('0'),
+    final_employee_status: str=None,
+    linking_user_employee_record: dict=dict(),
+    target_employee_record :dict=dict(),
+    logger=get_logger()
+)->bool:
+    logger.info('   ACTION: key={}'.format(key))
+    logger.info('   ACTION: record_data=n/a')
     return delete_dynamodb_record(
         key=key,
         logger=logger
     )
 
 def action_create_employee_access_card_record(
-    event_data: dict, 
-    event_timestamp: Decimal, 
-    final_employee_status: str, 
-    linking_user_employee_record: dict,
-    target_employee_record :dict,
+    key: dict,
+    event_data: dict=dict(),
+    event_timestamp: Decimal=Decimal('0'),
+    final_employee_status: str=None,
+    linking_user_employee_record: dict=dict(),
+    target_employee_record :dict=dict(),
     logger=get_logger()
 )->bool:
-    key = create_dynamodb_key(
-        pk_val='EMP#{}'.format(event_data['EmployeeId']), 
-        sk_val='PERSON#PERSONAL_DATA#ACCESS_CARD'
-    )
     record_data = {
         'CardIssuedTimestamp'   : { 'N': '{}'.format(str(event_timestamp))                                  },
         'CardRevokedTimestamp'  : { 'N': '0'                                                                },
@@ -708,6 +711,8 @@ def action_create_employee_access_card_record(
         'ScannedStatus'         : { 'S': 'scanned-in'                                                       },
         'CognitoSubjectId'      : { 'S': '{}'.format(target_employee_record['CognitoSubjectId'])            }
     }
+    logger.info('   ACTION: key={}'.format(key))
+    logger.info('   ACTION: record_data={}'.format(record_data))
     return create_dynamodb_record(
         key=key,
         record_data=record_data,
@@ -715,18 +720,24 @@ def action_create_employee_access_card_record(
     )
 
 
-def action_update_employee_status(event_data: dict, final_status: str, target_employee_record :dict, logger=get_logger())->bool:
-    key = create_dynamodb_key(
-        pk_val='{}'.format(target_employee_record['PK']), 
-        sk_val='{}'.format(target_employee_record['SK'])
-    )
+def action_update_employee_status(
+    key: dict,
+    event_data: dict=dict(),
+    event_timestamp: Decimal=Decimal('0'),
+    final_employee_status: str=None,
+    linking_user_employee_record: dict=dict(),
+    target_employee_record :dict=dict(),
+    logger=get_logger()
+)->bool:
     record_data = {
-        'PersonName'        : { 'S': '{}'.format(target_employee_record['PersonName'])},
-        'PersonSurname'     : { 'S': '{}'.format(target_employee_record['PersonSurname'])},
-        'PersonDepartment'  : { 'S': '{}'.format(target_employee_record['PersonDepartment'])},
-        'PersonStatus'      : { 'S': '{}'.format(final_status)},
-        'CognitoSubjectId'  : { 'S': '{}'.format(target_employee_record['CognitoSubjectId'])}
+        'PersonName'        : { 'S': '{}'.format(target_employee_record['PersonName'])          },
+        'PersonSurname'     : { 'S': '{}'.format(target_employee_record['PersonSurname'])       },
+        'PersonDepartment'  : { 'S': '{}'.format(target_employee_record['PersonDepartment'])    },
+        'PersonStatus'      : { 'S': '{}'.format(final_employee_status)                         },
+        'CognitoSubjectId'  : { 'S': '{}'.format(target_employee_record['CognitoSubjectId'])    }
     }
+    logger.info('   ACTION: key={}'.format(key))
+    logger.info('   ACTION: record_data={}'.format(record_data))
     return create_dynamodb_record(
         key=key,
         record_data=record_data,
@@ -734,11 +745,15 @@ def action_update_employee_status(event_data: dict, final_status: str, target_em
     )
 
 
-def action_create_card_link_event_record(event_data: dict, event_timestamp: Decimal, linking_user_employee_record: dict, logger=get_logger())->bool:
-    key = create_dynamodb_key(
-        pk_val='CARD#{}'.format(event_data['CardId']), 
-        sk_val='CARD#EVENT#LINK#{}'.format(str(event_timestamp))
-    )
+def action_create_card_link_event_record(
+    key: dict,
+    event_data: dict=dict(),
+    event_timestamp: Decimal=Decimal('0'),
+    final_employee_status: str=None,
+    linking_user_employee_record: dict=dict(),
+    target_employee_record :dict=dict(),
+    logger=get_logger()
+)->bool:
     sqs_event_source_id = 'SQS QUEUE "{}" With Event ID "{}"'.format(
         event_data['EventSourceArn'],
         event_data['EventId']
@@ -763,6 +778,8 @@ def action_create_card_link_event_record(event_data: dict, event_timestamp: Deci
         'EventSqsId'                        : { 'S': '{}'.format(sqs_event_source_id)                                   },
         'EventSqsOriginalPayloadJson'       : { 'S': '{}'.format(json.dumps(event_data))                                }
     }
+    logger.info('   ACTION: key={}'.format(key))
+    logger.info('   ACTION: record_data={}'.format(record_data))
     return create_dynamodb_record(
         key=key,
         record_data=record_data,
@@ -770,30 +787,42 @@ def action_create_card_link_event_record(event_data: dict, event_timestamp: Deci
     )
 
 
-def action_delete_existing_card_status_record(event_data: dict, logger=get_logger())->bool:
-    key = create_dynamodb_key(
-        pk_val='CARD#{}'.format(event_data['CardId']), 
-        sk_val='CARD#STATUS'
-    )
+def action_delete_existing_card_status_record(
+    key: dict,
+    event_data: dict=dict(),
+    event_timestamp: Decimal=Decimal('0'),
+    final_employee_status: str=None,
+    linking_user_employee_record: dict=dict(),
+    target_employee_record :dict=dict(),
+    logger=get_logger()
+)->bool:
+    logger.info('   ACTION: key={}'.format(key))
+    logger.info('   ACTION: record_data=n/a')
     return delete_dynamodb_record(
         key=key,
         logger=logger
     )
 
 
-def action_create_new_card_status_record(event_data: dict, event_timestamp: Decimal, logger=get_logger())->bool:
-    key = create_dynamodb_key(
-        pk_val='CARD#{}'.format(event_data['CardId']), 
-        sk_val='CARD#STATUS'
-    )
+def action_create_new_card_status_record(
+    key: dict,
+    event_data: dict=dict(),
+    event_timestamp: Decimal=Decimal('0'),
+    final_employee_status: str=None,
+    linking_user_employee_record: dict=dict(),
+    target_employee_record :dict=dict(),
+    logger=get_logger()
+)->bool:
     record_data = {
-        'CardIdx'               : { 'S': '{}'.format(event_data['CardId'])      },
-        'LockIdentifier'        : { 'S': 'null'                                 },
-        'IsAvailableForIssue'   : { 'BOOL': False                               },
-        'CardIssuedTo'          : { 'S': 'no-one'                               },
-        'CardIssuedBy'          : { 'S': '{}'.format(event_data['EmployeeId'])  },
-        'CardIssuedTimestamp'   : { 'N': '{}'.format(str(event_timestamp))      }
+        'CardIdx'               : { 'S': '{}'.format(event_data['CardId'])                                      },
+        'LockIdentifier'        : { 'S': 'null'                                                                 },
+        'IsAvailableForIssue'   : { 'BOOL': False                                                               },
+        'CardIssuedTo'          : { 'S': '{}'.format(event_data['EmployeeId'])                                  },
+        'CardIssuedBy'          : { 'S': '{}'.format(linking_user_employee_record['PK']).replace('EMP#', '')    },
+        'CardIssuedTimestamp'   : { 'N': '{}'.format(str(event_timestamp))                                      }
     }
+    logger.info('   ACTION: key={}'.format(key))
+    logger.info('   ACTION: record_data={}'.format(record_data))
     return create_dynamodb_record(
         key=key,
         record_data=record_data,
@@ -801,22 +830,32 @@ def action_create_new_card_status_record(event_data: dict, event_timestamp: Deci
     )
 
 
-def action_delete_existing_card_scanned_status_record(event_data: dict, logger=get_logger())->bool:
-    key = create_dynamodb_key(
-        pk_val='CARD#{}'.format(event_data['CardId']), 
-        sk_val='CARD#EVENT#SCANNED'
-    )
+def action_delete_existing_card_scanned_status_record(
+    key: dict,
+    event_data: dict=dict(),
+    event_timestamp: Decimal=Decimal('0'),
+    final_employee_status: str=None,
+    linking_user_employee_record: dict=dict(),
+    target_employee_record :dict=dict(),
+    logger=get_logger()
+)->bool:
+    logger.info('   ACTION: key={}'.format(key))
+    logger.info('   ACTION: record_data=n/a')
     return delete_dynamodb_record(
         key=key,
         logger=logger
     )
 
 
-def action_create_new_card_scanned_status_record(event_data: dict, target_employee_record :dict, event_timestamp: Decimal, logger=get_logger())->bool:
-    key = create_dynamodb_key(
-        pk_val='CARD#{}'.format(event_data['CardId']),
-        sk_val='CARD#EVENT#SCANNED'
-    )
+def action_create_new_card_scanned_status_record(
+    key: dict,
+    event_data: dict=dict(),
+    event_timestamp: Decimal=Decimal('0'),
+    final_employee_status: str=None,
+    linking_user_employee_record: dict=dict(),
+    target_employee_record :dict=dict(),
+    logger=get_logger()
+)->bool:
     record_data = {
         'PersonName'                : { 'S': '{}'.format(target_employee_record['PersonName'])      },
         'PersonSurname'             : { 'S': '{}'.format(target_employee_record['PersonSurname'])   },
@@ -826,6 +865,8 @@ def action_create_new_card_scanned_status_record(event_data: dict, target_employ
         'ScannedStatus'             : { 'S': 'scanned-in'                                           },
         'ScannedStatusComment'      : { 'S': 'Card Issued'                                          }
     }
+    logger.info('   ACTION: key={}'.format(key))
+    logger.info('   ACTION: record_data={}'.format(record_data))
     return create_dynamodb_record(
         key=key,
         record_data=record_data,
@@ -833,11 +874,15 @@ def action_create_new_card_scanned_status_record(event_data: dict, target_employ
     )
 
 
-def action_create_card_scanned_event_record(event_data: dict, event_timestamp: Decimal, linking_user_employee_record: dict, logger=get_logger())->bool:
-    key = create_dynamodb_key(
-        pk_val='CARD#{}'.format(event_data['CardId']), 
-        sk_val='CARD#EVENT#SCAN#{}'.format(str(event_timestamp))
-    )
+def action_create_card_scanned_event_record(
+    key: dict,
+    event_data: dict=dict(),
+    event_timestamp: Decimal=Decimal('0'),
+    final_employee_status: str=None,
+    linking_user_employee_record: dict=dict(),
+    target_employee_record :dict=dict(),
+    logger=get_logger()
+)->bool:
     sqs_event_source_id = 'SQS QUEUE "{}" With Event ID "{}"'.format(
         event_data['EventSourceArn'],
         event_data['EventId']
@@ -862,6 +907,8 @@ def action_create_card_scanned_event_record(event_data: dict, event_timestamp: D
         'EventSqsId'                        : { 'S': '{}'.format(sqs_event_source_id)                                   },
         'EventSqsOriginalPayloadJson'       : { 'S': '{}'.format(json.dumps(event_data))                                }
     }
+    logger.info('   ACTION: key={}'.format(key))
+    logger.info('   ACTION: record_data={}'.format(record_data))
     return create_dynamodb_record(
         key=key,
         record_data=record_data,
@@ -929,129 +976,100 @@ def process_event_record_body(event_data: dict, logger=get_logger()):
     linking_user_employee_record = get_employee_record_from_cognito_id(cognito_id=event_data['LinkedBy']['CognitoId'],logger=logger)
     target_employee_record = get_employee_record_from_employee_id(employee_id=event_data['EmployeeId'],logger=logger)
 
-    # 6) Log intensions
-    required_actions_completed_counter = 0
-    required_actions_completed_qty = 9
-    progress = 0
-    step_nr = 0
-    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
-    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
-    if event_data['CompleteOnboarding'] is True:
-        logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Update Employee Status - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
-    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Card Link Event Record - [PK=CARD#{}] [SK=CARD#EVENT#LINK#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
-    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create New Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Delete Existing Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create New Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-    logger.info('REQUIRED ACTION - PENDING - [employee={}] [card={}] - Create Card Scanned Event Record - [PK=CARD#{}] [SK=CARD#EVENT#SCAN{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
-    
+    # 6) DynamoDB Actions
+    actions = [
+        {
+            'Delete Existing Employee Access Card Record': {
+                'PK': 'EMP#{}'.format(event_data['EmployeeId']),
+                'SK': 'PERSON#PERSONAL_DATA#ACCESS_CARD',
+                'Executor': action_delete_existing_employee_access_card_record,
+                'Condition': True,
+            }
+        },
+        {
+            'Create Employee Access Card Record': {
+                'PK': 'EMP#{}'.format(event_data['EmployeeId']),
+                'SK': 'PERSON#PERSONAL_DATA#ACCESS_CARD',
+                'Executor': action_create_employee_access_card_record,
+                'Condition': True,
+            }
+        },
+        {
+            'Update Employee Status': {
+                'PK': '{}'.format(target_employee_record['PK']),
+                'SK': '{}'.format(target_employee_record['SK']),
+                'Executor': action_update_employee_status,
+                'Condition': event_data['CompleteOnboarding'],
+            }
+        },
+        {
+            'Create Card Link Event Record': {
+                'PK': 'CARD#{}'.format(event_data['CardId']),
+                'SK': 'CARD#EVENT#LINK#{}'.format(event_data['LinkedTimestamp']),
+                'Executor': action_create_card_link_event_record,
+                'Condition': True,
+            }
+        },
+        {
+            'Delete Existing Card Status Record': {
+                'PK': 'CARD#{}'.format(event_data['CardId']),
+                'SK': 'CARD#STATUS',
+                'Executor': action_delete_existing_card_status_record,
+                'Condition': True,
+            }
+        },
+        {
+            'Create New Card Status Record': {
+                'PK': 'CARD#{}'.format(event_data['CardId']),
+                'SK': 'CARD#STATUS',
+                'Executor': action_create_new_card_status_record,
+                'Condition': True,
+            }
+        },
+        {
+            'Delete Existing Card Scanned Status Record': {
+                'PK': 'CARD#{}'.format(event_data['CardId']),
+                'SK': 'CARD#EVENT#SCANNED',
+                'Executor': action_delete_existing_card_scanned_status_record,
+                'Condition': True,
+            }
+        },
+        {
+            'Create New Card Scanned Status Record': {
+                'PK': 'CARD#{}'.format(event_data['CardId']),
+                'SK': 'CARD#EVENT#SCANNED',
+                'Executor': action_create_new_card_scanned_status_record,
+                'Condition': True,
+            }
+        },
+        {
+            'Create Card Scanned Event Record': {
+                'PK': 'CARD#{}'.format(event_data['CardId']),
+                'SK': 'CARD#EVENT#SCAN{}'.format(event_data['LinkedTimestamp']),
+                'Executor': action_create_card_scanned_event_record,
+                'Condition': True,
+            }
+        },
+    ]
 
-    # 7) DynamoDB Actions
-
-    # STEP #1
-    step_nr += 1
-    if action_delete_existing_employee_access_card_record(event_data=event_data, logger=logger) is True:
-        required_actions_completed_counter += 1
-        progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
-        logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Delete Existing Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
-    else:
-        logger.error('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Delete Existing Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
-        logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
-
-
-    # STEP #2
-    step_nr += 1
-    if action_create_employee_access_card_record(event_data=event_data, event_timestamp=event_timestamp, final_employee_status=final_employee_status, linking_user_employee_record=linking_user_employee_record, target_employee_record=target_employee_record, logger=logger) is True:
-        required_actions_completed_counter += 1
-        progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
-        logger.info('REQUIRED ACTION - COMPLETE - [employee={}] [card={}] - Create Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
-    else:
-        logger.info('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Create Employee Access Card Record - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA#ACCESS_CARD]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
-        logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
-    
-
-    
-    # STEP #3
-    step_nr += 1
-    if event_data['CompleteOnboarding'] is True:
-        if action_update_employee_status(event_data=event_data, final_status=final_employee_status, target_employee_record=target_employee_record, logger=logger) is True:
-            required_actions_completed_counter += 1
-            progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
-            logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Update Employee Status - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
-        else:
-            logger.info('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Update Employee Status - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
-            logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
-    else:
-        logger.info('REQUIRED ACTION - SKIPPED - [employee={}] [card={}] - Update Employee Status - [PK=EMP#{}] [SK=PERSON#PERSONAL_DATA]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['EmployeeId']))
-
-
-    # STEP #4
-    step_nr += 1
-    if action_create_card_link_event_record(event_data=event_data, event_timestamp=event_timestamp, linking_user_employee_record=linking_user_employee_record, logger=logger) is True:
-        required_actions_completed_counter += 1
-        progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
-        logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Create Card Link Event Record - [PK=CARD#{}] [SK=CARD#EVENT#LINK#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
-    else:
-        logger.info('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Create Card Link Event Record - [PK=CARD#{}] [SK=CARD#EVENT#LINK#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
-        logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
-
-
-    # STEP #5
-    step_nr += 1
-    if action_delete_existing_card_status_record(event_data=event_data, logger=logger) is True:
-        required_actions_completed_counter += 1
-        progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
-        logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Delete Existing Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-    else:
-        logger.info('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Delete Existing Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-        logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
-
-
-    # STEP #6
-    step_nr += 1
-    if action_create_new_card_status_record(event_data=event_data, event_timestamp=event_timestamp, logger=logger) is True:
-        required_actions_completed_counter += 1
-        progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
-        logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Create New Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-    else:
-        logger.info('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Create New Card Status Record - [PK=CARD#{}] [SK=CARD#STATUS]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-        logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
-
-
-    # STEP #7
-    step_nr += 1
-    if action_delete_existing_card_scanned_status_record(event_data=event_data, logger=logger) is True:
-        required_actions_completed_counter += 1
-        progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
-        logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Delete Existing Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-    else:
-        logger.info('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Delete Existing Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-        logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
-
-
-    # STEP #8
-    step_nr += 1
-    if action_create_new_card_scanned_status_record(event_data=event_data, target_employee_record=target_employee_record, event_timestamp=event_timestamp, logger=logger) is True:
-        required_actions_completed_counter += 1
-        progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
-        logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Create New Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-    else:
-        logger.info('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Create New Card Scanned Status Record - [PK=CARD#{}] [SK=CARD#EVENT#SCANNED]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId']))
-        logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
-
-
-    # STEP #9
-    step_nr += 1
-    if action_create_card_scanned_event_record(event_data=event_data, event_timestamp=event_timestamp, linking_user_employee_record=linking_user_employee_record, logger=logger) is True:
-        required_actions_completed_counter += 1
-        progress = int((required_actions_completed_counter/required_actions_completed_qty)*100)
-        logger.info('REQUIRED ACTION - COMPLETED - [employee={}] [card={}] - Create Card Scanned Event Record - [PK=CARD#{}] [SK=CARD#EVENT#SCAN#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
-    else:
-        logger.info('REQUIRED ACTION - FAILED - [employee={}] [card={}] - Create Card Scanned Event Record - [PK=CARD#{}] [SK=CARD#EVENT#SCAN#{}]'.format(event_data['EmployeeId'],event_data['CardId'],event_data['CardId'], event_data['LinkedTimestamp']))
-        logger.error('DYNAMODB EVENT FAILED - Progress: Step #{} (successfully completed {} steps or  {}%)'.format(step_nr, required_actions_completed_counter, progress))
-
-
-    # TODO complete
+    for action in actions:
+        for action_name, action_data in action.items():
+            logger.info('REQUIRED ACTION - PENDING - {} [PK={}] [SK={}]'.format(action_name, action_data['PK'], action_data['SK']))
+            if action_data['Condition']:
+                if action_data['Executor'](
+                    key=create_dynamodb_key(pk_val=action_data['PK'], sk_val=action_data['SK']),
+                    event_data=event_data,
+                    event_timestamp=event_data['LinkedTimestamp'],
+                    final_employee_status=final_employee_status,
+                    linking_user_employee_record=linking_user_employee_record,
+                    target_employee_record=target_employee_record,
+                    logger=get_logger()
+                ) is True:
+                    logger.info('REQUIRED ACTION - COMPLETED - {} [PK={}] [SK={}]'.format(action_name, action_data['PK'], action_data['SK']))
+                else:
+                    logger.info('REQUIRED ACTION - FAILED - {} [PK={}] [SK={}]'.format(action_name, action_data['PK'], action_data['SK']))
+            else:
+                logger.info('REQUIRED ACTION - NO ACTION - {} [PK={}] [SK={}]'.format(action_name, action_data['PK'], action_data['SK']))
 
 
 def extract_event_record(event_record: str, logger=get_logger())->dict:
