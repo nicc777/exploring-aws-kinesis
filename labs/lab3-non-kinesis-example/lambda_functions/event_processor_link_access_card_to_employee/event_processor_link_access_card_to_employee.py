@@ -814,12 +814,12 @@ def action_create_new_card_status_record(
     logger=get_logger()
 )->bool:
     record_data = {
-        'CardIdx'               : { 'S': '{}'.format(event_data['CardId'])      },
-        'LockIdentifier'        : { 'S': 'null'                                 },
-        'IsAvailableForIssue'   : { 'BOOL': False                               },
-        'CardIssuedTo'          : { 'S': 'no-one'                               },
-        'CardIssuedBy'          : { 'S': '{}'.format(event_data['EmployeeId'])  },
-        'CardIssuedTimestamp'   : { 'N': '{}'.format(str(event_timestamp))      }
+        'CardIdx'               : { 'S': '{}'.format(event_data['CardId'])                                      },
+        'LockIdentifier'        : { 'S': 'null'                                                                 },
+        'IsAvailableForIssue'   : { 'BOOL': False                                                               },
+        'CardIssuedTo'          : { 'S': '{}'.format(event_data['EmployeeId'])                                  },
+        'CardIssuedBy'          : { 'S': '{}'.format(linking_user_employee_record['PK']).replace('EMP#', '')    },
+        'CardIssuedTimestamp'   : { 'N': '{}'.format(str(event_timestamp))                                      }
     }
     logger.info('   ACTION: key={}'.format(key))
     logger.info('   ACTION: record_data={}'.format(record_data))
