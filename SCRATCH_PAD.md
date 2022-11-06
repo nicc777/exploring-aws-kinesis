@@ -20,11 +20,11 @@ Instead of a page to see the status, I thought I would just create a general sea
 
 This would require Lambda functions for the API Gateway:
 
-| Site Function                 | Lambda Function Name      | Implemented | Notes                                                                                                                                                                     |
-|-------------------------------|---------------------------|:-----------:|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Lookup access card            | `api_search_cards.py`     | NO          | Accepts a card ID or Card Issuer or Employee ID as input (a number with the type of number). Criteria can include "EQUAL" (default), "CONTAINS" or "ENDS-WIDTH"           |
-| Lookup employee profile       | `api_search_employee.py`  | NO          | Accepts a card ID or Card Issuer or Employee ID as input (a number with the type of number). Criteria can include "EQUAL" (default), "CONTAINS" or "ENDS-WIDTH"           |
-| Lookup building occupancy     | `api_search_occupancy.py` | NO          | Accepts campus ID and returns list of employee card profiles (PK = `EMP#<<id>>` and SK = `PERSON#PERSONAL_DATA#ACCESS_CARD`).                                             |
+| Site Function                 | Lambda Function Name      | API Route           | Implemented | Notes                                                                                                                                                                     |
+|-------------------------------|---------------------------|---------------------|:-----------:|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Lookup access card            | `api_search_cards.py`     | `/search/cards`     | NO          | Accepts a card ID or Card Issuer or Employee ID as input (a number with the type of number). Criteria can include "EQUAL" (default), "CONTAINS" or "ENDS-WIDTH"           |
+| Lookup employee profile       | `api_search_employee.py`  | `/search/employees` | NO          | Accepts a card ID or Card Issuer or Employee ID as input (a number with the type of number). Criteria can include "EQUAL" (default), "CONTAINS" or "ENDS-WIDTH"           |
+| Lookup building occupancy     | `api_search_occupancy.py` | `/search/campus`    | NO          | Accepts campus ID and returns list of employee card profiles (PK = `EMP#<<id>>` and SK = `PERSON#PERSONAL_DATA#ACCESS_CARD`).                                             |
 
 # Design Thoughts...
 
