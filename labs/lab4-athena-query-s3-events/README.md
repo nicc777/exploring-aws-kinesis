@@ -17,7 +17,9 @@ The basic scenario walk through:
 6. Investigate how to best trigger these event objects to be processed again
 7. Ensure that post replay the data is what it is supposed to look like (compare with the very last DynamoDB snapshot)
 
-Another question I have would be to see if I can replay data from archives like Glacier. Does Athena even work with Glacier? Something to investigate.
+Another question I have would be to see if I can replay data from archives like Glacier. Athena [does not support](https://docs.aws.amazon.com/athena/latest/ug/other-notable-limitations.html) S3 glacier, so I need to consider how a process would look like to get archived objects back into play. Perhaps I need a second bucket that can act as a archive bucket, and then set-up some kind rule to delete objects after x days in the primary event bucket which in turn moves those items to the archive bucket with a life cycle rule to deep archive in the shortest possible time.
+
+Another aspect to keep in mind is that S3 does not provide a list filter. You either list all the objects or you get a specific object. Traditionally it is best to also use a secondary service like DynamoDB to store the meta data around objects, so that you can query objects from DynamoDB and then retrieve the object data as required from S3. This will probably be a key in selecting only objects created after a certain point in time for event replay. Further more, the archive status can be tracked in DynamoDB in order to kick off processes to restore those objects to a normal storage tier for retrieval and replay.
 
 # Initial Scenario Planning
 
