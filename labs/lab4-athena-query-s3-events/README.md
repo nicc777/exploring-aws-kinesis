@@ -2,6 +2,11 @@
 - [Lab 4 Goals](#lab-4-goals)
 - [Initial Scenario Planning](#initial-scenario-planning)
   - [Event Data](#event-data)
+    - [Cash Deposit Event](#cash-deposit-event)
+    - [Verify Cash Deposit Event](#verify-cash-deposit-event)
+    - [Cash Withdrawal](#cash-withdrawal)
+    - [Incoming Payment](#incoming-payment)
+    - [Transfer from one account to another](#transfer-from-one-account-to-another)
 
 # Lab 4 Goals
 
@@ -25,46 +30,104 @@ Another aspect to keep in mind is that S3 does not provide a list filter. You ei
 
 ## Event Data
 
-Since I need more than one type of event, and since the actual data does not matter, I am going to use these made-up events.
+Originally I though about just using random data, but perhaps it is better to use something practical that can also much easier assist with determining the test cases. One example is to consider simple bank accounts. Events can be either:
 
-_**Event 1**_:
+* Cash Deposit (increases balance of account)
+* Cash Withdrawal (decrease balance of account)
+* Incoming Payment (for example salary) (increases balance of account)
+* Transfer from one account to another (balance in first account decreases and in the second account increases)
 
-```json
-{
-    "E1F1": "String",
-    "E1F2": true,
-    "E1F3": 123,
-    "E1F4": {
-        "SF1": "String",
-        "SF2": [
-            "a",
-            "b",
-            "c"
-        ]
-    }
-}
-```
 
-_**Event 2**_:
+### Cash Deposit Event
+
+Key structure: `cash_deposit_<<request-id>>.event`
 
 ```json
 {
-    "E2F1": "String",
-    "E2F2": "String",
-    "E2F3": "String",
-    "E2F4": [
-        "a",
-        "b",
-        "c"
+    "EventTimeStamp": 1234567890,
+    "TargetAccount": "<<account number>>",
+    "Amount": "123.45",
+    "LocationType": "ATM or Teller",
+    "Reference": "Some Free Form Text",
+    "Verified": false,
+    "Currency": [
+        "100-euro-bills": 1,
+        "20-euro-bills": 1,
+        "1-euro-bills": 3,
+        "20-cents": 2,
+        "5-cents": 1
     ]
 }
 ```
 
-The actual data could be random, but I will attempt to make it still predictable in order to make testing/verification a little easier.
+### Verify Cash Deposit Event
 
-As per lab 3, the two different events will have slightly different key name structures:
+Key structure: `verify_cash_deposit_<<request-id>>.event`
 
-* Event 1: `event_1_<<event-id>>.event`
-* Event 2: `another_event_<<event-id>>.event`
+```json
+{
+    "EventTimeStamp": 1234567890,
+    "TargetAccount": "<<account number>>",
+    "Amount": "123.40",
+    "LocationType": "ATM or Teller",
+    "Reference": "Some Free Form Text",
+    "Verified": true,
+    "VerifiedCurrency": [
+        "100-euro-bills": 1,
+        "20-euro-bills": 1,
+        "1-euro-bills": 3,
+        "20-cents": 2
+    ],
+    "VerifiedByEmployeeId": "1234567890",
+    "FinalFinding": "5 cents was from incorrect currency and rejected. The coins were returned to the customer."
+}
+```
+
+### Cash Withdrawal
+
+Key structure: `cash_withdrawal_<<request-id>>.event`
+
+```json
+{
+    "EventTimeStamp": 1234567890,
+    "SourceAccount": "<<account number>>",
+    "Amount": "200.00",
+    "LocationType": "ATM or Teller",
+    "Reference": "Some Free Form Text",
+    "Currency": [
+        "50-euro-bills": 4
+    ]
+}
+```
+
+### Incoming Payment
+
+Key structure: `incoming_payment_<<request-id>>.event`
+
+```json
+{
+    "EventTimeStamp": 1234567890,
+    "SourceAccount": "<<account number>>",
+    "Amount": "123.45",
+    "SourceInstitution": "Source Bank",
+    "SourceAccount": "Source Account Number",
+    "Reference": "Some Free Form Text"
+}
+```
+
+### Transfer from one account to another
+
+Key structure: `inter_account_transfer_<<request-id>>.event`
+
+```json
+{
+    "EventTimeStamp": 1234567890,
+    "SourceAccount": "<<account number>>",
+    "TargetAccount": "<<account number>>",
+    "Amount": "123.45",
+    "Reference": "Some Free Form Text"
+}
+```
+
 
 
