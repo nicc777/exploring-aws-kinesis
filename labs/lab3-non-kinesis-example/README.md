@@ -25,6 +25,7 @@
     - [S3 Events Bucket Resources](#s3-events-bucket-resources)
     - [S3 Lambda Handler Resources](#s3-lambda-handler-resources)
 - [Random Thoughts](#random-thoughts)
+- [Conclusion](#conclusion)
 
 # Lab 3 Goals
 
@@ -903,3 +904,9 @@ From here the event type can be determined by the object key. For example, Acces
 Something that occurred to me while I was designing this solution was to think about why I would still expose certain applications via EC2 - why not have everything as serverless?
 
 The fact is that sometimes we still have to deal with off-the-shelve products, and I am treating this web app as a typical example. In theory I could also just host it directly from S3, but I would like to use this opportunity to exercise some other concepts as well, even though they may not be too high on the cool-scale.
+
+# Conclusion
+
+During the weekend of 5 and 6 November I have completed the lab. Initially I was thinking of adding more UI to search for information, but then I reflected on my initial goals and realized I have met all my original objectives and it is time to to stop and reflect after which I can move on to the next lab.
+
+The effort for this lab was much bigger than I anticipated. I originally thought a week, maybe two. 
