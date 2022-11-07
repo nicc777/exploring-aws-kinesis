@@ -1,0 +1,178 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "Define the bucket and supporting infrastructure for New Events"
+
+# Metadata:
+#   template metadata
+
+Parameters:
+  BucketNameParam:
+    Type: String
+    Default: "lab4-new-events-qpwoeiryt"
+  InventoryBucketNameParam:
+    Type: String
+    Default: "lab4-new-events-inventory-qpwoeiryt"
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+  
+  S3NewEventStoreNotificationDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: "S3NewEventStoreNotificationDeadLetterQueue"
+      VisibilityTimeout: 60
+
+  S3NewEventStoreNotificationQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: "S3NewEventStoreNotificationQueue"
+      RedriveAllowPolicy:
+        redrivePermission: "allowAll"
+      RedrivePolicy:
+        deadLetterTargetArn : !GetAtt S3NewEventStoreNotificationDeadLetterQueue.Arn
+        maxReceiveCount : 3
+      VisibilityTimeout: 60
+
+  S3NewEventStoreNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties: 
+      DisplayName: "S3NewEventStoreNotificationTopic"
+      FifoTopic: false
+      Subscription:
+      - Protocol: sqs
+        Endpoint: !GetAtt S3NewEventStoreNotificationQueue.Arn
+      TopicName: "S3NewEventStoreNotification"
+
+  S3NewEventStoreNotificationPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: "s3.amazonaws.com"
+            Action: sns:Publish
+            Resource: !Ref S3NewEventStoreNotificationTopic
+      Topics:
+        - !Ref S3NewEventStoreNotificationTopic
+
+  SnsToSqsPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "Allow SNS publish to SQS"
+            Effect: Allow
+            Principal:
+              Service: "sns.amazonaws.com"
+            Resource: !GetAtt S3NewEventStoreNotificationQueue.Arn
+            Action: SQS:SendMessage
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref S3NewEventStoreNotificationTopic
+      Queues:
+      - Ref: S3NewEventStoreNotificationQueue
+
+  S3NewEventStoreInventoryBucketPolicy:
+    Type: AWS::S3::BucketPolicy 
+    Properties: 
+      Bucket: !Ref S3NewEventStoreBucket
+      PolicyDocument: 
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: s3.amazonaws.com
+          Action:
+          - s3:PutObject
+          Resource:
+          - !Join ["", ["arn:aws:s3:::", !Ref S3NewEventStoreBucket, "/*"]]
+          Condition:
+            ArnLike:
+              aws:SourceArn:
+              - !Join ["", ["arn:aws:s3:::", !Ref S3NewEventStoreBucket, "/*"]]
+            StringEquals:
+              aws:SourceAccount:
+              - !Sub '${AWS::AccountId}'
+              s3:x-amz-acl: bucket-owner-full-control 
+
+  S3NewEventStoreInventoryBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties: 
+      AccessControl: "Private"
+      BucketName: !Ref InventoryBucketNameParam
+
+  S3NewEventStoreBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    DependsOn:
+      - "S3NewEventStoreInventoryBucket"
+    Properties: 
+      AccessControl: "Private"
+      BucketName: !Ref BucketNameParam
+      LifecycleConfiguration: 
+        Rules: 
+        - AbortIncompleteMultipartUpload: 
+            DaysAfterInitiation: 1
+          Id: !Sub "${BucketNameParam}-archive-lifecycle-01"
+          Status: "Enabled"
+          Transitions: 
+          - StorageClass: "GLACIER"
+            TransitionInDays: 2
+          - StorageClass: "DEEP_ARCHIVE"  # Days' in the 'Transition' action for StorageClass 'DEEP_ARCHIVE' for filter must be 90 days more than 'Transition' action for StorageClass 'GLACIER' 
+            TransitionInDays: 93
+      NotificationConfiguration: 
+        TopicConfigurations: 
+        - Event: "s3:ObjectCreated:*"   # See https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
+          Topic: !Ref S3NewEventStoreNotificationTopic
+      InventoryConfigurations: 
+      - Destination: 
+          BucketAccountId: !Sub '${AWS::AccountId}'
+          BucketArn:
+            Fn::Sub:
+            - "arn:${AWS::Partition}:s3:::${TargetBucket}"
+            - TargetBucket: !Ref InventoryBucketNameParam
+          Format: CSV
+          Prefix: "inv-"
+        Enabled: true
+        Id: "new-event-inventory"
+        IncludedObjectVersions: Current
+        OptionalFields: 
+        - Size
+        - LastModifiedDate
+        - StorageClass
+        - ETag
+        - IsMultipartUploaded
+        - ReplicationStatus
+        - ObjectLockRetainUntilDate
+        - IntelligentTieringAccessTier
+        Prefix: "inv-filter-"
+        ScheduleFrequency: Daily
+      Tags: 
+      - Key: Purpose
+        Value: NewEventStore
+
+# Outputs:
+#   set of outputs
