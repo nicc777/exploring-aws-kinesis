@@ -58,4 +58,9 @@ _**Event 2**_:
 
 The actual data could be random, but I will attempt to make it still predictable in order to make testing/verification a little easier.
 
+As per lab 3, the two different events will have slightly different key name structures:
+
+* Event 1: `event_1_<<event-id>>.event`
+* Event 2: `another_event_<<event-id>>.event`
+
 
