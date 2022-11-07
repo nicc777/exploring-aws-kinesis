@@ -100,8 +100,8 @@ I expect this project to have the following stages:
 * ~~Lab Design (based on learnings from documentation)~~
 * ~~Lab 1: Manual Lab Resource Provisioning (AWS API and AWS Console)~~
 * ~~Lab 2: Infrastructure as Code Lab Resource Provisioning (CloudFormation)~~
-* Lab 3: Adapt lab 2 to create a hybrid Kinesis and direct S3 put solution (splitting high volume and low volume data ingestion processes) (`In Progress`)
-* Lab 4: Evaluate Athena as a tool to query and replay old captured events
+* ~~Lab 3: Adapt lab 2 to create a hybrid Kinesis and direct S3 put solution (splitting high volume and low volume data ingestion processes)~~
+* Lab 4: Evaluate Athena as a tool to query and replay old captured events (`In Progress`)
 * Lab 5: Reorganize the CloudFormation stacks to a manageable set of files. Invest some time to figure out [AWS::CloudFormation::Stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-stack.html). The aim of this is to see how we can add more events in future in a structured way, with some inheritance and resource project organization.
 * Lab 6: Use private KMS in all areas to encrypt data. Introduce data models to enforce input and output validation.
 * Lab 7: A practical example with some real logic and a CloudFormation template to setup and run load tests via something like [Locust](https://locust.io/)
