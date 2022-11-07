@@ -12,6 +12,39 @@ The basic scenario walk through:
 6. Investigate how to best trigger these event objects to be processed again
 7. Ensure that post replay the data is what it is supposed to look like (compare with the very last DynamoDB snapshot)
 
-Since I need more than one type of event, and since the actual data does not matter, I am going to use these made-up events:
+Since I need more than one type of event, and since the actual data does not matter, I am going to use these made-up events.
+
+_**Event 1**_:
+
+```json
+{
+    "E1F1": "String",
+    "E1F2": true,
+    "E1F3": 123,
+    "E1F4": {
+        "SF1": "String",
+        "SF2": [
+            "a",
+            "b",
+            "c"
+        ]
+    }
+}
+```
+
+_**Event 2**_:
+
+```json
+{
+    "E2F1": "String",
+    "E2F2": "String",
+    "E2F3": "String",
+    "E2F4": [
+        "a",
+        "b",
+        "c"
+    ]
+}
+```
 
 
