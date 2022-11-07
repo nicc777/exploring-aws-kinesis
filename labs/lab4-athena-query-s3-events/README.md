@@ -1,0 +1,17 @@
+# Lab 4 Goals
+
+The aim for this lab is to see if Athena is suitable to query events in S3. From [Lab 3](../lab3-non-kinesis-example/README.md), the events are stored using JSON format, but I am not yet sure if this is a suitable format for Athena. It certainly [appears possible](https://docs.aws.amazon.com/athena/latest/ug/querying-JSON.html), but there is a lot I don't know going into this lab.
+
+The basic scenario walk through:
+
+1. Create events in JSON format, and include perhaps also different types of events (see how much a consistent structure matters).
+2. The S3 bucket kicks of a Lambda function (via SNS) and the Lambda function just saves the data in a make-shift table in DynamoDB (I am not worried about technical details of the data - just basic persistence)
+3. Take regular snapshots (time-in-point backup) of DynamoDB
+4. At some point, restore to a point in time
+5. Use Athena to get all events that is required to be replayed
+6. Investigate how to best trigger these event objects to be processed again
+7. Ensure that post replay the data is what it is supposed to look like (compare with the very last DynamoDB snapshot)
+
+Since I need more than one type of event, and since the actual data does not matter, I am going to use these made-up events:
+
+
