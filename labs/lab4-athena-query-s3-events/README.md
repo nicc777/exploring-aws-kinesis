@@ -17,6 +17,8 @@ The basic scenario walk through:
 6. Investigate how to best trigger these event objects to be processed again
 7. Ensure that post replay the data is what it is supposed to look like (compare with the very last DynamoDB snapshot)
 
+Another question I have would be to see if I can replay data from archives like Glacier. Does Athena even work with Glacier? Something to investigate.
+
 # Initial Scenario Planning
 
 ## Event Data
