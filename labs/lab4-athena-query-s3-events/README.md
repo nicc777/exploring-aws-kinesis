@@ -7,6 +7,8 @@
     - [Cash Withdrawal](#cash-withdrawal)
     - [Incoming Payment](#incoming-payment)
     - [Transfer from one account to another](#transfer-from-one-account-to-another)
+  - [Event Data Objects in DynamoDB](#event-data-objects-in-dynamodb)
+  - [Transaction Data in DynamoDB](#transaction-data-in-dynamodb)
 
 # Lab 4 Goals
 
@@ -129,5 +131,49 @@ Key structure: `inter_account_transfer_<<request-id>>.event`
 }
 ```
 
+## Event Data Objects in DynamoDB
 
+Table Name: `lab4_event_objects_qweriuyt`
+
+```text
++----------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
+| Primary Key                                                                      | Attributes                                                                                                  |
++-------------------------+--------------------------------------------------------+                                                                                                             |
+| Partition Key (PK)      | Sort Key (ST) Type: NUMBER                             |                                                                                                             |
+| Name: PK                | Name: SK                                               |                                                                                                             |
++-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
+|                         |                                                        |                                                                                                             |
+| KEY#<<object-key>>      | <<timestamp>>                                          | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
+|                         |                                                        | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
+|                         |                                                        | - InEventBucket  (BOOL)                                                                                     |
+|                         |                                                        | - InArchiveBucket  (BOOL)                                                                                   |
+|                         |                                                        |                                                                                                             |
++-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
+```
+
+## Transaction Data in DynamoDB
+
+Table Name: `lab4_bank_accounts_qweriuyt`
+
+```text
++----------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
+| Primary Key                                                                      | Attributes                                                                                                  |
++-------------------------+--------------------------------------------------------+                                                                                                             |
+| Partition Key (PK)      | Sort Key (ST) Type: NUMBER                             |                                                                                                             |
+| Name: PK                | Name: SK                                               |                                                                                                             |
++-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
+|                         |                                                        |                                                                                                             |
+| <<account-number>>      | SAVINGS#TRANSACTIONS<<customer-number>>                | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
+|                         |                                                        | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
+|                         |                                                        | - EventKey (STRING, links to <<object-key>>)                                                                |
+|                         |                                                        | - EventRawData (String, containing JSON of original transaction)                                            |
+|                         |                                                        | - Amount (Number)                                                                                           |
+|                         |                                                        |                                                                                                             |
+| <<account-number>>      | SAVINGS#BALANCE<<customer-number>>                     | - LastTransactionDate (NUMBER, format YYYYMMDD)                                                             |
+|                         |                                                        | - LastTransactionTime (NUMBER, format HHMMSS)                                                               |
+|                         |                                                        | - LastEventKey (STRING, links to <<object-key>>)                                                            |
+|                         |                                                        | - Balance (Number)                                                                                           |
+|                         |                                                        |                                                                                                             |
++-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
+```
 
