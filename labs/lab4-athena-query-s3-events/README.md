@@ -46,6 +46,8 @@ The following buckets will be created:
 
 Any transaction that failed, for example due to insufficient funds, goes to the `rejected` bucket.
 
+The SNS topic from the `lab4-new-events-qpwoeiryt` bucket streams into a FIFO SQS Queue.
+
 ## Event Data
 
 Originally I though about just using random data, but perhaps it is better to use something practical that can also much easier assist with determining the test cases. One example is to consider simple bank accounts. Events can be either:
