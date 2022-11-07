@@ -6,6 +6,9 @@
     - [Verify Cash Deposit Event](#verify-cash-deposit-event)
     - [Cash Withdrawal](#cash-withdrawal)
     - [Incoming Payment](#incoming-payment)
+    - [Outgoing Payment Not Accepted by Remote Party Yet](#outgoing-payment-not-accepted-by-remote-party-yet)
+    - [Outgoing Payment Accepted by Target Institution](#outgoing-payment-accepted-by-target-institution)
+    - [Outgoing Payment Rejected by Target Institution](#outgoing-payment-rejected-by-target-institution)
     - [Transfer from one account to another](#transfer-from-one-account-to-another)
   - [Event Data Objects in DynamoDB](#event-data-objects-in-dynamodb)
   - [Transaction Data in DynamoDB](#transaction-data-in-dynamodb)
@@ -44,6 +47,8 @@ Originally I though about just using random data, but perhaps it is better to us
 
 Key structure: `cash_deposit_<<request-id>>.event`
 
+Effect on Available Balance: None
+
 ```json
 {
     "EventTimeStamp": 1234567890,
@@ -65,6 +70,8 @@ Key structure: `cash_deposit_<<request-id>>.event`
 ### Verify Cash Deposit Event
 
 Key structure: `verify_cash_deposit_<<request-id>>.event`
+
+Effect on Available Balance: Increase Balance by `Amount`
 
 ```json
 {
@@ -89,6 +96,12 @@ Key structure: `verify_cash_deposit_<<request-id>>.event`
 
 Key structure: `cash_withdrawal_<<request-id>>.event`
 
+Effect on Available Balance: Decrease Balance by `Amount`
+
+Business Rules:
+
+* Balances cannot go below 0 after withdrawal
+
 ```json
 {
     "EventTimeStamp": 1234567890,
@@ -106,6 +119,8 @@ Key structure: `cash_withdrawal_<<request-id>>.event`
 
 Key structure: `incoming_payment_<<request-id>>.event`
 
+Effect on Available Balance: Increase Balance by `Amount`
+
 ```json
 {
     "EventTimeStamp": 1234567890,
@@ -117,9 +132,61 @@ Key structure: `incoming_payment_<<request-id>>.event`
 }
 ```
 
+### Outgoing Payment Not Accepted by Remote Party Yet
+
+Key structure: `outgoing_payment_unverified_<<request-id>>.event`
+
+Effect on Available Balance: Decrease Balance by `Amount`
+
+```json
+{
+    "EventTimeStamp": 1234567890,
+    "SourceAccount": "<<account number>>",
+    "Amount": "123.45",
+    "TargetInstitution": "Source Bank",
+    "TargetAccount": "Source Account Number",
+    "Reference": "Some Free Form Text"
+}
+```
+
+### Outgoing Payment Accepted by Target Institution
+
+Key structure: `outgoing_payment_verified_<<request-id>>.event`
+
+Effect on Available Balance: None
+
+_**Note**_: The `<<request-id>>` corresponds to the original request ID for the `unverified` event.
+
+```json
+{
+    "EventTimeStamp": 1234567890
+}
+```
+
+### Outgoing Payment Rejected by Target Institution
+
+Key structure: `outgoing_payment_rejected_<<request-id>>.event`
+
+_**Note**_: The `<<request-id>>` corresponds to the original request ID for the `unverified` event.
+
+Effect on Available Balance: Increase Balance by `RejectedAmount`
+
+```json
+{
+    "EventTimeStamp": 1234567890,
+    "Reason": "Incorrect account number (account not found)",
+    "RejectedAmount": "123.45"
+}
+```
+
 ### Transfer from one account to another
 
 Key structure: `inter_account_transfer_<<request-id>>.event`
+
+Effect on Available Balance: 
+
+* Increase Balance by `Amount` on Target Account
+* Decrease Balance by `Amount` on Source Account
 
 ```json
 {
@@ -147,6 +214,7 @@ Table Name: `lab4_event_objects_qweriuyt`
 |                         |                                                        | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
 |                         |                                                        | - InEventBucket  (BOOL)                                                                                     |
 |                         |                                                        | - InArchiveBucket  (BOOL)                                                                                   |
+|                         |                                                        | - TargetAccountNumber  (STRING)                                                                             |
 |                         |                                                        |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 ```
@@ -163,17 +231,35 @@ Table Name: `lab4_bank_accounts_qweriuyt`
 | Name: PK                | Name: SK                                               |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 |                         |                                                        |                                                                                                             |
-| <<account-number>>      | SAVINGS#TRANSACTIONS<<customer-number>>                | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
+| <<account-number>>      | TRANSACTIONS#PENDING#<<event-key>>                     | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
 |                         |                                                        | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
 |                         |                                                        | - EventKey (STRING, links to <<object-key>>)                                                                |
 |                         |                                                        | - EventRawData (String, containing JSON of original transaction)                                            |
 |                         |                                                        | - Amount (Number)                                                                                           |
 |                         |                                                        |                                                                                                             |
-| <<account-number>>      | SAVINGS#BALANCE<<customer-number>>                     | - LastTransactionDate (NUMBER, format YYYYMMDD)                                                             |
+| <<account-number>>      | TRANSACTIONS#VERIFIED#<<event-key>>                    | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
+|                         |                                                        | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
+|                         |                                                        | - EventKey (STRING, links to <<object-key>>)                                                                |
+|                         |                                                        | - EventRawData (String, containing JSON of original transaction)                                            |
+|                         |                                                        | - Amount (Number)                                                                                           |
+|                         |                                                        |                                                                                                             |
+| <<account-number>>      | SAVINGS#BALANCE#ACTUAL<<customer-number>>              | - LastTransactionDate (NUMBER, format YYYYMMDD)                                                             |
 |                         |                                                        | - LastTransactionTime (NUMBER, format HHMMSS)                                                               |
 |                         |                                                        | - LastEventKey (STRING, links to <<object-key>>)                                                            |
-|                         |                                                        | - Balance (Number)                                                                                           |
+|                         |                                                        | - Balance (Number)                                                                                          |
+|                         |                                                        |                                                                                                             |
+| <<account-number>>      | SAVINGS#BALANCE#AVAILABLE<<customer-number>>           | - LastTransactionDate (NUMBER, format YYYYMMDD)                                                             |
+|                         |                                                        | - LastTransactionTime (NUMBER, format HHMMSS)                                                               |
+|                         |                                                        | - LastEventKey (STRING, links to <<object-key>>)                                                            |
+|                         |                                                        | - Balance (Number)                                                                                          |
 |                         |                                                        |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 ```
+
+Notes:
+
+* The `SAVINGS#BALANCE` balances reflect the balance of all `TRANSACTIONS#VERIFIED` transactions. Unverified transactions does not yet influence the final balance.
+* The Available balance is the balance available for transactions. 
+
+
 
