@@ -1,6 +1,7 @@
 
 - [Lab 4 Goals](#lab-4-goals)
 - [Initial Scenario Planning](#initial-scenario-planning)
+  - [S3 Buckets](#s3-buckets)
   - [Event Data](#event-data)
     - [Cash Deposit Event](#cash-deposit-event)
     - [Verify Cash Deposit Event](#verify-cash-deposit-event)
@@ -32,6 +33,18 @@ Another question I have would be to see if I can replay data from archives like 
 Another aspect to keep in mind is that S3 does not provide a list filter. You either list all the objects or you get a specific object. Traditionally it is best to also use a secondary service like DynamoDB to store the meta data around objects, so that you can query objects from DynamoDB and then retrieve the object data as required from S3. This will probably be a key in selecting only objects created after a certain point in time for event replay. Further more, the archive status can be tracked in DynamoDB in order to kick off processes to restore those objects to a normal storage tier for retrieval and replay.
 
 # Initial Scenario Planning
+
+## S3 Buckets
+
+The following buckets will be created:
+
+| Bucket Name                      | Glacier | Processing                                                                             | 
+|----------------------------------|:-------:|----------------------------------------------------------------------------------------|
+| `lab4-new-events-qpwoeiryt`      | No      | Delete key after 1 day. Delete action triggers Lambda to move data to archive bucket   |
+| `lab4-archive-events-qpwoeiryt`  | Yes     | Move to glacier class after 3 days (if possible)                                       |
+| `lab4-rejected-events-qpwoeiryt` | Yes     | Move to glacier class after 3 days (if possible)                                       |
+
+Any transaction that failed, for example due to insufficient funds, goes to the `rejected` bucket.
 
 ## Event Data
 
@@ -214,6 +227,7 @@ Table Name: `lab4_event_objects_qweriuyt`
 |                         |                                                        | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
 |                         |                                                        | - InEventBucket  (BOOL)                                                                                     |
 |                         |                                                        | - InArchiveBucket  (BOOL)                                                                                   |
+|                         |                                                        | - InRejectedBucket  (BOOL - note: rejected events won't be in the archive bucket)                           |
 |                         |                                                        | - TargetAccountNumber  (STRING)                                                                             |
 |                         |                                                        | - Processed  (BOOL, default=false)                                                                          |
 |                         |                                                        |                                                                                                             |
