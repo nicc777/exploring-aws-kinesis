@@ -38,11 +38,14 @@ Another aspect to keep in mind is that S3 does not provide a list filter. You ei
 
 The following buckets will be created:
 
-| Bucket Name                      | Glacier | Processing                                                                             | 
-|----------------------------------|:-------:|----------------------------------------------------------------------------------------|
-| `lab4-new-events-qpwoeiryt`      | No      | Delete key after 1 day. Delete action triggers Lambda to move data to archive bucket   |
-| `lab4-archive-events-qpwoeiryt`  | Yes     | Move to glacier class after 3 days (if possible)                                       |
-| `lab4-rejected-events-qpwoeiryt` | Yes     | Move to glacier class after 3 days (if possible)                                       |
+| Bucket Name                                | Glacier | Processing                                                                             | 
+|--------------------------------------------|:-------:|----------------------------------------------------------------------------------------|
+| `lab4-new-events-qpwoeiryt`                | No      | Delete key after 1 day. Delete action triggers Lambda to move data to archive bucket   |
+| `lab4-new-events-inventory-qpwoeiryt`      | No      |                                                                                        |
+| `lab4-archive-events-qpwoeiryt`            | Yes     | Move to glacier class after 3 days (if possible)                                       |
+| `lab4-archive-events-inventory-qpwoeiryt`  | No      |                                                                                        |
+| `lab4-rejected-events-qpwoeiryt`           | Yes     | Move to glacier class after 3 days (if possible)                                       |
+| `lab4-rejected-events-inventory-qpwoeiryt` | No      |                                                                                        |
 
 Any transaction that failed, for example due to insufficient funds, goes to the `rejected` bucket.
 
