@@ -909,4 +909,10 @@ The fact is that sometimes we still have to deal with off-the-shelve products, a
 
 During the weekend of 5 and 6 November I have completed the lab. Initially I was thinking of adding more UI to search for information, but then I reflected on my initial goals and realized I have met all my original objectives and it is time to to stop and reflect after which I can move on to the next lab.
 
-The effort for this lab was much bigger than I anticipated. I originally thought a week, maybe two. 
+The effort for this lab was much bigger than I anticipated. I originally thought a week, maybe two. I ended up working two full months on this lab. 
+
+My big takeaways:
+
+* DynamoDB can be amazing, but requires a lot of thinking to get the primary keys and indexes planned properly. You really need to know how your data will be used, and it is probably a good idea to run several scenarios up-front. At this point I can't see any easy way to adapt DYnamoDB structures once they are established. I had to changes index and records a couple of times, and each time I ended up re-creating the table. I am not sure what the effort would be to implement major changes in production, but I am certain it will require a lot of effort and planning.
+* Serving web pages from EC2 using the FSX file system was a really cool experience. The integration worked well, and there were never any major issues.
+* I implemented a custom continuos deployment system for the web site that was triggered by a release on GitHub which in turn calls a AWS Lambda Function URL, which in turn starts up an EC2 instance (if an instance is not already running), which in turn will deploy the new web site. AFter a couple of minutes, the EC2 instance will shut down again. Since deployment was done in FSX (NFS File System), changes was quickly available to the web server(s). I am very happy with this pattern and I am considering packaging it for re-use in many other projects. It has the potential to become a product.
