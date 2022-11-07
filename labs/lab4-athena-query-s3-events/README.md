@@ -215,6 +215,7 @@ Table Name: `lab4_event_objects_qweriuyt`
 |                         |                                                        | - InEventBucket  (BOOL)                                                                                     |
 |                         |                                                        | - InArchiveBucket  (BOOL)                                                                                   |
 |                         |                                                        | - TargetAccountNumber  (STRING)                                                                             |
+|                         |                                                        | - Processed  (BOOL, default=false)                                                                          |
 |                         |                                                        |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 ```
@@ -260,6 +261,7 @@ Notes:
 
 * The `SAVINGS#BALANCE` balances reflect the balance of all `TRANSACTIONS#VERIFIED` transactions. Unverified transactions does not yet influence the final balance.
 * The Available balance is the balance available for transactions. 
+
 
 
 
