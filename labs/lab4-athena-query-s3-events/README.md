@@ -329,3 +329,5 @@ At this point, I should also point out that there should be an operational proce
 2. Old events in the process of being recovered and replayed, must only include events before and up to the last known snapshot.
 
 I assume there may be some process to ensure that the recovered and replayed events end with the same state as the last known good snapshot state (i.e. account starting balance from the last known good snapshot should match with the balance calculate from all older events leading up to that point in time).
+
+
