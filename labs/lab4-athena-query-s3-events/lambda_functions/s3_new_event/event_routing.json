@@ -61,6 +61,17 @@
                     "Reference": 2
                 }
             }
+            {
+                "Sequence": 99,
+                "Type": "StopProcessing",
+                "TargetResource": null,
+                "TargetResourceReference": null,
+                "TargetResourceReferenceType": null,
+                "PreTargetProcessingHelper": null,
+                "ProcessingConfiguration": null,
+                "OnSuccess": null,
+                "OnFail": null
+            }
         ]
     },
     "CashDepositEvents": {
