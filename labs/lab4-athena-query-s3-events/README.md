@@ -286,6 +286,15 @@ Notes:
 
 # Implementation
 
+When running commands, the following environment variables are assumed to be set:
+
+| Environment Variable Example                | Description                                                                                                          |
+|---------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| `export AWS_PROFILE="..."`                  | The AWS Credentials Profile to use                                                                                   |
+| `export AWS_REGION="..."`                   | The AWS Region to deploy resources to                                                                                |
+| `export ARTIFACT_S3_BUCKET_NAME="..."`      | The S3 Bucket name containing any additional artifacts                                                               |
+| `export NEW_EVEN_STACK_NAME="..."`          | The CloudFormation stack name for deploying New Event Bucket Resources                                               |
+
 ## Deploying the New Event S3 Bucket Resources
 
 First, prepare the Lambda function source files and upload to the relevant source code bucket:
