@@ -1,0 +1,14 @@
+{
+    "CashDepositEvents": {
+        "S3KeyAttributes": {
+            "StartsWith": "cash_deposit_",
+            "Extension": "event"
+        },
+        "Routing": {
+            "SqsQueue": {
+                "Url": "undefined"
+            }
+        }
+    }
+    
+}
