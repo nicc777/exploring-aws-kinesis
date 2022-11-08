@@ -231,13 +231,18 @@ Table Name: `lab4_event_objects_qweriuyt`
 | Name: PK                | Name: SK                                               |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 |                         |                                                        |                                                                                                             |
-| KEY#<<object-key>>      | <<timestamp>>                                          | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
+| KEY#<<object-key>>      | STATE                                                  | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
 |                         |                                                        | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
 |                         |                                                        | - InEventBucket  (BOOL)                                                                                     |
 |                         |                                                        | - InArchiveBucket  (BOOL)                                                                                   |
 |                         |                                                        | - InRejectedBucket  (BOOL - note: rejected events won't be in the archive bucket)                           |
 |                         |                                                        | - TargetAccountNumber  (STRING)                                                                             |
 |                         |                                                        | - Processed  (BOOL, default=false)                                                                          |
+|                         |                                                        |                                                                                                             |
+| KEY#<<object-key>>      | EVENT<<timestamp>>                                     | - EventType (InitialEvent|ArchiveEvent|RejectEvent|...)                                                     |
+|                         |                                                        | - ErrorState (BOOL)                                                                                         |
+|                         |                                                        | - ErrorReason (STRING)                                                                                      |
+|                         |                                                        | - NextAction (STRING)                                                                                       |
 |                         |                                                        |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 ```
