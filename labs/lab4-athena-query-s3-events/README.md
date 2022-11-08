@@ -15,6 +15,7 @@
   - [Transaction Data in DynamoDB](#transaction-data-in-dynamodb)
 - [Implementation](#implementation)
   - [Deploying the New Event S3 Bucket Resources](#deploying-the-new-event-s3-bucket-resources)
+- [Learnings and Discoveries](#learnings-and-discoveries)
 
 # Lab 4 Goals
 
@@ -310,3 +311,21 @@ aws cloudformation deploy \
     --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
+
+# Learnings and Discoveries
+
+> _**Note**_: While I'm busy with the Lab, this section will evolve as I learn or discover new things. Some of my notes may include knowledge I already had, but I will not make the distinction and I will still echo those thoughts here for context and to ensure that others using this resource can also benefit from these extra pieces of knowledge.
+
+This lab is about the operational processes required that will allow us to recover a DynamoDB Database to a point in time and then replay events in the event bucket after that recovery time (using some "last event" indicator).
+
+The first thought I had after thinking about the initial design was that there are two distinct approaches in recovery:
+
+1. Recovery of much older events, where these events are in inventory records and archive buckets.
+2. Recovery of more recent events, where those events may not necessarily be in an inventory file (inventory bucket), but they should be in the DynamoDB table tracking event/inventory files.
+
+At this point, I should also point out that there should be an operational process to stop new events from being generated until the recovery process is complete. This is not ideal as this will demand downtime. One strategy that I will explore is the introduction of daily (or even hourly) summary processes that generates like a point in time snapshot of the state of an account. When recovery is in progress, two things should be noted, assuming the state snapshot is in-tact and trusted to be correct:
+
+1. New events can still be processed, using the last good snapshot as a starting reference, for example to calculate the latest account balance
+2. Old events in the process of being recovered and replayed, must only include events before and up to the last known snapshot.
+
+I assume there may be some process to ensure that the recovered and replayed events end with the same state as the last known good snapshot state (i.e. account starting balance from the last known good snapshot should match with the balance calculate from all older events leading up to that point in time).
