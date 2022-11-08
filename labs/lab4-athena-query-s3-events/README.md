@@ -297,10 +297,16 @@ When running commands, the following environment variables are assumed to be set
 
 ## Deploying the New Event S3 Bucket Resources
 
-First, prepare the Lambda function source files and upload to the relevant source code bucket:
+First, prepare the Lambda function source files and upload to the relevant source code bucket. Then deploy the stack:
 
 ```shell
 rm -vf labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event/s3_new_event.zip
 cd labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event/ && zip s3_new_event.zip s3_new_event.py && cd $OLDPWD 
 aws s3 cp labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event/s3_new_event.zip s3://$ARTIFACT_S3_BUCKET_NAME/s3_new_event.zip
+
+aws cloudformation deploy \
+    --stack-name $NEW_EVEN_STACK_NAME \
+    --template-file labs/lab4-athena-query-s3-events/cloudformation/1000-new-events.yaml \
+    --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
+    --capabilities CAPABILITY_NAMED_IAM
 ```
