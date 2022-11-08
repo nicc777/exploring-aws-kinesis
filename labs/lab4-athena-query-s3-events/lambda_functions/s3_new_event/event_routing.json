@@ -1,14 +1,72 @@
 {
-    "CashDepositEvents": {
+    "InitialCashDepositEvents": {
         "S3KeyAttributes": {
             "StartsWith": "cash_deposit_",
             "Extension": "event"
         },
-        "Routing": {
-            "SqsQueue": {
-                "Url": "undefined"
+        "ProcessingInstructions": [
+            {
+                "Sequence": 0,
+                "Type": "AppendToOriginEvent",
+                "TargetResource": "DynamoDB",
+                "TargetResourceReference": "undefined",
+                "TargetResourceReferenceType": "ARN",
+                "PreTargetProcessingHelper": {},
+                "ProcessingConfiguration": {
+                    "Grouping": {
+                        "GroupingType": "OriginEventKey",
+                        "Value": "TargetAccount"
+                    }
+                },
+                "OnSuccess": {
+                    "Action": "NextSequence",
+                    "Reference": 1
+                },
+                "OnFail": {
+                    "Action": "NextSequence",
+                    "Reference": 2
+                }
+            },
+            {
+                "Sequence": 1,
+                "Type": "SqsFifoMessage",
+                "TargetResource": "SqsFifo",
+                "TargetResourceReference": "AccountTransactionEventQueue",
+                "TargetResourceReferenceType": "Name",
+                "PreTargetProcessingHelper": {
+                    "FunctionName": "get_sqs_queue",
+                    "ParameterMap": {
+                        "ParameterName": "get_sqs_queue_by_name",
+                        "ParameterValue": {
+                            "Type": "Constant",
+                            "Value": "AccountTransactionEventQueue"
+                        }
+                    },
+                    "ResultStoreName": "Seq1SqsQueueName",
+                    "EnableCache": true,
+                    "CacheTTL": 600
+                },
+                "ProcessingConfiguration": {
+                    "Grouping": {
+                        "GroupingType": "OriginEventKey",
+                        "Value": "TargetAccount"
+                    }
+                },
+                "OnSuccess": {
+                    "Action": "NextSequence",
+                    "Reference": 3
+                },
+                "OnFail": {
+                    "Action": "NextSequence",
+                    "Reference": 2
+                }
             }
+        ]
+    },
+    "CashDepositEvents": {
+        "S3KeyAttributes": {
+            "StartsWith": "verify_cash_deposit_",
+            "Extension": "event"
         }
     }
-    
 }
