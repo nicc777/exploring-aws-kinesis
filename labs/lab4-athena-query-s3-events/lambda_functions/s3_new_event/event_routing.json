@@ -60,7 +60,7 @@
                     "Action": "NextSequence",
                     "Reference": 2
                 }
-            }
+            },
             {
                 "Sequence": 99,
                 "Type": "StopProcessing",
