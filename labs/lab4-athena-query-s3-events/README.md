@@ -13,6 +13,8 @@
     - [Transfer from one account to another](#transfer-from-one-account-to-another)
   - [Event Data Objects in DynamoDB](#event-data-objects-in-dynamodb)
   - [Transaction Data in DynamoDB](#transaction-data-in-dynamodb)
+- [Implementation](#implementation)
+  - [Deploying the New Event S3 Bucket Resources](#deploying-the-new-event-s3-bucket-resources)
 
 # Lab 4 Goals
 
@@ -282,4 +284,14 @@ Notes:
 * The Available balance is the balance available for transactions. 
 * It should be accepted that any cash will only be released once the transaction is a `TRANSACTIONS#VERIFIED` type transaction.
 
+# Implementation
 
+## Deploying the New Event S3 Bucket Resources
+
+First, prepare the Lambda function source files and upload to the relevant source code bucket:
+
+```shell
+rm -vf labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event/s3_new_event.zip
+cd labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event/ && zip s3_new_event.zip s3_new_event.py && cd $OLDPWD 
+aws s3 cp labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event/s3_new_event.zip s3://$ARTIFACT_S3_BUCKET_NAME/s3_new_event.zip
+```
