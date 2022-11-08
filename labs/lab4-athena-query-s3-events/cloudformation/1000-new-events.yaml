@@ -146,13 +146,9 @@ Resources:
         Rules: 
         - AbortIncompleteMultipartUpload: 
             DaysAfterInitiation: 1
+          ExpirationInDays: 7
           Id: !Sub "${BucketNameParam}-archive-lifecycle-01"
           Status: "Enabled"
-          Transitions: 
-          - StorageClass: "GLACIER"
-            TransitionInDays: 2
-          - StorageClass: "DEEP_ARCHIVE"  # Days' in the 'Transition' action for StorageClass 'DEEP_ARCHIVE' for filter must be 90 days more than 'Transition' action for StorageClass 'GLACIER' 
-            TransitionInDays: 93
       NotificationConfiguration: 
         TopicConfigurations: 
         - Event: "s3:ObjectCreated:*"   # See https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
