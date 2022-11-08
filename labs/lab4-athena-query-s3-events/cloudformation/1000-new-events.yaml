@@ -191,7 +191,7 @@ Resources:
 ###                                                                                                                 ###
 #######################################################################################################################
 
-  S3EventLambdaFunctionRole:
+  S3NewEventLambdaFunctionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -202,9 +202,9 @@ Resources:
           Principal:
             Service: "lambda.amazonaws.com"
           Action: "sts:AssumeRole"
-      Description: "Lambda role for S3EventLambdaFunction"
+      Description: "Lambda role for S3NewEventLambdaFunction"
       Policies:
-      - PolicyName: S3EventLambdaFunctionPolicy01
+      - PolicyName: S3NewEventLambdaFunctionPolicy01
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -214,7 +214,7 @@ Resources:
             - "logs:CreateLogStream"
             - "logs:PutLogEvents"
             Resource: arn:aws:logs:*:*:*
-      - PolicyName: S3EventLambdaFunctionPolicy02
+      - PolicyName: S3NewEventLambdaFunctionPolicy02
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -225,7 +225,7 @@ Resources:
             - "sqs:GetQueueAttributes"
             - "sqs:ChangeMessageVisibility"
             Resource: !GetAtt S3NewEventStoreNotificationQueue.Arn
-      - PolicyName: S3EventLambdaFunctionPolicy03
+      - PolicyName: S3NewEventLambdaFunctionPolicy03
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -248,7 +248,7 @@ Resources:
             - Fn::Sub: 
               - "${BucketArn}/*"
               - BucketArn: !GetAtt S3NewEventStoreInventoryBucket.Arn
-      - PolicyName: S3EventLambdaFunctionPolicy04
+      - PolicyName: S3NewEventLambdaFunctionPolicy04
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -256,9 +256,9 @@ Resources:
             Action:
             - "sns:Publish"
             Resource: !Sub "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:*"
-      RoleName: S3EventLambdaFunctionRole
+      RoleName: S3NewEventLambdaFunctionRole
 
-  S3EventLambdaFunctionLogGroup:
+  S3NewEventLambdaFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
@@ -266,10 +266,10 @@ Resources:
       LogGroupName:
         Fn::Sub:
         -  "/aws/lambda/${functionRef}"
-        - functionRef: !Ref S3EventLambdaFunction
+        - functionRef: !Ref S3NewEventLambdaFunction
       RetentionInDays: 7
 
-  S3EventLambdaFunction:
+  S3NewEventLambdaFunction:
     Type: AWS::Lambda::Function
     Properties: 
       Architectures: 
@@ -281,20 +281,20 @@ Resources:
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: "s3_new_event.zip"
       Description: "Start the GitHub Sync Server if required"
-      FunctionName: "S3EventLambdaFunction"
+      FunctionName: "S3NewEventLambdaFunction"
       Handler: "s3_new_event.handler"
       MemorySize: 128
-      Role: !GetAtt S3EventLambdaFunctionRole.Arn
+      Role: !GetAtt S3NewEventLambdaFunctionRole.Arn
       Runtime: "python3.8"
       Timeout: 300
 
-  S3EventLambdaFunctionEventSourceMapping:
+  S3NewEventLambdaFunctionEventSourceMapping:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       BatchSize: 10
       Enabled: true
       EventSourceArn: !GetAtt S3NewEventStoreNotificationQueue.Arn
-      FunctionName: !GetAtt S3EventLambdaFunction.Arn
+      FunctionName: !GetAtt S3NewEventLambdaFunction.Arn
 
 
 # Outputs:
