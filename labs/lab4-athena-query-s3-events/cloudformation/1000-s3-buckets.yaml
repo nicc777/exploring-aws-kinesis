@@ -20,6 +20,9 @@ Parameters:
     Type: String
     Description: "The S3 bucket name containing the Lambda function ZIP file"
 
+  DynamoDbTableEventObjectTrackingNameParam:
+    Type: String
+
 # Rules:
 #   set of rules
 
@@ -298,7 +301,7 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
-###                                                 Lambda Function                                                 ###
+###                            Lambda Function - New Event Bucket - CREATE Event Handler                            ###
 ###                                                                                                                 ###
 #######################################################################################################################
 
@@ -406,6 +409,133 @@ Resources:
       Enabled: true
       EventSourceArn: !GetAtt S3NewEventStoreNotificationQueue.Arn
       FunctionName: !GetAtt S3NewEventLambdaFunction.Arn
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                            Lambda Function - New Event Bucket - DELETE Event Handler                            ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  S3NewEventDeleteLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "S3EventFunctionRoleAssumeRolePolicyDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role for S3NewEventDeleteLambdaFunction"
+      Policies:
+      - PolicyName: S3NewEventDeleteLambdaFunctionPolicy01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+      - PolicyName: S3NewEventDeleteLambdaFunctionPolicy02
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "sqs:ReceiveMessage"
+            - "sqs:DeleteMessage"
+            - "sqs:GetQueueAttributes"
+            - "sqs:ChangeMessageVisibility"
+            Resource: !GetAtt S3NewEventDeleteStoreNotificationQueue.Arn
+      - PolicyName: S3NewEventDeleteLambdaFunctionPolicy03
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "s3:GetBucketObjectLockConfiguration"
+            - "s3:GetObjectAcl"
+            - "s3:GetObject"
+            - "s3:GetObjectRetention"
+            - "s3:GetObjectVersionTagging"
+            - "s3:GetObjectAttributes"
+            - "s3:GetObjectVersionAcl"
+            - "s3:GetObjectTagging"
+            - "s3:GetObjectLegalHold"
+            - "s3:GetObjectVersionAttributes"
+            - "s3:GetObjectVersion"
+            - "s3:ListBucket"
+            - "s3:DeleteObjectTagging"
+            - "s3:DeleteObjectVersion"
+            - "s3:DeleteObjectVersionTagging"
+            - "s3:DeleteObject"
+            Resource:
+            - !GetAtt S3NewEventStoreBucket.Arn
+            - Fn::Sub: 
+              - "${BucketArn}/*"
+              - BucketArn: !GetAtt S3NewEventStoreBucket.Arn
+      - PolicyName: S3NewEventDeleteLambdaFunctionPolicy04
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "dynamodb:Scan"
+            - "dynamodb:Query"
+            - "dynamodb:PutItem"
+            - "dynamodb:GetItem"
+            - "dynamodb:UpdateItem"
+            - "dynamodb:DeleteItem"
+            Resource:
+            - Fn::Sub:
+              - Sub "arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/${TableName}/index/*"
+              - TableName: !Ref DynamoDbTableEventObjectTrackingNameParam
+            - Fn::Sub: 
+              - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
+              - TableName: !Ref DynamoDbTableEventObjectTrackingNameParam
+      RoleName: S3NewEventDeleteLambdaFunctionRole
+
+  S3NewEventDeleteLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref S3NewEventDeleteLambdaFunction
+      RetentionInDays: 7
+
+  S3NewEventDeleteLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Environment:
+        Variables: 
+          DEBUG: "1"
+      Code: 
+        S3Bucket: !Ref S3SourceBucketParam
+        S3Key: "s3_new_event_bucket_object_delete.zip"
+      Description: "Start the GitHub Sync Server if required"
+      FunctionName: "S3NewEventDeleteLambdaFunction"
+      Handler: "s3_new_event_bucket_object_delete.handler"
+      MemorySize: 128
+      Role: !GetAtt S3NewEventDeleteLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 300
+
+  S3NewEventDeleteLambdaFunctionEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      Enabled: true
+      EventSourceArn: !GetAtt S3NewEventDeleteStoreNotificationQueue.Arn
+      FunctionName: !GetAtt S3NewEventDeleteLambdaFunction.Arn
 
 
 # Outputs:

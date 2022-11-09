@@ -303,6 +303,7 @@ When running commands, the following environment variables are assumed to be set
 | `export NEW_EVENT_BUCKET_NAME_PARAM="..."`          | The S3 bucket name for new events                                                                                    |
 | `export ARCHIVE_EVENT_BUCKET_NAME_PARAM="..."`      | The S3 bucket name for events archives                                                                               |
 | `export ARCHIVE_INVENTORY_BUCKET_NAME_PARAM="..."`  | The S3 bucket name for events archive bucket inventory                                                               |
+| `export DYNAMODB_OBJECT_TABLE_NAME_PARAM="..."`     | The DynamoDB Table name for event artifact tracking                                                                  |
 
 ## Deploying the New Event S3 Bucket Resources
 
