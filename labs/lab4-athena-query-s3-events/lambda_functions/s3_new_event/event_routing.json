@@ -8,15 +8,13 @@
             {
                 "Sequence": 0,
                 "Type": "AppendToOriginEvent",
-                "TargetResource": "DynamoDB",
-                "TargetResourceReference": "undefined",
-                "TargetResourceReferenceType": "ARN",
+                "TargetResource": null,
+                "TargetResourceReference": null,
+                "TargetResourceReferenceType": null,
                 "PreTargetProcessingHelper": {},
                 "ProcessingConfiguration": {
-                    "Grouping": {
-                        "GroupingType": "OriginEventKey",
-                        "Value": "TargetAccount"
-                    }
+                    "DataSource": "LambdaEvent",
+                    "Key": "SomeKey"
                 },
                 "OnSuccess": {
                     "Action": "NextSequence",
@@ -29,7 +27,7 @@
             },
             {
                 "Sequence": 1,
-                "Type": "SqsFifoMessage",
+                "Type": "SendSqsFifoMessage",
                 "TargetResource": "SqsFifo",
                 "TargetResourceReference": "AccountTransactionEventQueue",
                 "TargetResourceReferenceType": "Name",

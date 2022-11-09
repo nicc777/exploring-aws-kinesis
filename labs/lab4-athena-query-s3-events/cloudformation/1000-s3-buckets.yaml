@@ -7,12 +7,15 @@ Description: "Define the bucket and supporting infrastructure for New Events"
 #   template metadata
 
 Parameters:
-  BucketNameParam:
+
+  NewEventBucketNameParam:
     Type: String
-    Default: "lab4-new-events-qpwoeiryt"
-  InventoryBucketNameParam:
+
+  ArchiveBucketNameParam:
     Type: String
-    Default: "lab4-new-events-inventory-qpwoeiryt"
+  ArchiveInventoryBucketNameParam:
+    Type: String
+
   S3SourceBucketParam:
     Type: String
     Description: "The S3 bucket name containing the Lambda function ZIP file"
@@ -33,10 +36,9 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
-###                                               S3 New Event Bucket                                               ###
+###                                       Event Bucket Trigger Topic and Queue                                      ###
 ###                                                                                                                 ###
 #######################################################################################################################
-
 
   S3NewEventStoreNotificationDeadLetterQueue:
     Type: AWS::SQS::Queue
@@ -103,10 +105,46 @@ Resources:
       Queues:
       - Ref: S3NewEventStoreNotificationQueue
 
-  S3NewEventStoreInventoryBucketPolicy:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                               S3 New Event Bucket                                               ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  S3NewEventStoreBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties: 
+      AccessControl: "Private"
+      BucketName: !Ref NewEventBucketNameParam
+      LifecycleConfiguration: 
+        Rules: 
+        - AbortIncompleteMultipartUpload: 
+            DaysAfterInitiation: 1
+          ExpirationInDays: 7
+          Id: !Sub "${NewEventBucketNameParam}-archive-lifecycle-01"
+          Status: "Enabled"
+      NotificationConfiguration: 
+        TopicConfigurations: 
+        - Event: "s3:ObjectCreated:*"   # See https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
+          Topic: !Ref S3NewEventStoreNotificationTopic
+      Tags: 
+      - Key: Purpose
+        Value: NewEventStore
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                             S3 Archive Event Bucket                                             ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  S3ArchiveStoreInventoryBucketPolicy:
     Type: AWS::S3::BucketPolicy 
     Properties: 
-      Bucket: !Ref S3NewEventStoreBucket
+      Bucket: !Ref S3NewArchiveStoreBucket
       PolicyDocument: 
         Statement:
         - Effect: Allow
@@ -115,51 +153,51 @@ Resources:
           Action:
           - s3:PutObject
           Resource:
-          - !Join ["", ["arn:aws:s3:::", !Ref S3NewEventStoreBucket, "/*"]]
+          - !Join ["", ["arn:aws:s3:::", !Ref S3NewArchiveStoreBucket, "/*"]]
           Condition:
             ArnLike:
               aws:SourceArn:
-              - !Join ["", ["arn:aws:s3:::", !Ref S3NewEventStoreBucket, "/*"]]
+              - !Join ["", ["arn:aws:s3:::", !Ref S3NewArchiveStoreBucket, "/*"]]
             StringEquals:
               aws:SourceAccount:
               - !Sub '${AWS::AccountId}'
               s3:x-amz-acl: bucket-owner-full-control 
 
-  S3NewEventStoreInventoryBucket:
+  S3NewArchiveStoreInventoryBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties: 
       AccessControl: "Private"
-      BucketName: !Ref InventoryBucketNameParam
+      BucketName: !Ref ArchiveInventoryBucketNameParam
 
-  S3NewEventStoreBucket:
+  S3NewArchiveStoreBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     DependsOn:
-      - "S3NewEventStoreInventoryBucket"
+      - "S3NewArchiveStoreInventoryBucket"
     Properties: 
       AccessControl: "Private"
-      BucketName: !Ref BucketNameParam
+      BucketName: !Ref ArchiveBucketNameParam
       LifecycleConfiguration: 
         Rules: 
         - AbortIncompleteMultipartUpload: 
             DaysAfterInitiation: 1
-          ExpirationInDays: 7
-          Id: !Sub "${BucketNameParam}-archive-lifecycle-01"
+          Id: !Sub "${ArchiveBucketNameParam}-archive-lifecycle-01"
           Status: "Enabled"
-      NotificationConfiguration: 
-        TopicConfigurations: 
-        - Event: "s3:ObjectCreated:*"   # See https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
-          Topic: !Ref S3NewEventStoreNotificationTopic
+          Transitions: 
+          - StorageClass: "GLACIER"
+            TransitionInDays: 14
+          - StorageClass: "DEEP_ARCHIVE"  # Days' in the 'Transition' action for StorageClass 'DEEP_ARCHIVE' for filter must be 90 days more than 'Transition' action for StorageClass 'GLACIER' 
+            TransitionInDays: 105
       InventoryConfigurations: 
       - Destination: 
           BucketAccountId: !Sub '${AWS::AccountId}'
           BucketArn:
             Fn::Sub:
             - "arn:${AWS::Partition}:s3:::${TargetBucket}"
-            - TargetBucket: !Ref InventoryBucketNameParam
+            - TargetBucket: !Ref ArchiveInventoryBucketNameParam
           Format: CSV
           Prefix: "inv-"
         Enabled: true
@@ -178,8 +216,7 @@ Resources:
         ScheduleFrequency: Daily
       Tags: 
       - Key: Purpose
-        Value: NewEventStore
-
+        Value: NewArchiveStore
 
 #######################################################################################################################
 ###                                                                                                                 ###
@@ -240,10 +277,10 @@ Resources:
             - "s3:GetObjectVersion"
             - "s3:ListBucket"
             Resource:
-            - !GetAtt S3NewEventStoreInventoryBucket.Arn
+            - !GetAtt S3NewEventStoreBucket.Arn
             - Fn::Sub: 
               - "${BucketArn}/*"
-              - BucketArn: !GetAtt S3NewEventStoreInventoryBucket.Arn
+              - BucketArn: !GetAtt S3NewEventStoreBucket.Arn
       - PolicyName: S3NewEventLambdaFunctionPolicy04
         PolicyDocument:
           Version: '2012-10-17'
