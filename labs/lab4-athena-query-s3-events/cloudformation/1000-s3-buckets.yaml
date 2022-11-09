@@ -36,7 +36,7 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
-###                                       Event Bucket Trigger Topic and Queue                                      ###
+###                                Event Bucket Trigger Topic and Queue - New Events                                ###
 ###                                                                                                                 ###
 #######################################################################################################################
 
@@ -108,6 +108,82 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
+###                               Event Bucket Trigger Topic and Queue - Deleted Keys                               ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  ###
+  ### This is for the S3 Bucket holding new events, where keys are DELETED, in order to finalize any processing 
+  ###
+
+  S3NewEventDeleteStoreNotificationDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: "S3NewEventDeleteStoreNotificationDeadLetterQueue"
+      VisibilityTimeout: 300
+
+  S3NewEventDeleteStoreNotificationQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: "S3NewEventDeleteStoreNotificationQueue"
+      RedriveAllowPolicy:
+        redrivePermission: "allowAll"
+      RedrivePolicy:
+        deadLetterTargetArn : !GetAtt S3NewEventDeleteStoreNotificationDeadLetterQueue.Arn
+        maxReceiveCount : 3
+      VisibilityTimeout: 300
+
+  S3NewEventDeleteStoreNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties: 
+      DisplayName: "S3NewEventDeleteStoreNotificationTopic"
+      FifoTopic: false
+      Subscription:
+      - Protocol: sqs
+        Endpoint: !GetAtt S3NewEventDeleteStoreNotificationQueue.Arn
+      TopicName: "S3NewEventDeleteStoreNotification"
+
+  S3NewEventDeleteStoreNotificationPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: "s3.amazonaws.com"
+            Action: sns:Publish
+            Resource: !Ref S3NewEventDeleteStoreNotificationTopic
+      Topics:
+        - !Ref S3NewEventDeleteStoreNotificationTopic
+
+  DeleteSnsToSqsPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "Allow SNS publish to SQS"
+            Effect: Allow
+            Principal:
+              Service: "sns.amazonaws.com"
+            Resource: !GetAtt S3NewEventDeleteStoreNotificationQueue.Arn
+            Action: SQS:SendMessage
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref S3NewEventDeleteStoreNotificationTopic
+      Queues:
+      - Ref: S3NewEventDeleteStoreNotificationQueue
+
+
+#######################################################################################################################
+###                                                                                                                 ###
 ###                                               S3 New Event Bucket                                               ###
 ###                                                                                                                 ###
 #######################################################################################################################
@@ -130,6 +206,8 @@ Resources:
         TopicConfigurations: 
         - Event: "s3:ObjectCreated:*"   # See https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
           Topic: !Ref S3NewEventStoreNotificationTopic
+        - Event: "s3:ObjectRemoved:*"   
+          Topic: !Ref S3NewEventDeleteStoreNotificationTopic
       Tags: 
       - Key: Purpose
         Value: NewEventStore
