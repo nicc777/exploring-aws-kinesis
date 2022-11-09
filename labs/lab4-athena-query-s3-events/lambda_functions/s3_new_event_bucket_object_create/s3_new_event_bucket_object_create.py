@@ -128,9 +128,13 @@ def extract_s3_event_messages(event: dict, logger=get_logger())->tuple:
     messages = list()
     try:
         for record in event['Records']:
-            s3_event = record['body']
-            s3_message = json.loads(s3_event['Message'])
-            for s3_record in s3_message['Records']:
+            debug_log('record={}', variable_as_list=[record,], logger=logger)
+            event_record_body = json.loads(record['body'])
+            debug_log('event_record_body={}', variable_as_list=[event_record_body,], logger=logger)
+            event_record_body_message = json.loads(event_record_body['Message'])
+            debug_log('event_record_body_message={}', variable_as_list=[event_record_body_message,], logger=logger)
+            for s3_record in event_record_body_message['Records']:
+                debug_log('s3_record={}', variable_as_list=[s3_record,], logger=logger)
                 if s3_record['eventSource'] == 'aws:s3':
                     if s3_record['eventName'] in SUPPORTED_EVENTS:
                         messages.append(s3_record)
