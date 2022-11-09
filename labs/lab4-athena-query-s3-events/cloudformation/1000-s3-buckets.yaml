@@ -370,6 +370,21 @@ Resources:
             Action:
             - "sns:Publish"
             Resource: !Sub "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:*"
+      - PolicyName: S3NewEventLambdaFunctionPolicy05
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "dynamodb:PutItem"
+            - "dynamodb:GetItem"
+            Resource:
+            - Fn::Sub:
+              - Sub "arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/${TableName}/index/*"
+              - TableName: !Ref DynamoDbTableEventObjectTrackingNameParam
+            - Fn::Sub: 
+              - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
+              - TableName: !Ref DynamoDbTableEventObjectTrackingNameParam
       RoleName: S3NewEventLambdaFunctionRole
 
   S3NewEventLambdaFunctionLogGroup:
@@ -452,33 +467,6 @@ Resources:
             - "sqs:ChangeMessageVisibility"
             Resource: !GetAtt S3NewEventDeleteStoreNotificationQueue.Arn
       - PolicyName: S3NewEventDeleteLambdaFunctionPolicy03
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: "Allow"
-            Action:
-            - "s3:GetBucketObjectLockConfiguration"
-            - "s3:GetObjectAcl"
-            - "s3:GetObject"
-            - "s3:GetObjectRetention"
-            - "s3:GetObjectVersionTagging"
-            - "s3:GetObjectAttributes"
-            - "s3:GetObjectVersionAcl"
-            - "s3:GetObjectTagging"
-            - "s3:GetObjectLegalHold"
-            - "s3:GetObjectVersionAttributes"
-            - "s3:GetObjectVersion"
-            - "s3:ListBucket"
-            - "s3:DeleteObjectTagging"
-            - "s3:DeleteObjectVersion"
-            - "s3:DeleteObjectVersionTagging"
-            - "s3:DeleteObject"
-            Resource:
-            - !GetAtt S3NewEventStoreBucket.Arn
-            - Fn::Sub: 
-              - "${BucketArn}/*"
-              - BucketArn: !GetAtt S3NewEventStoreBucket.Arn
-      - PolicyName: S3NewEventDeleteLambdaFunctionPolicy04
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
