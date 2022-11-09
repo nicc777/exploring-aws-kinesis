@@ -309,9 +309,13 @@ When running commands, the following environment variables are assumed to be set
 First, prepare the Lambda function source files and upload to the relevant source code bucket. Then deploy the stack:
 
 ```shell
-rm -vf labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event/s3_new_event.zip
-cd labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event/ && zip s3_new_event.zip s3_new_event.py && cd $OLDPWD 
-aws s3 cp labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event/s3_new_event.zip s3://$ARTIFACT_S3_BUCKET_NAME/s3_new_event.zip
+rm -vf labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event_bucket_object_create/s3_new_event_bucket_object_create.zip
+cd labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event_bucket_object_create/ && zip s3_new_event_bucket_object_create.zip s3_new_event_bucket_object_create.py && cd $OLDPWD 
+aws s3 cp labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event_bucket_object_create/s3_new_event_bucket_object_create.zip s3://$ARTIFACT_S3_BUCKET_NAME/s3_new_event_bucket_object_create.zip
+
+rm -vf labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event_bucket_object_delete/s3_new_event_bucket_object_delete.zip
+cd labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event_bucket_object_delete/ && zip s3_new_event_bucket_object_delete.zip s3_new_event_bucket_object_delete.py && cd $OLDPWD 
+aws s3 cp labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event_bucket_object_delete/s3_new_event_bucket_object_delete.zip s3://$ARTIFACT_S3_BUCKET_NAME/s3_new_event_bucket_object_delete.zip
 
 aws cloudformation deploy \
     --stack-name $S3_BUCKET_STACK_NAME \

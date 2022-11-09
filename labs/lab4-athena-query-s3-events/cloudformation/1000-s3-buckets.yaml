@@ -390,10 +390,10 @@ Resources:
           DEBUG: "1"
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
-        S3Key: "s3_new_event.zip"
+        S3Key: "s3_new_event_bucket_object_create.zip"
       Description: "Start the GitHub Sync Server if required"
       FunctionName: "S3NewEventLambdaFunction"
-      Handler: "s3_new_event.handler"
+      Handler: "s3_new_event_bucket_object_create.handler"
       MemorySize: 128
       Role: !GetAtt S3NewEventLambdaFunctionRole.Arn
       Runtime: "python3.8"
