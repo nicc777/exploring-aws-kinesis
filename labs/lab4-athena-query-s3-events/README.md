@@ -16,6 +16,9 @@
 - [Implementation](#implementation)
   - [Deploying the New Event S3 Bucket Resources](#deploying-the-new-event-s3-bucket-resources)
 - [Learnings and Discoveries](#learnings-and-discoveries)
+  - [S3 SNS Notifications - Data Structures](#s3-sns-notifications---data-structures)
+    - [Message of a S3 Create Type Event (PUT)](#message-of-a-s3-create-type-event-put)
+    - [Message of a S3 Remove Type Event (DELETE)](#message-of-a-s3-remove-type-event-delete)
 
 # Lab 4 Goals
 
@@ -346,4 +349,132 @@ At this point, I should also point out that there should be an operational proce
 
 I assume there may be some process to ensure that the recovered and replayed events end with the same state as the last known good snapshot state (i.e. account starting balance from the last known good snapshot should match with the balance calculate from all older events leading up to that point in time).
 
+## S3 SNS Notifications - Data Structures
 
+When the Lambda function ultimately receives an event, the first level structure is a SQS structure and has the following structure:
+
+```json
+{
+    "Records": [
+        {
+            "messageId": "36117b2c-afd6-4d73-98e1-248fbbd41cf5",
+            "receiptHandle": "...",
+            "body": "...",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "SentTimestamp": "1667973667951",
+                "SenderId": "...",
+                "ApproximateFirstReceiveTimestamp": "1667973667953"
+            },
+            "messageAttributes": {},
+            "md5OfBody": "2354d8a23817f58fde75c781dc12322b",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:eu-central-1:000000000000:S3NewEventStoreNotificationQueue",
+            "awsRegion": "eu-central-1"
+        }
+    ]
+}
+```
+
+The `Records[].body` field, contains more detail about the SNS message send to the SQS queue and has the following structure:
+
+```json
+{
+    "Type": "Notification",
+    "MessageId": "...",
+    "TopicArn": "arn:aws:sns:eu-central-1:000000000000:S3NewEventStoreNotification",
+    "Subject": "Amazon S3 Notification",
+    "Message": "...",
+    "Timestamp": "2022-11-09T06:01:07.921Z",
+    "SignatureVersion": "1",
+    "Signature": "...",
+    "SigningCertURL": "...",
+    "UnsubscribeURL": "..."
+}
+```
+
+The `Message` field contains the actual S3 event
+
+### Message of a S3 Create Type Event (PUT)
+
+```json
+{
+    "Records": [
+        {
+            "eventVersion": "2.1",
+            "eventSource": "aws:s3",
+            "awsRegion": "eu-central-1",
+            "eventTime": "2022-11-09T06:01:06.967Z",
+            "eventName": "ObjectCreated:Put",
+            "userIdentity": {
+                "principalId": "AWS:..."
+            },
+            "requestParameters": {
+                "sourceIPAddress": "n.n.n.n"
+            },
+            "responseElements": {
+                "x-amz-request-id": "...",
+                "x-amz-id-2": "..."
+            },
+            "s3": {
+                "s3SchemaVersion": "1.0",
+                "configurationId": "...",
+                "bucket": {
+                    "name": "lab4-new-events-qpwoeiryt",
+                    "ownerIdentity": {
+                        "principalId": "..."
+                    },
+                    "arn": "arn:aws:s3:::lab4-new-events-qpwoeiryt"
+                },
+                "object": {
+                    "key": "some_file.txt",
+                    "size": 119985,
+                    "eTag": "b3a671cd395478ee9c78be33740381c4",
+                    "sequencer": "00636B4222CBA01ADB"
+                }
+            }
+        }
+    ]
+}
+```
+
+### Message of a S3 Remove Type Event (DELETE)
+
+```json
+{
+    "Records": [
+        {
+            "eventVersion": "2.1",
+            "eventSource": "aws:s3",
+            "awsRegion": "eu-central-1",
+            "eventTime": "2022-11-09T06:03:46.412Z",
+            "eventName": "ObjectRemoved:Delete",
+            "userIdentity": {
+                "principalId": "AWS:..."
+            },
+            "requestParameters": {
+                "sourceIPAddress": "n.n.n.n"
+            },
+            "responseElements": {
+                "x-amz-request-id": "...",
+                "x-amz-id-2": "..."
+            },
+            "s3": {
+                "s3SchemaVersion": "1.0",
+                "configurationId": "...",
+                "bucket": {
+                    "name": "lab4-new-events-qpwoeiryt",
+                    "ownerIdentity": {
+                        "principalId": "..."
+                    },
+                    "arn": "arn:aws:s3:::lab4-new-events-qpwoeiryt"
+                },
+                "object": {
+                    "key": "some_file.txt",
+                    "sequencer": "00636B42C26391BE2F"
+                }
+            }
+        }
+    ]
+}
+```
