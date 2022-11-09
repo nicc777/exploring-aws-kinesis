@@ -299,7 +299,7 @@ When running commands, the following environment variables are assumed to be set
 | `export AWS_PROFILE="..."`                          | The AWS Credentials Profile to use                                                                                   |
 | `export AWS_REGION="..."`                           | The AWS Region to deploy resources to                                                                                |
 | `export ARTIFACT_S3_BUCKET_NAME="..."`              | The S3 Bucket name containing any additional artifacts                                                               |
-| `export NEW_EVEN_STACK_NAME="..."`                  | The CloudFormation stack name for deploying New Event Bucket Resources                                               |
+| `export S3_BUCKET_STACK_NAME="..."`                 | The CloudFormation stack name for deploying New Event Bucket Resources                                               |
 | `export NEW_EVENT_BUCKET_NAME_PARAM="..."`          | The S3 bucket name for new events                                                                                    |
 | `export ARCHIVE_EVENT_BUCKET_NAME_PARAM="..."`      | The S3 bucket name for events archives                                                                               |
 | `export ARCHIVE_INVENTORY_BUCKET_NAME_PARAM="..."`  | The S3 bucket name for events archive bucket inventory                                                               |
@@ -314,9 +314,12 @@ cd labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event/ && zip s3_new
 aws s3 cp labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event/s3_new_event.zip s3://$ARTIFACT_S3_BUCKET_NAME/s3_new_event.zip
 
 aws cloudformation deploy \
-    --stack-name $NEW_EVEN_STACK_NAME \
+    --stack-name $S3_BUCKET_STACK_NAME \
     --template-file labs/lab4-athena-query-s3-events/cloudformation/1000-s3-buckets.yaml \
     --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
+        NewEventBucketNameParam="$NEW_EVENT_BUCKET_NAME_PARAM" \
+        ArchiveBucketNameParam="$ARCHIVE_EVENT_BUCKET_NAME_PARAM" \
+        ArchiveInventoryBucketNameParam="$ARCHIVE_INVENTORY_BUCKET_NAME_PARAM" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 
