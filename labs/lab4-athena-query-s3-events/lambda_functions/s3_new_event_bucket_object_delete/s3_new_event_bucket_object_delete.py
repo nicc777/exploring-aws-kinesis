@@ -118,6 +118,30 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 ###                                                                         ###
 ###############################################################################
 
+
+SUPPORTED_EVENTS = (
+    'ObjectRemoved:Delete',
+)
+
+
+def extract_s3_event_messages(event: dict, logger=get_logger())->tuple:
+    messages = list()
+    try:
+        for record in event['Records']:
+            s3_event = record['body']
+            s3_message = json.loads(s3_event['Message'])
+            for s3_record in s3_message['Records']:
+                if s3_record['eventSource'] == 'aws:s3':
+                    if s3_record['eventName'] in SUPPORTED_EVENTS:
+                        messages.append(s3_record)
+                    else:
+                        logger.warning('Unsupported event type: {}'.format(s3_record['eventName']))
+                else:
+                    logger.error('Not an S3 event. Event Source: {}'.format(s3_record['eventSource']))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return tuple(messages)
+
     
 def handler(
     event,

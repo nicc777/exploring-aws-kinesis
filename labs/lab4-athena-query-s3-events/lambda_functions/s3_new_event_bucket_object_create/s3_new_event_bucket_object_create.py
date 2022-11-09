@@ -118,6 +118,30 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 ###                                                                         ###
 ###############################################################################
 
+
+SUPPORTED_EVENTS = (
+    'ObjectCreated:Put',
+)
+
+
+def extract_s3_event_messages(event: dict, logger=get_logger())->tuple:
+    messages = list()
+    try:
+        for record in event['Records']:
+            s3_event = record['body']
+            s3_message = json.loads(s3_event['Message'])
+            for s3_record in s3_message['Records']:
+                if s3_record['eventSource'] == 'aws:s3':
+                    if s3_record['eventName'] in SUPPORTED_EVENTS:
+                        messages.append(s3_record)
+                    else:
+                        logger.warning('Unsupported event type: {}'.format(s3_record['eventName']))
+                else:
+                    logger.error('Not an S3 event. Event Source: {}'.format(s3_record['eventSource']))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return tuple(messages)
+
     
 def handler(
     event,
@@ -130,7 +154,9 @@ def handler(
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
         logger  = get_logger(level=logging.DEBUG)
     
-    debug_log('event={}', variable_as_list=[event], logger=logger)
+    debug_log('event={}', variable_as_list=[event,], logger=logger)
+    s3_records = extract_s3_event_messages(event=event, logger=logger)
+    debug_log('s3_records={}', variable_as_list=[s3_records,], logger=logger)
     
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
 
