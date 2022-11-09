@@ -5,12 +5,15 @@
   - [Updates](#updates)
     - [Lab 4](#lab-4)
     - [Lab 3](#lab-3)
-- [Example Application](#example-application)
-  - [Process: Register a New Employee Access Card](#process-register-a-new-employee-access-card)
-  - [Process: Enter building through a turnstile gate](#process-enter-building-through-a-turnstile-gate)
-  - [Process: Exit building through a turnstile gate](#process-exit-building-through-a-turnstile-gate)
-  - [Process: Authenticated user views access card usage events for an employee](#process-authenticated-user-views-access-card-usage-events-for-an-employee)
-  - [Final Notes](#final-notes)
+- [Example Applications](#example-applications)
+  - [Lab 1 and 2](#lab-1-and-2)
+  - [Lab 3](#lab-3-1)
+    - [Process: Register a New Employee Access Card](#process-register-a-new-employee-access-card)
+    - [Process: Enter building through a turnstile gate](#process-enter-building-through-a-turnstile-gate)
+    - [Process: Exit building through a turnstile gate](#process-exit-building-through-a-turnstile-gate)
+    - [Process: Authenticated user views access card usage events for an employee](#process-authenticated-user-views-access-card-usage-events-for-an-employee)
+    - [Final Notes](#final-notes)
+  - [Lab 4](#lab-4-1)
 - [Security](#security)
   - [What are the risks?](#what-are-the-risks)
   - [Controls](#controls)
@@ -172,9 +175,14 @@ I expect this project to have the following stages:
 | 2022-09-05 | In [Lab 3](labs/lab3-non-kinesis-example/README.md) I added SSM access to EC2 Instances via the AWS Console. As a result, SSH access was also now removed. The only way to access an instance terminal now is via AWS Console. Started adding ELB to the proxy server setup, but at the moment ACM fails to create - still need to trouble shoot this.                                                                                                                                                                                                                                                    |
 | 2022-09-04 | Sometimes I don't always know just how much a chew off... Today I realized that the _simple_ example application I created requires a ton of additional resources I did not initially thought about. This is not a bad thing, but the effect is that [Lab 3](labs/lab3-non-kinesis-example/README.md) will take considerably longer to complete than what I initially thought. In any case, it is still a worthwhile exercise and I am learning (or re-learning) a ton of stuff. More update to follow in the coming weeks.                                                                               |
 
-# Example Application
+# Example Applications
+
+
+## Lab 1 and 2
 
 Lab 1 and 2 are early exploratory labs and as such, they will not contain any meaningful data or even processing functions - it's basically boilerplate stuff to see if it works.
+
+## Lab 3
 
 From Lab 3 I am starting to think about a practical application. I have settled on a _"Employee Access Card Usage Event Capturing System"_.
 
@@ -185,7 +193,7 @@ First of all, there are two types of event sources to consider:
 
 In this scenario and broad use-cases, I would therefore build up the following applications with their relevant events:
 
-## Process: Register a New Employee Access Card
+### Process: Register a New Employee Access Card
 
 A new Access Card is Issued.
 
@@ -195,7 +203,7 @@ A new Access Card is Issued.
 |:--------------------:|:------------:|:-----------:|:--------------:|:-------------:|
 |  No                  |  Async (Web) |   No        | AWS Cognito    | JWT Token     |
 
-## Process: Enter building through a turnstile gate
+### Process: Enter building through a turnstile gate
 
 A person enters the building and must scan their access card at the turnstile gate.
 
@@ -205,7 +213,7 @@ A person enters the building and must scan their access card at the turnstile ga
 |:--------------------:|:------------:|:-----------:|:--------------:|:-------------:|
 |  Yes                 |  Sync        |   No        | n/a            | API Key       |
 
-## Process: Exit building through a turnstile gate
+### Process: Exit building through a turnstile gate
 
 A person exits the building. In emergencies, this could be a high volume scenario.
 
@@ -216,7 +224,7 @@ A person exits the building. In emergencies, this could be a high volume scenari
 |  Yes                 |  Async       |   Yes       | n/a            | API Key       |
 
 
-## Process: Authenticated user views access card usage events for an employee
+### Process: Authenticated user views access card usage events for an employee
 
 An external auditor review key scan logs of an individual.
 
@@ -226,13 +234,19 @@ An external auditor review key scan logs of an individual.
 |:--------------------:|:------------:|:-----------:|:--------------:|:-------------:|
 |  Yes                 |  Async (Web) |   No        | AWS Cognito    | JWT Token     |
 
-## Final Notes
+### Final Notes
 
 _**Note**_: Async events can use Kinesis if it is a potential high volume scenario. Events are buffered and therefore there can be small delays before events are processed.
 
 Another business rule we will introduce is that access cannot be allowed if the current employee is considered to be already in the building. In other words, you must scan out before you can scan back in. This means that sometimes when an employee goes out, and immediately tries to go back in, they may have to wait a little.
 
 The actual card state will be maintained in a DynamoDB table.
+
+## Lab 4
+
+In lab 4 I switched to a more financial transaction type scenario. It is not as involved as Lab 3, and will not have API Gateways, Web Sites etc. 
+
+Rather, I want to concentrate on the actual events in S3 buckets and see how I can track these events, create transactional snapshot and then later replay events to simulate a data recovery exercise.
 
 # Security
 
