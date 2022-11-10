@@ -14,6 +14,7 @@
   - [Event Data Objects in DynamoDB](#event-data-objects-in-dynamodb)
   - [Transaction Data in DynamoDB](#transaction-data-in-dynamodb)
 - [Implementation](#implementation)
+  - [Deploying the DynamoDB Stack](#deploying-the-dynamodb-stack)
   - [Deploying the New Event S3 Bucket Resources](#deploying-the-new-event-s3-bucket-resources)
 - [Learnings and Discoveries](#learnings-and-discoveries)
   - [S3 SNS Notifications - Data Structures](#s3-sns-notifications---data-structures)
@@ -239,15 +240,28 @@ Table Name: `lab4_event_objects_qweriuyt`
 |                         |                                                        | - InEventBucket  (BOOL)                                                                                     |
 |                         |                                                        | - InArchiveBucket  (BOOL)                                                                                   |
 |                         |                                                        | - InRejectedBucket  (BOOL - note: rejected events won't be in the archive bucket)                           |
-|                         |                                                        | - TargetAccountNumber  (STRING)                                                                             |
+|                         |                                                        | - AccountNumber  (STRING)                                                                                   |
 |                         |                                                        | - Processed  (BOOL, default=false)                                                                          |
 |                         |                                                        |                                                                                                             |
 | KEY#<<object-key>>      | EVENT<<timestamp>>                                     | - EventType (InitialEvent|ArchiveEvent|RejectEvent|...)                                                     |
 |                         |                                                        | - ErrorState (BOOL)                                                                                         |
 |                         |                                                        | - ErrorReason (STRING)                                                                                      |
 |                         |                                                        | - NextAction (STRING)                                                                                       |
+|                         |                                                        | - AccountNumber  (STRING)                                                                                   |
 |                         |                                                        |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
+```
+
+Global Secondary Indexes:
+
+```text
++-------------------------------------------------------------------------+------------------------+
+| Primary Key                                                             | Index Name             |
++---------------------------------+---------------------------------------|                        |
+| Partition Key (PK)              | Sort Key (ST) Attribute               |                        |
++---------------------------------+---------------------------------------+------------------------+
+| AccountNumber                   | SK                                    | AccountNumberIdx       |
++---------------------------------+---------------------------------------+------------------------+
 ```
 
 ## Transaction Data in DynamoDB
@@ -274,17 +288,24 @@ Table Name: `lab4_bank_accounts_qweriuyt`
 |                         |                                                        | - EventRawData (String, containing JSON of original transaction)                                            |
 |                         |                                                        | - Amount (Number)                                                                                           |
 |                         |                                                        |                                                                                                             |
-| <<account-number>>      | SAVINGS#BALANCE#ACTUAL<<customer-number>>              | - LastTransactionDate (NUMBER, format YYYYMMDD)                                                             |
-|                         |                                                        | - LastTransactionTime (NUMBER, format HHMMSS)                                                               |
-|                         |                                                        | - LastEventKey (STRING, links to <<object-key>>)                                                            |
-|                         |                                                        | - Balance (Number)                                                                                          |
-|                         |                                                        |                                                                                                             |
-| <<account-number>>      | SAVINGS#BALANCE#AVAILABLE<<customer-number>>           | - LastTransactionDate (NUMBER, format YYYYMMDD)                                                             |
-|                         |                                                        | - LastTransactionTime (NUMBER, format HHMMSS)                                                               |
+| <<account-number>>      | SAVINGS#BALANCE#<type>>#<<customer-number>>            | - LastTransactionDate (NUMBER, format YYYYMMDD)                                                             |
+|                         |    Types: ACTUAL or AVAILABLE                          | - LastTransactionTime (NUMBER, format HHMMSS)                                                               |
 |                         |                                                        | - LastEventKey (STRING, links to <<object-key>>)                                                            |
 |                         |                                                        | - Balance (Number)                                                                                          |
 |                         |                                                        |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
+```
+
+Global Secondary Indexes:
+
+```text
++-------------------------------------------------------------------------+------------------------+
+| Primary Key                                                             | Index Name             |
++---------------------------------+---------------------------------------|                        |
+| Partition Key (PK)              | Sort Key (ST) Attribute               |                        |
++---------------------------------+---------------------------------------+------------------------+
+| EventKey                        | SK                                    | EventKeyIdx            |
++---------------------------------+---------------------------------------+------------------------+
 ```
 
 Notes:
@@ -307,6 +328,15 @@ When running commands, the following environment variables are assumed to be set
 | `export ARCHIVE_EVENT_BUCKET_NAME_PARAM="..."`      | The S3 bucket name for events archives                                                                               |
 | `export ARCHIVE_INVENTORY_BUCKET_NAME_PARAM="..."`  | The S3 bucket name for events archive bucket inventory                                                               |
 | `export DYNAMODB_OBJECT_TABLE_NAME_PARAM="..."`     | The DynamoDB Table name for event artifact tracking                                                                  |
+| `export DYNAMODB_ACCOUNTS_TABLE_NAME_PARAM="..."`   | The DynamoDB Table name for transactions and accounts                                                                |
+
+## Deploying the DynamoDB Stack
+
+Deploy the stack with the following command:
+
+```shell
+# Deploy
+```
 
 ## Deploying the New Event S3 Bucket Resources
 
