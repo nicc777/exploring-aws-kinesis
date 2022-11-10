@@ -142,6 +142,26 @@ def get_s3_object_payload(
     return key_json_data
 
 
+def create_dynamodb_record(
+    record_data: dict,
+    boto3_clazz=boto3,
+    logger=get_logger()
+)->bool:
+    try:
+        client=get_client(client_name='dynamodb', region='eu-central-1', boto3_clazz=boto3_clazz)
+        response = client.put_item(
+            TableName='lab3-access-card-app',
+            Item=record_data,
+            ReturnValues='NONE',
+            ReturnConsumedCapacity='TOTAL',
+            ReturnItemCollectionMetrics='SIZE'
+        )
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        return True
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return False
+
 ###############################################################################
 ###                                                                         ###
 ###                         M A I N    H A N D L E R                        ###
@@ -319,6 +339,20 @@ def update_object_table(
         object_state_data['ErrorReason']['S'] = 'no-error'
         object_event = {**object_event_key, **object_event_data}
 
+
+        create_dynamodb_record(
+            record_data=object_state,
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
+        logger.info('OBJECT STATE RECORD CREATED')
+        create_dynamodb_record(
+            record_data=object_event,
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
+        logger.info('OBJECT STATE EVENT RECORD CREATED')
+
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
@@ -337,6 +371,18 @@ def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->boo
             )
             s3_payload_dict = json.loads(s3_payload_json)
             debug_log('s3_payload_dict={}', variable_as_list=[s3_payload_dict,], logger=logger)
+
+            update_object_table(
+                record=record, 
+                transaction_data=s3_payload_dict,
+                boto3_clazz=boto3_clazz,
+                logger=logger
+            )
+
+            # TODO - Publish event to SQS FIFO...
+
+            logger.info('RECORD EVENT PREPARED AND READY FOR PROCESSING')
+
         else:
             logger.warning('Skipping S3 record as it is not recognized as a valid event (Key Name Validation Failed)')
     except:
