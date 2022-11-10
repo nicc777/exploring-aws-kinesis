@@ -323,7 +323,7 @@ aws s3 cp labs/lab4-athena-query-s3-events/lambda_functions/s3_new_event_bucket_
 
 aws cloudformation deploy \
     --stack-name $S3_BUCKET_STACK_NAME \
-    --template-file labs/lab4-athena-query-s3-events/cloudformation/1000-s3-buckets.yaml \
+    --template-file labs/lab4-athena-query-s3-events/cloudformation/2000-s3-buckets.yaml \
     --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
         NewEventBucketNameParam="$NEW_EVENT_BUCKET_NAME_PARAM" \
         ArchiveBucketNameParam="$ARCHIVE_EVENT_BUCKET_NAME_PARAM" \
