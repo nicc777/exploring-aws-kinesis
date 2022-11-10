@@ -225,7 +225,7 @@ Effect on Available Balance:
 
 ## Event Data Objects in DynamoDB
 
-Table Name: `lab4_event_objects_qweriuyt`
+Table Name: `lab4_event_objects_v1`
 
 ```text
 +----------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
@@ -266,7 +266,7 @@ Global Secondary Indexes:
 
 ## Transaction Data in DynamoDB
 
-Table Name: `lab4_bank_accounts_qweriuyt`
+Table Name: `lab4_accounts_v1`
 
 ```text
 +----------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
