@@ -20,7 +20,7 @@ Parameters:
     Type: String
     Description: "The S3 bucket name containing the Lambda function ZIP file"
 
-  DynamoDbTableEventObjectTrackingNameParam:
+  DynamoDbStackNameParam:
     Type: String
 
 # Rules:
@@ -381,10 +381,12 @@ Resources:
             Resource:
             - Fn::Sub:
               - Sub "arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/${TableName}/index/*"
-              - TableName: !Ref DynamoDbTableEventObjectTrackingNameParam
+              - TableName: 
+                  Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
             - Fn::Sub: 
               - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
-              - TableName: !Ref DynamoDbTableEventObjectTrackingNameParam
+              - TableName: 
+                  Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
       RoleName: S3NewEventLambdaFunctionRole
 
   S3NewEventLambdaFunctionLogGroup:
@@ -481,10 +483,12 @@ Resources:
             Resource:
             - Fn::Sub:
               - Sub "arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/${TableName}/index/*"
-              - TableName: !Ref DynamoDbTableEventObjectTrackingNameParam
+              - TableName: 
+                  Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
             - Fn::Sub: 
               - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
-              - TableName: !Ref DynamoDbTableEventObjectTrackingNameParam
+              - TableName: 
+                  Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
       RoleName: S3NewEventDeleteLambdaFunctionRole
 
   S3NewEventDeleteLambdaFunctionLogGroup:

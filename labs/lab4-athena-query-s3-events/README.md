@@ -363,6 +363,7 @@ aws cloudformation deploy \
         NewEventBucketNameParam="$NEW_EVENT_BUCKET_NAME_PARAM" \
         ArchiveBucketNameParam="$ARCHIVE_EVENT_BUCKET_NAME_PARAM" \
         ArchiveInventoryBucketNameParam="$ARCHIVE_INVENTORY_BUCKET_NAME_PARAM" \
+        DynamoDbStackNameParam="$DYNAMODB_STACK_NAME" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 
