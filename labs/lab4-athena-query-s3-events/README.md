@@ -324,6 +324,7 @@ When running commands, the following environment variables are assumed to be set
 | `export AWS_REGION="..."`                           | The AWS Region to deploy resources to                                                                                |
 | `export ARTIFACT_S3_BUCKET_NAME="..."`              | The S3 Bucket name containing any additional artifacts                                                               |
 | `export S3_BUCKET_STACK_NAME="..."`                 | The CloudFormation stack name for deploying New Event Bucket Resources                                               |
+| `export DYNAMODB_STACK_NAME="..."`                  | The CloudFormation stack name for deploying DynamoDB Resources                                                       |
 | `export NEW_EVENT_BUCKET_NAME_PARAM="..."`          | The S3 bucket name for new events                                                                                    |
 | `export ARCHIVE_EVENT_BUCKET_NAME_PARAM="..."`      | The S3 bucket name for events archives                                                                               |
 | `export ARCHIVE_INVENTORY_BUCKET_NAME_PARAM="..."`  | The S3 bucket name for events archive bucket inventory                                                               |
@@ -335,7 +336,11 @@ When running commands, the following environment variables are assumed to be set
 Deploy the stack with the following command:
 
 ```shell
-# Deploy
+aws cloudformation deploy \
+    --stack-name $DYNAMODB_STACK_NAME \
+    --template-file labs/lab4-athena-query-s3-events/cloudformation/1000-dynamodb.yaml \
+    --parameter-overrides ObjectTableNameParam="$DYNAMODB_OBJECT_TABLE_NAME_PARAM" \
+        AccountTableNameParam="$DYNAMODB_ACCOUNTS_TABLE_NAME_PARAM"
 ```
 
 ## Deploying the New Event S3 Bucket Resources
