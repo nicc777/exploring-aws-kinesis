@@ -150,7 +150,7 @@ def create_dynamodb_record(
     try:
         client=get_client(client_name='dynamodb', region='eu-central-1', boto3_clazz=boto3_clazz)
         response = client.put_item(
-            TableName='lab3-access-card-app',
+            TableName='lab4_event_objects_v1',
             Item=record_data,
             ReturnValues='NONE',
             ReturnConsumedCapacity='TOTAL',
