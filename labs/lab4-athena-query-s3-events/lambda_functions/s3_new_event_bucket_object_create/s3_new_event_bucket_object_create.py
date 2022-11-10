@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 import sys
 from inspect import getframeinfo, stack
+from decimal import Decimal
 # Other imports here...
 
 
@@ -163,6 +164,18 @@ ACCEPTABLE_KEY_PREFIXES = (
     'inter_account_transfer_',
 )
 
+ACCOUNT_FIELD_NAME_BASED_ON_TRANSACTION_TYPE = {
+    # "Event Key Prefix"            : "Field Name"
+    'cash_deposit_'                 : 'TargetAccount',
+    'verify_cash_deposit_'          : 'TargetAccount',
+    'cash_withdrawal_'              : 'SourceAccount',
+    'incoming_payment_'             : 'TargetAccount',
+    'outgoing_payment_unverified_'  : 'SourceAccount',
+    'outgoing_payment_verified_'    : 'SourceAccount',
+    'outgoing_payment_rejected_'    : 'SourceAccount',
+    'inter_account_transfer_'       : 'SourceAccount',
+}
+
 
 def extract_body_messages_from_event_record(event_record: dict, logger=get_logger())->dict:
     event_body_messages = dict()
@@ -226,27 +239,95 @@ def validate_key_is_recognized(key: str, logger=get_logger())->bool:
     return False
 
 
-def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
-    """
-        record={
-            's3SchemaVersion': '1.0', 
-            'configurationId': '...', 
-            'bucket': {
-                'name': 'lab4-new-events-qpwoeiryt', 
-                'ownerIdentity': {
-                    'principalId': 'A1OFXF1IHRJZE7'
-                }, 
-                'arn': 'arn:aws:s3:::lab4-new-events-qpwoeiryt'
-            }, 
-            'object': {
-                'key': 'some_file.txt', 
-                'size': 123, 
-                'eTag': '854fce33df76ad3953e25b378a07f237', 
-                'sequencer': '00636C82CFF1F68E3D'
-            }
-        }
-    """
+def extract_account_number(
+    record: dict, 
+    transaction_data: dict,
+    logger=get_logger()
+):
+    account_number = None
     try:
+        for key_start, account_number_field in ACCOUNT_FIELD_NAME_BASED_ON_TRANSACTION_TYPE.items():
+            if record['object']['key'].startswith(key_start):
+                logger.info(
+                    'Match for "{}" identified field name "{}" with extracted account number "{}"'.format(
+                        record['object']['key'],
+                        account_number_field,
+                        transaction_data[account_number_field]
+                    )
+                )
+                account_number = Decimal(transaction_data[account_number_field])
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log('account_number={}', variable_as_list=[account_number,], logger=logger)
+    return account_number
+
+
+def update_object_table(
+    record: dict, 
+    transaction_data: dict,
+    boto3_clazz=boto3,
+    logger=get_logger()
+):
+    try:
+
+
+        reference_account_number = extract_account_number(
+            record=record, 
+            transaction_data=transaction_data,
+            logger=logger
+        )
+        if reference_account_number is None:
+            logger.error('Invalid Account Number')
+            return
+        if isinstance(reference_account_number, str) is False:
+            logger.error('Invalid Account Number Object Type')
+            return
+        tx_date = Decimal(datetime.utcfromtimestamp(transaction_data['EventTimeStamp']).strftime('%Y%m%d'))
+        tx_time = Decimal(datetime.utcfromtimestamp(transaction_data['EventTimeStamp']).strftime('%H%M%S'))
+        zero = Decimal('0')
+        if tx_date.compare(zero) <= 0:
+            logger.error('Invalid tx_date value')
+            return
+        if tx_time.compare(zero) <= 0:
+            logger.error('Invalid tx_date value')
+            return
+
+        
+        object_state_key = dict()
+        object_state_data = dict()
+        object_state_key['PK']['S'] = 'KEY#{}'.format(record['object']['key'])
+        object_state_key['SK']['S'] = 'STATE'
+        object_state_data['TransactionDate']['N'] = '{}'.format(tx_date)
+        object_state_data['TransactionTime']['N'] = '{}'.format(tx_time)
+        object_state_data['InEventBucket']['BOOL'] = True
+        object_state_data['InArchiveBucket']['BOOL'] = False
+        object_state_data['InRejectedBucket']['BOOL'] = False
+        object_state_data['AccountNumber']['S'] = '{}'.format(reference_account_number)
+        object_state_data['Processed']['BOOL'] = False
+        object_state = {**object_state_key, **object_state_data}
+        
+
+        object_event_key = dict()
+        object_event_data = dict()
+        object_state_key['PK']['S'] = 'KEY#{}'.format(record['object']['key'])
+        object_state_key['SK']['S'] = 'EVENT#{}'.format(transaction_data['EventTimeStamp'])
+        object_state_data['TransactionDate']['N'] = '{}'.format(tx_date)
+        object_state_data['TransactionTime']['N'] = '{}'.format(tx_time)
+        object_state_data['EventType']['S'] = 'InitialEvent'
+        object_state_data['AccountNumber']['S'] = '{}'.format(reference_account_number)
+        object_state_data['ErrorState']['BOOL'] = False
+        object_state_data['ErrorReason']['S'] = 'no-error'
+        object_event = {**object_event_key, **object_event_data}
+
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
+def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    try:
+        if int(record['object']['size']) > 1024:
+            logger.warning('Skipping S3 record as it is larger than the acceptable maximum size of 1KiB')
+            return False
         if validate_key_is_recognized(key=record['object']['key'], logger=logger) is True:
             s3_payload_json = get_s3_object_payload(
                 s3_bucket=record['bucket']['name'],
@@ -278,27 +359,6 @@ def handler(
     debug_log('event={}', variable_as_list=[event,], logger=logger)
     s3_records = extract_s3_event_messages(event=event, logger=logger)
     debug_log('s3_records={}', variable_as_list=[s3_records,], logger=logger)
-    """
-        s3_records=(
-            {
-                's3SchemaVersion': '1.0', 
-                'configurationId': '...', 
-                'bucket': {
-                    'name': 'lab4-new-events-qpwoeiryt', 
-                    'ownerIdentity': {
-                        'principalId': 'A1OFXF1IHRJZE7'
-                    }, 
-                    'arn': 'arn:aws:s3:::lab4-new-events-qpwoeiryt'
-                }, 
-                'object': {
-                    'key': 'some_file.txt', 
-                    'size': 123, 
-                    'eTag': '854fce33df76ad3953e25b378a07f237', 
-                    'sequencer': '00636C82CFF1F68E3D'
-                }
-            },
-        )
-    """
     for s3_record in s3_records:
         if process_s3_record(record=s3_record, logger=logger, boto3_clazz=boto3_clazz) is True:
             logger.info('SUCCESSFULLY PROCESSED S3 RECORD: {}'.format(s3_record))

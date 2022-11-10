@@ -149,7 +149,7 @@ Effect on Available Balance: Increase Balance by `Amount`
 ```json
 {
     "EventTimeStamp": 1234567890,
-    "SourceAccount": "<<account number>>",
+    "TargetAccount": "<<account number>>",
     "Amount": "123.45",
     "SourceInstitution": "Source Bank",
     "SourceAccount": "Source Account Number",
@@ -184,7 +184,8 @@ _**Note**_: The `<<request-id>>` corresponds to the original request ID for the 
 
 ```json
 {
-    "EventTimeStamp": 1234567890
+    "EventTimeStamp": 1234567890,
+    "SourceAccount": "<<account number>>"
 }
 ```
 
@@ -199,6 +200,7 @@ Effect on Available Balance: Increase Balance by `RejectedAmount`
 ```json
 {
     "EventTimeStamp": 1234567890,
+    "SourceAccount": "<<account number>>",
     "Reason": "Incorrect account number (account not found)",
     "RejectedAmount": "123.45"
 }
@@ -243,10 +245,11 @@ Table Name: `lab4_event_objects_v1`
 |                         |                                                        | - AccountNumber  (STRING)                                                                                   |
 |                         |                                                        | - Processed  (BOOL, default=false)                                                                          |
 |                         |                                                        |                                                                                                             |
-| KEY#<<object-key>>      | EVENT<<timestamp>>                                     | - EventType (InitialEvent|ArchiveEvent|RejectEvent|...)                                                     |
+| KEY#<<object-key>>      | EVENT#<<timestamp>>                                    | - EventType (InitialEvent|ArchiveEvent|RejectEvent|...)                                                     |
+|                         |                                                        | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
+|                         |                                                        | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
 |                         |                                                        | - ErrorState (BOOL)                                                                                         |
 |                         |                                                        | - ErrorReason (STRING)                                                                                      |
-|                         |                                                        | - NextAction (STRING)                                                                                       |
 |                         |                                                        | - AccountNumber  (STRING)                                                                                   |
 |                         |                                                        |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
