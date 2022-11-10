@@ -124,22 +124,48 @@ SUPPORTED_EVENTS = (
 )
 
 
+def extract_body_messages_from_event_record(event_record: dict, logger=get_logger())->dict:
+    event_body_messages = dict()
+    try:
+        event_record_body = json.loads(event_record['body'])
+        event_body_messages = json.loads(event_record_body['Message'])
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log('event_body_messages={}', variable_as_list=[event_body_messages,], logger=logger)
+    return event_body_messages
+
+
+def extract_s3_record_from_event_body_message_record(event_body_message_record: dict, logger=get_logger())->dict:
+    s3_record = dict()
+    try:
+        if event_body_message_record['eventSource'] == 'aws:s3':
+            if event_body_message_record['eventName'] in SUPPORTED_EVENTS:
+                s3_record = event_body_message_record['s3']
+                logger.info('ACCEPTED S3 RECORD: s3_record={}'.format(s3_record))
+            else:
+                logger.warning('Unsupported event type: {}'.format(event_body_message_record['eventName']))
+        else:
+            logger.error('Not an S3 event. Event Source: {}'.format(event_body_message_record['eventSource']))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        logger.error('REJECT S3 RECORD: event_body_message_record={}'.format(event_body_message_record))
+    debug_log('s3_record={}', variable_as_list=[s3_record,], logger=logger)
+    return s3_record
+
+
 def extract_s3_event_messages(event: dict, logger=get_logger())->tuple:
     messages = list()
     try:
         for record in event['Records']:
-            event_record_body = json.loads(record['body'])
-            event_record_body_message = json.loads(event_record_body['Message'])
+            event_record_body_message = extract_body_messages_from_event_record(event_record=record, logger=logger)
             for s3_record in event_record_body_message['Records']:
-                if s3_record['eventSource'] == 'aws:s3':
-                    if s3_record['eventName'] in SUPPORTED_EVENTS:
-                        messages.append(s3_record)
-                    else:
-                        logger.warning('Unsupported event type: {}'.format(s3_record['eventName']))
-                else:
-                    logger.error('Not an S3 event. Event Source: {}'.format(s3_record['eventSource']))
+                extracted_s3_record = extract_s3_record_from_event_body_message_record(event_body_message_record=s3_record, logger=logger)
+                if extracted_s3_record:
+                    if len(extracted_s3_record) > 0:
+                        messages.append(extracted_s3_record)
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    logger.info('ACCEPTED RECORDS QTY: {}'.format(len(messages)))
     return tuple(messages)
 
     
