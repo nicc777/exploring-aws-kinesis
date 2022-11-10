@@ -313,30 +313,34 @@ def update_object_table(
             return
 
         
-        object_state_key = dict()
-        object_state_data = dict()
-        object_state_key['PK']['S'] = 'KEY#{}'.format(record['object']['key'])
-        object_state_key['SK']['S'] = 'STATE'
-        object_state_data['TransactionDate']['N'] = '{}'.format(tx_date)
-        object_state_data['TransactionTime']['N'] = '{}'.format(tx_time)
-        object_state_data['InEventBucket']['BOOL'] = True
-        object_state_data['InArchiveBucket']['BOOL'] = False
-        object_state_data['InRejectedBucket']['BOOL'] = False
-        object_state_data['AccountNumber']['S'] = '{}'.format(reference_account_number)
-        object_state_data['Processed']['BOOL'] = False
+        object_state_key = {
+            'PK'                : { 'S'     : 'KEY#{}'.format(record['object']['key'])              },
+            'SK'                : { 'S'     : 'STATE'                                               },
+        }
+        object_state_data = {
+            'TransactionDate'   : { 'N'     : '{}'.format(tx_date)                                  },
+            'TransactionTime'   : { 'N'     : '{}'.format(tx_time)                                  },
+            'InEventBucket'     : { 'BOOL'  : True                                                  },
+            'InArchiveBucket'   : { 'BOOL'  : False                                                 },
+            'InRejectedBucket'  : { 'BOOL'  : False                                                 },
+            'AccountNumber'     : { 'S'     : '{}'.format(reference_account_number)                 },
+            'Processed'         : { 'BOOL'  : False                                                 },
+        }
         object_state = {**object_state_key, **object_state_data}
         
 
-        object_event_key = dict()
-        object_event_data = dict()
-        object_state_key['PK']['S'] = 'KEY#{}'.format(record['object']['key'])
-        object_state_key['SK']['S'] = 'EVENT#{}'.format(transaction_data['EventTimeStamp'])
-        object_state_data['TransactionDate']['N'] = '{}'.format(tx_date)
-        object_state_data['TransactionTime']['N'] = '{}'.format(tx_time)
-        object_state_data['EventType']['S'] = 'InitialEvent'
-        object_state_data['AccountNumber']['S'] = '{}'.format(reference_account_number)
-        object_state_data['ErrorState']['BOOL'] = False
-        object_state_data['ErrorReason']['S'] = 'no-error'
+        object_event_key = {
+            'PK'                : { 'S'     : 'KEY#{}'.format(record['object']['key'])              },
+            'SK'                : { 'S'     : 'EVENT#{}'.format(transaction_data['EventTimeStamp']) },
+        }
+        object_event_data = {
+            'TransactionDate'   : { 'N'     : '{}'.format(tx_date)                                  },
+            'TransactionTime'   : { 'N'     : '{}'.format(tx_time)                                  },
+            'EventType'         : { 'S'     : 'InitialEvent'                                        },
+            'AccountNumber'     : { 'S'     : '{}'.format(reference_account_number)                 },
+            'ErrorState'        : { 'BOOL'  : False                                                 },
+            'ErrorReason'       : { 'S'     : 'no-error'                                            },
+        }
         object_event = {**object_event_key, **object_event_data}
 
 
