@@ -377,13 +377,8 @@ Resources:
           - Effect: Allow
             Action:
             - "dynamodb:PutItem"
-            - "dynamodb:GetItem"
             Resource:
-            - Fn::Sub:
-              - Sub "arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/${TableName}/index/*"
-              - TableName: 
-                  Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
-            - Fn::Sub: 
+              Fn::Sub: 
               - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
               - TableName: 
                   Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
