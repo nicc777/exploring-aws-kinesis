@@ -73,7 +73,13 @@ Resources:
 Outputs:
 
   ObjectTableName:
-    Description: "DynamoDB AccessCardApp Name"
+    Description: "DynamoDB ObjectTable Name"
     Value: !Ref ObjectTable
     Export:
       Name: !Sub "${AWS::StackName}-ObjectTableName"
+
+  AccountTableName:
+    Description: "DynamoDB AccountTable Name"
+    Value: !Ref AccountTable
+    Export:
+      Name: !Sub "${AWS::StackName}-AccountTableName"
