@@ -275,7 +275,7 @@ def extract_account_number(
                         transaction_data[account_number_field]
                     )
                 )
-                account_number = Decimal(transaction_data[account_number_field])
+                account_number = '{}'.format(transaction_data[account_number_field])
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     debug_log('account_number={}', variable_as_list=[account_number,], logger=logger)
