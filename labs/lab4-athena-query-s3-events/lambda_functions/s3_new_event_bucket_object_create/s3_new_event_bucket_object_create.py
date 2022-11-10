@@ -114,6 +114,35 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 
 ###############################################################################
 ###                                                                         ###
+###                      A W S    I N T E G R A T I O N                     ###
+###                                                                         ###
+###############################################################################
+
+
+def get_s3_object_payload(
+    s3_bucket: str,
+    s3_key: str,
+    boto3_clazz=boto3,
+    logger=get_logger()
+)->str:
+    key_json_data = ''
+    try:
+        client=get_client(client_name="s3", boto3_clazz=boto3_clazz)
+        response = client.get_object(
+            Bucket=s3_bucket,
+            Key=s3_key
+        )
+        debug_log('response={}', variable_as_list=[response,], logger=logger)
+        if 'Body' in response:
+            key_json_data = response['Body'].read().decode('utf-8')
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log('key_json_data={}', variable_as_list=[key_json_data,], logger=logger)
+    return key_json_data
+
+
+###############################################################################
+###                                                                         ###
 ###                         M A I N    H A N D L E R                        ###
 ###                                                                         ###
 ###############################################################################
@@ -121,6 +150,17 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 
 SUPPORTED_EVENTS = (
     'ObjectCreated:Put',
+)
+
+ACCEPTABLE_KEY_PREFIXES = (
+    'cash_deposit_',
+    'verify_cash_deposit_',
+    'cash_withdrawal_',
+    'incoming_payment_',
+    'outgoing_payment_unverified_',
+    'outgoing_payment_verified_',
+    'outgoing_payment_rejected_',
+    'inter_account_transfer_',
 )
 
 
@@ -168,6 +208,61 @@ def extract_s3_event_messages(event: dict, logger=get_logger())->tuple:
     logger.info('ACCEPTED RECORDS QTY: {}'.format(len(messages)))
     return tuple(messages)
 
+
+def validate_key_is_recognized(key: str, logger=get_logger())->bool:
+    if key is None:
+        logger.error('Key cannot be None')
+        return False
+    if isinstance(key, str) is False:
+        logger.error('Key must be a string')
+        return False
+    if key.endswith('.event') is False:
+        logger.error('Key has invalid extension')
+        return False
+    for acceptable_key_prefix in ACCEPTABLE_KEY_PREFIXES:
+        if key.startswith(acceptable_key_prefix):
+            return True
+    logger.error('Key unrecognized')
+    return False
+
+
+def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    """
+        record={
+            's3SchemaVersion': '1.0', 
+            'configurationId': '...', 
+            'bucket': {
+                'name': 'lab4-new-events-qpwoeiryt', 
+                'ownerIdentity': {
+                    'principalId': 'A1OFXF1IHRJZE7'
+                }, 
+                'arn': 'arn:aws:s3:::lab4-new-events-qpwoeiryt'
+            }, 
+            'object': {
+                'key': 'some_file.txt', 
+                'size': 123, 
+                'eTag': '854fce33df76ad3953e25b378a07f237', 
+                'sequencer': '00636C82CFF1F68E3D'
+            }
+        }
+    """
+    try:
+        if validate_key_is_recognized(key=record['object']['key'], logger=logger) is True:
+            s3_payload_json = get_s3_object_payload(
+                s3_bucket=record['bucket']['name'],
+                s3_key=record['object']['key'],
+                boto3_clazz=boto3_clazz,
+                logger=logger
+            )
+            s3_payload_dict = json.loads(s3_payload_json)
+            debug_log('s3_payload_dict={}', variable_as_list=[s3_payload_dict,], logger=logger)
+        else:
+            logger.warning('Skipping S3 record as it is not recognized as a valid event (Key Name Validation Failed)')
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        return False
+    return True
+
     
 def handler(
     event,
@@ -204,6 +299,10 @@ def handler(
             },
         )
     """
+    for s3_record in s3_records:
+        if process_s3_record(record=s3_record, logger=logger, boto3_clazz=boto3_clazz) is True:
+            logger.info('SUCCESSFULLY PROCESSED S3 RECORD: {}'.format(s3_record))
+
     
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
 
