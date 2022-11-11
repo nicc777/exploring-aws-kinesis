@@ -9,7 +9,7 @@ Parameters:
   S3SourceBucketParam:
     Type: String
   
-  CashDepositProcessingLambdaFunctionSrcZipParam:
+  TransactionProcessingLambdaFunctionSrcZipParam:
     Type: String
     Description: "The S3 key of the ZIP file containing the packaged Lambda function. DO NOT include the .zip extension - it will be added automatically"
 
@@ -58,24 +58,24 @@ Resources:
 
 #######################################################################################################################
 ###                                                                                                                 ###
-###                           TRANSACTION PROCESSING LAMBDA FUNCTION - Cash Deposit Event                           ###
+###                                      TRANSACTION PROCESSING LAMBDA FUNCTION                                     ###
 ###                                                                                                                 ###
 #######################################################################################################################
 
-  CashDepositLambdaFunctionRole:
+  TransactionLambdaFunctionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-        - Sid: "CashDepositLambdaFunctionRoleAssumeRolePolicyDocument"
+        - Sid: "TransactionLambdaFunctionRoleAssumeRolePolicyDocument"
           Effect: "Allow"
           Principal:
             Service: "lambda.amazonaws.com"
           Action: "sts:AssumeRole"
-      Description: "Lambda role CashDepositLambdaFunction"
+      Description: "Lambda role TransactionLambdaFunction"
       Policies:
-      - PolicyName: CashDepositLambdaFunctionPolicy01
+      - PolicyName: TransactionLambdaFunctionPolicy01
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -85,7 +85,7 @@ Resources:
             - "logs:CreateLogStream"
             - "logs:PutLogEvents"
             Resource: arn:aws:logs:*:*:*
-      - PolicyName: CashDepositLambdaFunctionPolicy02
+      - PolicyName: TransactionLambdaFunctionPolicy02
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -96,7 +96,7 @@ Resources:
             - "sqs:GetQueueAttributes"
             - "sqs:ChangeMessageVisibility"
             Resource: !GetAtt AccountTransactionQueue.Arn
-      - PolicyName: CashDepositLambdaFunctionPolicy03
+      - PolicyName: TransactionLambdaFunctionPolicy03
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -108,7 +108,7 @@ Resources:
             - "sqs:ChangeMessageVisibility"
             - "sqs:SendMessage"
             Resource: !GetAtt AccountTransactionCleanupQueue.Arn
-      - PolicyName: CashDepositLambdaFunctionPolicy04
+      - PolicyName: TransactionLambdaFunctionPolicy04
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -129,9 +129,9 @@ Resources:
                 - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}/index/*"
                 - TableName: 
                     Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-AccountTableName"
-      RoleName: CashDepositLambdaFunctionRole
+      RoleName: TransactionLambdaFunctionRole
 
-  CashDepositLambdaFunctionLogGroup:
+  TransactionLambdaFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
@@ -139,10 +139,10 @@ Resources:
       LogGroupName:
         Fn::Sub:
         -  "/aws/lambda/${functionRef}"
-        - functionRef: !Ref CashDepositLambdaFunction
+        - functionRef: !Ref TransactionLambdaFunction
       RetentionInDays: 7
 
-  CashDepositLambdaFunction:
+  TransactionLambdaFunction:
     Type: AWS::Lambda::Function
     Properties: 
       Architectures: 
@@ -152,26 +152,23 @@ Resources:
           DEBUG: "1"
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
-        S3Key: !Sub "${CashDepositProcessingLambdaFunctionSrcZipParam}.zip"
+        S3Key: !Sub "${TransactionProcessingLambdaFunctionSrcZipParam}.zip"
       Description: "Event Processing Lambda Function"
-      FunctionName: "TxProcessingCashDepositEvents"
-      Handler: !Sub "${CashDepositProcessingLambdaFunctionSrcZipParam}.handler"
+      FunctionName: "TxProcessingTransactionEvents"
+      Handler: !Sub "${TransactionProcessingLambdaFunctionSrcZipParam}.handler"
       MemorySize: 128
-      Role: !GetAtt CashDepositLambdaFunctionRole.Arn
+      Role: !GetAtt TransactionLambdaFunctionRole.Arn
       Runtime: "python3.8"
       Timeout: 300
 
-  CashDepositLambdaFunctionEventSourceMapping:
+  TransactionLambdaFunctionEventSourceMapping:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
-      BatchSize: 10
+      BatchSize: 10   # FIFO Queue has a max of 10
       Enabled: true
       EventSourceArn:
         Fn::ImportValue: !Sub "${AccountTransactionQueue}-EventQueueArn"
-      FilterCriteria: 
-          Filters: 
-          - Pattern: ""
-      FunctionName: !GetAtt CashDepositLambdaFunction.Arn
+      FunctionName: !GetAtt TransactionLambdaFunction.Arn
 
 
 # Outputs:
