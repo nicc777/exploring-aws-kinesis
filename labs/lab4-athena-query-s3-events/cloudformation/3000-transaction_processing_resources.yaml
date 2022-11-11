@@ -1,0 +1,189 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+
+  DynamoDbStackNameParam:
+    Type: String
+
+  S3SourceBucketParam:
+    Type: String
+  
+  CashDepositProcessingLambdaFunctionSrcZipParam:
+    Type: String
+    Description: "The S3 key of the ZIP file containing the packaged Lambda function. DO NOT include the .zip extension - it will be added automatically"
+
+Resources:
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                                   SQS QUEUES                                                    ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  AccountTransactionCleanupDLQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: "AccountTransactionCleanupDLQueue"
+      VisibilityTimeout: 300
+
+  AccountTransactionCleanupQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: "AccountTransactionCleanupQueue"
+      RedriveAllowPolicy:
+        redrivePermission: "allowAll"
+      RedrivePolicy:
+        deadLetterTargetArn : !GetAtt AccountTransactionCleanupDLQueue.Arn
+        maxReceiveCount : 3
+      VisibilityTimeout: 300
+
+  AccountTransactionQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties: 
+      MessageRetentionPeriod: 86400
+      QueueName: "AccountTransactionQueue.fifo"
+      VisibilityTimeout: 300
+      FifoQueue: true
+      MaximumMessageSize: 1024
+
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                           TRANSACTION PROCESSING LAMBDA FUNCTION - Cash Deposit Event                           ###
+###                                                                                                                 ###
+#######################################################################################################################
+
+  CashDepositLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: "CashDepositLambdaFunctionRoleAssumeRolePolicyDocument"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action: "sts:AssumeRole"
+      Description: "Lambda role CashDepositLambdaFunction"
+      Policies:
+      - PolicyName: CashDepositLambdaFunctionPolicy01
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource: arn:aws:logs:*:*:*
+      - PolicyName: CashDepositLambdaFunctionPolicy02
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "sqs:ReceiveMessage"
+            - "sqs:DeleteMessage"
+            - "sqs:GetQueueAttributes"
+            - "sqs:ChangeMessageVisibility"
+            Resource: !GetAtt AccountTransactionQueue.Arn
+      - PolicyName: CashDepositLambdaFunctionPolicy03
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "sqs:ReceiveMessage"
+            - "sqs:DeleteMessage"
+            - "sqs:GetQueueAttributes"
+            - "sqs:ChangeMessageVisibility"
+            - "sqs:SendMessage"
+            Resource: !GetAtt AccountTransactionCleanupQueue.Arn
+      - PolicyName: CashDepositLambdaFunctionPolicy04
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "dynamodb:PutItem"
+            - "dynamodb:GetItem"
+            - "dynamodb:Scan"
+            - "dynamodb:Query"
+            - "dynamodb:UpdateItem"
+            - "dynamodb:DeleteItem"
+            Resource:
+              - Fn::Sub:
+                - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
+                - TableName: 
+                    Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-AccountTableName"
+              - Fn::Sub:
+                - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}/index/*"
+                - TableName: 
+                    Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-AccountTableName"
+      RoleName: CashDepositLambdaFunctionRole
+
+  CashDepositLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        -  "/aws/lambda/${functionRef}"
+        - functionRef: !Ref CashDepositLambdaFunction
+      RetentionInDays: 7
+
+  CashDepositLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Architectures: 
+      - "arm64"
+      Environment:
+        Variables: 
+          DEBUG: "1"
+      Code: 
+        S3Bucket: !Ref S3SourceBucketParam
+        S3Key: !Sub "${CashDepositProcessingLambdaFunctionSrcZipParam}.zip"
+      Description: "Event Processing Lambda Function"
+      FunctionName: "TxProcessingCashDepositEvents"
+      Handler: !Sub "${CashDepositProcessingLambdaFunctionSrcZipParam}.handler"
+      MemorySize: 128
+      Role: !GetAtt CashDepositLambdaFunctionRole.Arn
+      Runtime: "python3.8"
+      Timeout: 300
+
+  CashDepositLambdaFunctionEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      Enabled: true
+      EventSourceArn:
+        Fn::ImportValue: !Sub "${AccountTransactionQueue}-EventQueueArn"
+      FilterCriteria: 
+          Filters: 
+          - Pattern: ""
+      FunctionName: !GetAtt CashDepositLambdaFunction.Arn
+
+
+# Outputs:
+
+#   ObjectTableName:
+#     Description: "DynamoDB ObjectTable Name"
+#     Value: !Ref ObjectTable
+#     Export:
+#       Name: !Sub "${AWS::StackName}-ObjectTableName"
+
+#   AccountTableName:
+#     Description: "DynamoDB AccountTable Name"
+#     Value: !Ref AccountTable
+#     Export:
+#       Name: !Sub "${AWS::StackName}-AccountTableName"
