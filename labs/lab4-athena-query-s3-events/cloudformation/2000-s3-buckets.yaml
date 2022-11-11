@@ -234,11 +234,17 @@ Resources:
           Action:
           - s3:PutObject
           Resource:
-          - !Join ["", ["arn:aws:s3:::", !Ref S3NewArchiveStoreBucket, "/*"]]
+          # - !Join ["", ["arn:aws:s3:::", !Ref S3NewArchiveStoreBucket, "/*"]]
+          - Fn::Sub:
+            - "arn:${AWS::Partition}:s3:::${BucketName}/*"
+            - BucketName: !Ref S3NewArchiveStoreBucket
           Condition:
             ArnLike:
               aws:SourceArn:
-              - !Join ["", ["arn:aws:s3:::", !Ref S3NewArchiveStoreBucket, "/*"]]
+              # - !Join ["", ["arn:aws:s3:::", !Ref S3NewArchiveStoreBucket, "/*"]]
+              - Fn::Sub:
+                - "arn:${AWS::Partition}:s3:::${BucketName}/*"
+                - BucketName: !Ref S3NewArchiveStoreBucket
             StringEquals:
               aws:SourceAccount:
               - !Sub '${AWS::AccountId}'
