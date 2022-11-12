@@ -126,6 +126,41 @@ def handler(
         logger  = get_logger(level=logging.DEBUG)
     
     debug_log('event={}', variable_as_list=[event], logger=logger)
+    """
+        event={
+            "Records": [
+                {
+                    "messageId": "...",
+                    "receiptHandle": "...",
+                    "body": "{\"EventTimeStamp\": 1668274700, \"TargetAccount\": \"1234567890\", \"Amount\": \"120.00\", \"SourceInstitution\": \"ABC Bank\", \"SourceAccount\": \"5550101010\", \"Reference\": \"Test Transaction\", \"EventSourceDataResource\": {\"S3Key\": \"incoming_payment_test0012.event\", \"S3Bucket\": \"lab4-new-events-qpwoeiryt\"}}",
+                    "attributes": {
+                        ...
+                    },
+                    "messageAttributes": {},
+                    "md5OfBody": "...",
+                    "eventSource": "aws:sqs",
+                    "eventSourceARN": "arn:aws:sqs:eu-central-1:342872205792:AccountTransactionQueue.fifo",
+                    "awsRegion": "eu-central-1"
+                }
+            ]
+        }
+
+        body: 
+
+            {
+                "EventTimeStamp": 1668274700,
+                "TargetAccount": "1234567890",
+                "Amount": "120.00",
+                "SourceInstitution": "ABC Bank",
+                "SourceAccount": "5550101010",
+                "Reference": "Test Transaction",
+                "EventSourceDataResource": {
+                    "S3Key": "incoming_payment_test0012.event",
+                    "S3Bucket": "lab4-new-events-qpwoeiryt"
+                }
+            } 
+
+    """
     
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
 

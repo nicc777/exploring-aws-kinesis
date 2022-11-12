@@ -8,6 +8,7 @@ import sys
 from inspect import getframeinfo, stack
 from decimal import Decimal
 # Other imports here...
+import hashlib
 
 
 def get_logger(level=logging.INFO):
@@ -174,12 +175,15 @@ def send_sqs_fifo_message(
     logger=get_logger()
 )->bool:
     try:
+        json_body = json.dumps(body)
+        json_body_checksum = hashlib.sha256(json_body.encode('utf-8')).hexdigest()
         session = get_session(boto3_clazz=boto3_clazz)
         sqs = session.resource('sqs')
         queue = sqs.get_queue_by_name(QueueName='AccountTransactionQueue.fifo')
         response = queue.send_message(
-            MessageBody=json.dumps(body),
-            MessageGroupId=message_group_id
+            MessageBody=json_body,
+            MessageGroupId=message_group_id,
+            MessageDeduplicationId=json_body_checksum
         )
         debug_log(message='response={}', variable_as_list=[response,], logger=logger)
         return True
