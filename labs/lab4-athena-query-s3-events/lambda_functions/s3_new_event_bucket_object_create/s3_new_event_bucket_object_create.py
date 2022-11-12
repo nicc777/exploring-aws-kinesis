@@ -387,6 +387,19 @@ def update_object_table(
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
 
+def determine_message_group_id(data: dict, logger=get_logger())->str:
+    # TODO Refactor at some point by combining with extract_account_number() as these are essentially the same function... but this one is simpler...
+    group_id = 'reject-group'
+    try:
+        for key_starts_with_value, account_reference_field_name in ACCOUNT_FIELD_NAME_BASED_ON_TRANSACTION_TYPE.items():
+            if data['EventSourceDataResource']['S3Key'].startswith(key_starts_with_value):
+                logger.info('Transaction Type Match: "{}"   Reference Field Name: "{}"'.format(key_starts_with_value, account_reference_field_name))
+                group_id = data[account_reference_field_name]
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return group_id
+
+
 def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('PROCESSING RECORD: {}'.format(record))
     try:
@@ -416,6 +429,7 @@ def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->boo
 
             send_sqs_fifo_message(
                 body=s3_payload_dict,
+                message_group_id=determine_message_group_id(data=s3_payload_dict),
                 boto3_clazz=boto3_clazz,
                 logger=logger
             )
