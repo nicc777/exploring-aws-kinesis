@@ -342,6 +342,7 @@ Resources:
             Action:
             - "sqs:ReceiveMessage"
             - "sqs:DeleteMessage"
+            - "sqs:DeleteMessageBatch"
             - "sqs:GetQueueAttributes"
             - "sqs:ChangeMessageVisibility"
             - "sqs:GetQueueUrl"

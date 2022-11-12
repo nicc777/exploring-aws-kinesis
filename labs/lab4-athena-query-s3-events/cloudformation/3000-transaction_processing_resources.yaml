@@ -95,6 +95,7 @@ Resources:
             - "sqs:DeleteMessage"
             - "sqs:GetQueueAttributes"
             - "sqs:ChangeMessageVisibility"
+            - "sqs:GetQueueUrl"
             Resource: !GetAtt AccountTransactionQueue.Arn
       - PolicyName: TransactionLambdaFunctionPolicy03
         PolicyDocument:
