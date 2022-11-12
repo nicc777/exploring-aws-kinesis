@@ -346,7 +346,10 @@ Resources:
             - "sqs:GetQueueAttributes"
             - "sqs:ChangeMessageVisibility"
             - "sqs:GetQueueUrl"
-            Resource: !GetAtt S3NewEventStoreNotificationQueue.Arn
+            - "sqs:SendMessage"
+            Resource: 
+            - !GetAtt S3NewEventStoreNotificationQueue.Arn
+            - !Sub "arn:${AWS::Partition}:sqs:eu-central-1:${AWS::AccountId}:AccountTransactionQueue.fifo"
       - PolicyName: S3NewEventLambdaFunctionPolicy03
         PolicyDocument:
           Version: '2012-10-17'
