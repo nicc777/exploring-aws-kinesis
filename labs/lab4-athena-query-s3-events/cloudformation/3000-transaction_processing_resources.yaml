@@ -107,6 +107,7 @@ Resources:
             - "sqs:GetQueueAttributes"
             - "sqs:ChangeMessageVisibility"
             - "sqs:SendMessage"
+            - "sqs:GetQueueUrl"
             Resource: !GetAtt AccountTransactionCleanupQueue.Arn
       - PolicyName: TransactionLambdaFunctionPolicy04
         PolicyDocument:
