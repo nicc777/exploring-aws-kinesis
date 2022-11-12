@@ -344,6 +344,7 @@ Resources:
             - "sqs:DeleteMessage"
             - "sqs:GetQueueAttributes"
             - "sqs:ChangeMessageVisibility"
+            - "sqs:GetQueueUrl"
             Resource: !GetAtt S3NewEventStoreNotificationQueue.Arn
       - PolicyName: S3NewEventLambdaFunctionPolicy03
         PolicyDocument:
