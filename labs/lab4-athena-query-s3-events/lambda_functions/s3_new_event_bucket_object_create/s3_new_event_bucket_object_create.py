@@ -362,6 +362,7 @@ def update_object_table(
 
 
 def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    logger.info('PROCESSING RECORD: {}'.format(record))
     try:
         if int(record['object']['size']) > 1024:
             logger.warning('Skipping S3 record as it is larger than the acceptable maximum size of 1KiB')
@@ -382,6 +383,8 @@ def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->boo
                 boto3_clazz=boto3_clazz,
                 logger=logger
             )
+
+            # TODO Add bucket name and key to the s3_payload_dict
 
             # TODO - Publish event to SQS FIFO...
 
