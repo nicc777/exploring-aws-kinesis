@@ -166,8 +166,7 @@ Resources:
     Properties:
       BatchSize: 10   # FIFO Queue has a max of 10
       Enabled: true
-      EventSourceArn:
-        Fn::ImportValue: !Sub "${AccountTransactionQueue}-EventQueueArn"
+      EventSourceArn: !GetAtt  AccountTransactionQueue.Arn
       FunctionName: !GetAtt TransactionLambdaFunction.Arn
 
 
