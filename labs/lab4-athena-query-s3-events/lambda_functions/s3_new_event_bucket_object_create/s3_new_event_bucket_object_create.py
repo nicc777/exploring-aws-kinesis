@@ -34,6 +34,10 @@ def get_client(client_name: str, region: str='eu-central-1', boto3_clazz=boto3):
     return boto3_clazz.client(client_name, region_name=region)
 
 
+def get_session(region: str='eu-central-1', boto3_clazz=boto3):
+    return boto3_clazz.Session(region_name=region)
+
+
 CACHE_TTL_DEFAULT = 600
 cache = dict()
 
@@ -161,6 +165,28 @@ def create_dynamodb_record(
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     return False
+
+
+def send_sqs_fifo_message(
+    body: dict,
+    message_group_id: str,
+    boto3_clazz=boto3,
+    logger=get_logger()
+)->bool:
+    try:
+        session = get_session(boto3_clazz=boto3_clazz)
+        sqs = session.resource('sqs')
+        queue = sqs.get_queue_by_name(QueueName='AccountTransactionQueue')
+        response = queue.send_message(
+            MessageBody=json.dumps(body),
+            MessageGroupId=message_group_id
+        )
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        return True
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return False
+
 
 ###############################################################################
 ###                                                                         ###
@@ -388,7 +414,11 @@ def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->boo
             s3_payload_dict['EventSourceDataResource']['S3Key'] = record['object']['key']
             s3_payload_dict['EventSourceDataResource']['S3Bucket'] = record['bucket']['name']
 
-            # TODO - Publish event to SQS FIFO...
+            send_sqs_fifo_message(
+                body=s3_payload_dict,
+                boto3_clazz=boto3_clazz,
+                logger=logger
+            )
 
             logger.info('RECORD EVENT PREPARED AND READY FOR PROCESSING')
 
