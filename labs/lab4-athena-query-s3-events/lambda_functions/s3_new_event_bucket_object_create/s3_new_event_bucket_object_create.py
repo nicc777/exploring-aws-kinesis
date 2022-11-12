@@ -384,7 +384,9 @@ def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->boo
                 logger=logger
             )
 
-            # TODO Add bucket name and key to the s3_payload_dict
+            s3_payload_dict['EventSourceDataResource'] = dict()
+            s3_payload_dict['EventSourceDataResource']['S3Key'] = record['object']['key']
+            s3_payload_dict['EventSourceDataResource']['S3Bucket'] = record['bucket']['name']
 
             # TODO - Publish event to SQS FIFO...
 
