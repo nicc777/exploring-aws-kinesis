@@ -176,7 +176,7 @@ def send_sqs_fifo_message(
     try:
         session = get_session(boto3_clazz=boto3_clazz)
         sqs = session.resource('sqs')
-        queue = sqs.get_queue_by_name(QueueName='AccountTransactionQueue')
+        queue = sqs.get_queue_by_name(QueueName='AccountTransactionQueue.fifo')
         response = queue.send_message(
             MessageBody=json.dumps(body),
             MessageGroupId=message_group_id
@@ -415,6 +415,7 @@ def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->boo
             )
             s3_payload_dict = json.loads(s3_payload_json)
             debug_log('s3_payload_dict={}', variable_as_list=[s3_payload_dict,], logger=logger)
+            logger.info('STEP COMPLETE: S3 Payload Retrieved and Converted')
 
             update_object_table(
                 record=record, 
@@ -422,17 +423,22 @@ def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->boo
                 boto3_clazz=boto3_clazz,
                 logger=logger
             )
+            logger.info('STEP COMPLETE: Event Object Table Updated')
 
             s3_payload_dict['EventSourceDataResource'] = dict()
             s3_payload_dict['EventSourceDataResource']['S3Key'] = record['object']['key']
             s3_payload_dict['EventSourceDataResource']['S3Bucket'] = record['bucket']['name']
+            logger.info('STEP COMPLETE: S3 Payload Enriched with Event Source Data')
 
-            send_sqs_fifo_message(
+            if send_sqs_fifo_message(
                 body=s3_payload_dict,
                 message_group_id=determine_message_group_id(data=s3_payload_dict),
-                boto3_clazz=boto3_clazz,
-                logger=logger
-            )
+                boto3_clazz=boto3_clazz,logger=logger
+            ) is True:
+                logger.info('STEP COMPLETE: S3 Payload Send to Transactional SQS FIFO Queue')
+            else:
+                logger.error('STEP FAILED: S3 Payload Send to Transactional SQS FIFO Queue')
+                return False
 
             logger.info('RECORD EVENT PREPARED AND READY FOR PROCESSING')
 
