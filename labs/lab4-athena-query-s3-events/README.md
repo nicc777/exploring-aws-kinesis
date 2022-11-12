@@ -16,6 +16,7 @@
 - [Implementation](#implementation)
   - [Deploying the DynamoDB Stack](#deploying-the-dynamodb-stack)
   - [Deploying the New Event S3 Bucket Resources](#deploying-the-new-event-s3-bucket-resources)
+  - [Deploying the Transaction Processing Resources](#deploying-the-transaction-processing-resources)
 - [Learnings and Discoveries](#learnings-and-discoveries)
   - [S3 SNS Notifications - Data Structures](#s3-sns-notifications---data-structures)
     - [Message of a S3 Create Type Event (PUT)](#message-of-a-s3-create-type-event-put)
@@ -328,6 +329,7 @@ When running commands, the following environment variables are assumed to be set
 | `export ARTIFACT_S3_BUCKET_NAME="..."`              | The S3 Bucket name containing any additional artifacts                                                               |
 | `export S3_BUCKET_STACK_NAME="..."`                 | The CloudFormation stack name for deploying New Event Bucket Resources                                               |
 | `export DYNAMODB_STACK_NAME="..."`                  | The CloudFormation stack name for deploying DynamoDB Resources                                                       |
+| `export TX_PROCESSING_STACK_NAME="..."`             | The CloudFormation stack name for deploying Resources to support Transaction Processing                              |
 | `export NEW_EVENT_BUCKET_NAME_PARAM="..."`          | The S3 bucket name for new events                                                                                    |
 | `export ARCHIVE_EVENT_BUCKET_NAME_PARAM="..."`      | The S3 bucket name for events archives                                                                               |
 | `export ARCHIVE_INVENTORY_BUCKET_NAME_PARAM="..."`  | The S3 bucket name for events archive bucket inventory                                                               |
@@ -367,6 +369,24 @@ aws cloudformation deploy \
         ArchiveBucketNameParam="$ARCHIVE_EVENT_BUCKET_NAME_PARAM" \
         ArchiveInventoryBucketNameParam="$ARCHIVE_INVENTORY_BUCKET_NAME_PARAM" \
         DynamoDbStackNameParam="$DYNAMODB_STACK_NAME" \
+    --capabilities CAPABILITY_NAMED_IAM
+```
+
+## Deploying the Transaction Processing Resources
+
+Run the following commands:
+
+```shell
+rm -vf labs/lab4-athena-query-s3-events/lambda_functions/tx_processing_consumer/tx_processing_consumer.zip
+cd labs/lab4-athena-query-s3-events/lambda_functions/tx_processing_consumer/ && zip tx_processing_consumer.zip tx_processing_consumer.py && cd $OLDPWD 
+aws s3 cp labs/lab4-athena-query-s3-events/lambda_functions/tx_processing_consumer/tx_processing_consumer.zip s3://$ARTIFACT_S3_BUCKET_NAME/tx_processing_consumer.zip
+
+aws cloudformation deploy \
+    --stack-name $TX_PROCESSING_STACK_NAME \
+    --template-file labs/lab4-athena-query-s3-events/cloudformation/3000-transaction_processing_resources.yaml \
+    --parameter-overrides S3SourceBucketParam="$ARTIFACT_S3_BUCKET_NAME" \
+        DynamoDbStackNameParam="$DYNAMODB_STACK_NAME" \
+        TransactionProcessingLambdaFunctionSrcZipParam="tx_processing_consumer" \
     --capabilities CAPABILITY_NAMED_IAM
 ```
 
