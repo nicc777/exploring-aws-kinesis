@@ -308,75 +308,7 @@ def validate_key_is_recognized(key: str, logger=get_logger())->bool:
     return False
 
 
-def extract_account_number(
-    record: dict, 
-    transaction_data: dict,
-    logger=get_logger()
-)->str:
-    account_number = None
-    try:
-        for key_start, account_number_field in ACCOUNT_FIELD_NAME_BASED_ON_TRANSACTION_TYPE.items():
-            if record['object']['key'].startswith(key_start):
-                logger.info(
-                    'Match for "{}" identified field name "{}" with extracted account number "{}"'.format(
-                        record['object']['key'],
-                        account_number_field,
-                        transaction_data[account_number_field]
-                    )
-                )
-                account_number = '{}'.format(transaction_data[account_number_field])
-    except:
-        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-    debug_log('account_number={}', variable_as_list=[account_number,], logger=logger)
-    return account_number
-
-
-def determine_message_group_id(data: dict, logger=get_logger())->str:
-    # TODO Refactor at some point by combining with extract_account_number() as these are essentially the same function... but this one is simpler...
-    """
-        data={
-            'EventTimeStamp': 1668329996, 
-            'TargetAccount': '1234567890', 
-            'Amount': '130.00', 
-            'SourceInstitution': 
-            'ABC Bank', 
-            'SourceAccount': '5550101010', 
-            'Reference': 'Test Transaction', 
-            'EventSourceDataResource': {
-                'S3Key': 'incoming_payment_test0013.event', 
-                'S3Bucket': 'lab4-new-events-qpwoeiryt'
-            }
-        }
-    """
-    debug_log('data={}', variable_as_list=[data,], logger=logger)
-    group_id = 'reject-group'
-    try:
-        for key_starts_with_value, account_reference_field_name in ACCOUNT_FIELD_NAME_BASED_ON_TRANSACTION_TYPE.items():
-            if data['EventSourceDataResource']['S3Key'].startswith(key_starts_with_value):
-                logger.info('Transaction Type Match: "{}"   Reference Field Name: "{}"'.format(key_starts_with_value, account_reference_field_name))
-                group_id = data[account_reference_field_name]
-    except:
-        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-    return group_id
-
-
 def determine_tx_type_and_reference_account(data: dict, logger=get_logger())->dict:
-    # TODO Refactor at some point by combining with extract_account_number() as these are essentially the same function... but this one is simpler...
-    """
-        data={
-            'EventTimeStamp': 1668329996, 
-            'TargetAccount': '1234567890', 
-            'Amount': '130.00', 
-            'SourceInstitution': 
-            'ABC Bank', 
-            'SourceAccount': '5550101010', 
-            'Reference': 'Test Transaction', 
-            'EventSourceDataResource': {
-                'S3Key': 'incoming_payment_test0013.event', 
-                'S3Bucket': 'lab4-new-events-qpwoeiryt'
-            }
-        }
-    """
     debug_log('data={}', variable_as_list=[data,], logger=logger)
     result = dict()
     result['TxType'] = 'unknown'
@@ -397,17 +329,12 @@ def determine_tx_type_and_reference_account(data: dict, logger=get_logger())->di
 def update_object_table(
     record: dict, 
     transaction_data: dict,
+    tx_type_and_reference_account: dict,
     boto3_clazz=boto3,
     logger=get_logger()
 ):
     try:
-
-
-        reference_account_number = extract_account_number(
-            record=record, 
-            transaction_data=transaction_data,
-            logger=logger
-        )
+        reference_account_number = tx_type_and_reference_account['ReferenceAccount']
         if reference_account_number is None:
             logger.error('Invalid Account Number')
             return
@@ -473,7 +400,11 @@ def update_object_table(
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
 
-def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+def process_s3_record(
+    record: dict,
+    logger=get_logger(),
+    boto3_clazz=boto3
+)->bool:
     logger.info('PROCESSING RECORD: {}'.format(record))
     try:
         if int(record['object']['size']) > 1024:
@@ -508,6 +439,7 @@ def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->boo
             update_object_table(
                 record=record, 
                 transaction_data=s3_payload_dict,
+                tx_type_and_reference_account=tx_type_and_reference_account,
                 boto3_clazz=boto3_clazz,
                 logger=logger
             )
@@ -515,7 +447,7 @@ def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->boo
 
             if send_sqs_fifo_message(
                 body=s3_payload_dict,
-                message_group_id=determine_message_group_id(data=s3_payload_dict),
+                message_group_id=tx_type_and_reference_account['ReferenceAccount'],
                 boto3_clazz=boto3_clazz,logger=logger
             ) is True:
                 logger.info('STEP COMPLETE: S3 Payload Send to Transactional SQS FIFO Queue')
