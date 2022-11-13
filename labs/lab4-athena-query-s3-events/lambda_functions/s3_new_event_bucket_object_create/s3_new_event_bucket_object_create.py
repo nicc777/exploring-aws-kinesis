@@ -171,6 +171,7 @@ def create_dynamodb_record(
 def send_sqs_fifo_message(
     body: dict,
     message_group_id: str,
+    transaction_type: str='unknown',
     boto3_clazz=boto3,
     logger=get_logger()
 )->bool:
@@ -183,7 +184,13 @@ def send_sqs_fifo_message(
         response = queue.send_message(
             MessageBody=json_body,
             MessageGroupId=message_group_id,
-            MessageDeduplicationId=json_body_checksum
+            MessageDeduplicationId=json_body_checksum,
+            MessageAttributes={
+                'TransactionType': {
+                    'StringValue': transaction_type,
+                    'DataType': 'String'
+                }
+            }
         )
         debug_log(message='response={}', variable_as_list=[response,], logger=logger)
         return True
@@ -293,7 +300,7 @@ def extract_account_number(
     record: dict, 
     transaction_data: dict,
     logger=get_logger()
-):
+)->str:
     account_number = None
     try:
         for key_start, account_number_field in ACCOUNT_FIELD_NAME_BASED_ON_TRANSACTION_TYPE.items():
@@ -310,6 +317,20 @@ def extract_account_number(
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     debug_log('account_number={}', variable_as_list=[account_number,], logger=logger)
     return account_number
+
+
+def determine_message_group_id(data: dict, logger=get_logger())->str:
+    # TODO Refactor at some point by combining with extract_account_number() as these are essentially the same function... but this one is simpler...
+    debug_log('data={}', variable_as_list=[data,], logger=logger)
+    group_id = 'reject-group'
+    try:
+        for key_starts_with_value, account_reference_field_name in ACCOUNT_FIELD_NAME_BASED_ON_TRANSACTION_TYPE.items():
+            if data['EventSourceDataResource']['S3Key'].startswith(key_starts_with_value):
+                logger.info('Transaction Type Match: "{}"   Reference Field Name: "{}"'.format(key_starts_with_value, account_reference_field_name))
+                group_id = data[account_reference_field_name]
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return group_id
 
 
 def update_object_table(
@@ -391,19 +412,6 @@ def update_object_table(
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
 
-def determine_message_group_id(data: dict, logger=get_logger())->str:
-    # TODO Refactor at some point by combining with extract_account_number() as these are essentially the same function... but this one is simpler...
-    group_id = 'reject-group'
-    try:
-        for key_starts_with_value, account_reference_field_name in ACCOUNT_FIELD_NAME_BASED_ON_TRANSACTION_TYPE.items():
-            if data['EventSourceDataResource']['S3Key'].startswith(key_starts_with_value):
-                logger.info('Transaction Type Match: "{}"   Reference Field Name: "{}"'.format(key_starts_with_value, account_reference_field_name))
-                group_id = data[account_reference_field_name]
-    except:
-        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-    return group_id
-
-
 def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('PROCESSING RECORD: {}'.format(record))
     try:
@@ -421,6 +429,11 @@ def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->boo
             debug_log('s3_payload_dict={}', variable_as_list=[s3_payload_dict,], logger=logger)
             logger.info('STEP COMPLETE: S3 Payload Retrieved and Converted')
 
+            s3_payload_dict['EventSourceDataResource'] = dict()
+            s3_payload_dict['EventSourceDataResource']['S3Key'] = record['object']['key']
+            s3_payload_dict['EventSourceDataResource']['S3Bucket'] = record['bucket']['name']
+            logger.info('STEP COMPLETE: S3 Payload Enriched with Event Source Data')
+
             update_object_table(
                 record=record, 
                 transaction_data=s3_payload_dict,
@@ -428,11 +441,6 @@ def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->boo
                 logger=logger
             )
             logger.info('STEP COMPLETE: Event Object Table Updated')
-
-            s3_payload_dict['EventSourceDataResource'] = dict()
-            s3_payload_dict['EventSourceDataResource']['S3Key'] = record['object']['key']
-            s3_payload_dict['EventSourceDataResource']['S3Bucket'] = record['bucket']['name']
-            logger.info('STEP COMPLETE: S3 Payload Enriched with Event Source Data')
 
             if send_sqs_fifo_message(
                 body=s3_payload_dict,
