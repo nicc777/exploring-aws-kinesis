@@ -330,6 +330,7 @@ def update_object_table(
     record: dict, 
     transaction_data: dict,
     tx_type_and_reference_account: dict,
+    event_type: str='InitialEvent',
     boto3_clazz=boto3,
     logger=get_logger()
 ):
@@ -375,7 +376,7 @@ def update_object_table(
         object_event_data = {
             'TransactionDate'   : { 'N'     : '{}'.format(tx_date)                                  },
             'TransactionTime'   : { 'N'     : '{}'.format(tx_time)                                  },
-            'EventType'         : { 'S'     : 'InitialEvent'                                        },
+            'EventType'         : { 'S'     : event_type                                        },
             'AccountNumber'     : { 'S'     : '{}'.format(reference_account_number)                 },
             'ErrorState'        : { 'BOOL'  : False                                                 },
             'ErrorReason'       : { 'S'     : 'no-error'                                            },
@@ -388,6 +389,61 @@ def update_object_table(
             boto3_clazz=boto3_clazz,
             logger=logger
         )
+        logger.info('OBJECT STATE RECORD CREATED')
+        create_dynamodb_record(
+            record_data=object_event,
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
+        logger.info('OBJECT STATE EVENT RECORD CREATED')
+
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
+def update_object_table_add_event(
+    record: dict, 
+    transaction_data: dict,
+    tx_type_and_reference_account: dict,
+    event_type: str='InitialEvent',
+    is_error: bool=False,
+    error_message: str='no-error',
+    boto3_clazz=boto3,
+    logger=get_logger()
+):
+    try:
+        reference_account_number = tx_type_and_reference_account['ReferenceAccount']
+        if reference_account_number is None:
+            logger.error('Invalid Account Number')
+            return
+        if isinstance(reference_account_number, str) is False:
+            logger.error('Invalid Account Number Object Type')
+            return
+        tx_date = Decimal(datetime.utcfromtimestamp(transaction_data['EventTimeStamp']).strftime('%Y%m%d'))
+        tx_time = Decimal(datetime.utcfromtimestamp(transaction_data['EventTimeStamp']).strftime('%H%M%S'))
+        zero = Decimal('0')
+        if tx_date.compare(zero) <= 0:
+            logger.error('Invalid tx_date value')
+            return
+        if tx_time.compare(zero) <= 0:
+            logger.error('Invalid tx_date value')
+            return
+
+        object_event_key = {
+            'PK'                : { 'S'     : 'KEY#{}'.format(record['object']['key'])              },
+            'SK'                : { 'S'     : 'EVENT#{}'.format(transaction_data['EventTimeStamp']) },
+        }
+        object_event_data = {
+            'TransactionDate'   : { 'N'     : '{}'.format(tx_date)                                  },
+            'TransactionTime'   : { 'N'     : '{}'.format(tx_time)                                  },
+            'EventType'         : { 'S'     : event_type                                            },
+            'AccountNumber'     : { 'S'     : '{}'.format(reference_account_number)                 },
+            'ErrorState'        : { 'BOOL'  : is_error                                              },
+            'ErrorReason'       : { 'S'     : error_message                                         },
+        }
+        object_event = {**object_event_key, **object_event_data}
+
+
         logger.info('OBJECT STATE RECORD CREATED')
         create_dynamodb_record(
             record_data=object_event,
@@ -440,10 +496,67 @@ def process_s3_record(
                 record=record, 
                 transaction_data=s3_payload_dict,
                 tx_type_and_reference_account=tx_type_and_reference_account,
+                event_type='InitialEvent',
                 boto3_clazz=boto3_clazz,
                 logger=logger
             )
             logger.info('STEP COMPLETE: Event Object Table Updated')
+
+
+            if tx_type_and_reference_account['TxType'] == 'unknown':
+                logger.error(
+                    'Transaction Type not recognized and/or not supported. The Transaction will NOT be send for further processing. S3 bucket "{}" key "{}"'.format(
+                        record['object']['key'],
+                        record['bucket']['name']
+                    )
+                )
+                update_object_table_add_event(
+                    record=record, 
+                    transaction_data=s3_payload_dict,
+                    tx_type_and_reference_account=tx_type_and_reference_account,
+                    event_type='TxAbortEvent',
+                    is_error=True,
+                    error_message='Transaction Type Not Recognized',
+                    boto3_clazz=boto3_clazz,
+                    logger=logger
+                )
+                logger.info('STEP COMPLETE: Event Object Table Updated with Event')
+                return False
+
+
+            if tx_type_and_reference_account['ReferenceAccount'] == 'unknown':
+                logger.error(
+                    'Reference Account Number not recognized and/or not supported. The Transaction will NOT be send for further processing. S3 bucket "{}" key "{}"'.format(
+                        record['object']['key'],
+                        record['bucket']['name']
+                    )
+                )
+                update_object_table_add_event(
+                    record=record, 
+                    transaction_data=s3_payload_dict,
+                    tx_type_and_reference_account=tx_type_and_reference_account,
+                    event_type='TxAbortEvent',
+                    is_error=True,
+                    error_message='Reference Account Number Not Recognized',
+                    boto3_clazz=boto3_clazz,
+                    logger=logger
+                )
+                logger.info('STEP COMPLETE: Event Object Table Updated with Event')
+                return False
+
+
+            update_object_table_add_event(
+                record=record, 
+                transaction_data=s3_payload_dict,
+                tx_type_and_reference_account=tx_type_and_reference_account,
+                event_type='InitialEvent',
+                is_error=False,
+                error_message='no-error',
+                boto3_clazz=boto3_clazz,
+                logger=logger
+            )
+            logger.info('STEP COMPLETE: Event Object Table Updated with Event')
+
 
             if send_sqs_fifo_message(
                 body=s3_payload_dict,
@@ -482,6 +595,8 @@ def handler(
     for s3_record in s3_records:
         if process_s3_record(record=s3_record, logger=logger, boto3_clazz=boto3_clazz) is True:
             logger.info('SUCCESSFULLY PROCESSED S3 RECORD: {}'.format(s3_record))
+        else:
+            logger.info('FAILED TO PROCESS S3 RECORD: {}'.format(s3_record))
 
     
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
