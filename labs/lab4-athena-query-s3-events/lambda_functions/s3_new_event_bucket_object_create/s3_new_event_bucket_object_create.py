@@ -234,6 +234,18 @@ ACCOUNT_FIELD_NAME_BASED_ON_TRANSACTION_TYPE = {
 }
 
 
+TX_ACCOUNT_TYPE_ID_MAP = {
+    'cash_deposit_'                 : 'CashDeposit',
+    'verify_cash_deposit_'          : 'VerifyCashDeposit',
+    'cash_withdrawal_'              : 'CashWithdrawal',
+    'incoming_payment_'             : 'IncomingPayment',
+    'outgoing_payment_unverified_'  : 'UnverifiedOutgoingPayment',
+    'outgoing_payment_verified_'    : 'VerifiedOutgoingPayment',
+    'outgoing_payment_rejected_'    : 'RejectedOutgoingPayment',
+    'inter_account_transfer_'       : 'InterAccountTransfer',
+}
+
+
 def extract_body_messages_from_event_record(event_record: dict, logger=get_logger())->dict:
     event_body_messages = dict()
     try:
@@ -321,6 +333,21 @@ def extract_account_number(
 
 def determine_message_group_id(data: dict, logger=get_logger())->str:
     # TODO Refactor at some point by combining with extract_account_number() as these are essentially the same function... but this one is simpler...
+    """
+        data={
+            'EventTimeStamp': 1668329996, 
+            'TargetAccount': '1234567890', 
+            'Amount': '130.00', 
+            'SourceInstitution': 
+            'ABC Bank', 
+            'SourceAccount': '5550101010', 
+            'Reference': 'Test Transaction', 
+            'EventSourceDataResource': {
+                'S3Key': 'incoming_payment_test0013.event', 
+                'S3Bucket': 'lab4-new-events-qpwoeiryt'
+            }
+        }
+    """
     debug_log('data={}', variable_as_list=[data,], logger=logger)
     group_id = 'reject-group'
     try:
@@ -331,6 +358,40 @@ def determine_message_group_id(data: dict, logger=get_logger())->str:
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     return group_id
+
+
+def determine_tx_type_and_reference_account(data: dict, logger=get_logger())->dict:
+    # TODO Refactor at some point by combining with extract_account_number() as these are essentially the same function... but this one is simpler...
+    """
+        data={
+            'EventTimeStamp': 1668329996, 
+            'TargetAccount': '1234567890', 
+            'Amount': '130.00', 
+            'SourceInstitution': 
+            'ABC Bank', 
+            'SourceAccount': '5550101010', 
+            'Reference': 'Test Transaction', 
+            'EventSourceDataResource': {
+                'S3Key': 'incoming_payment_test0013.event', 
+                'S3Bucket': 'lab4-new-events-qpwoeiryt'
+            }
+        }
+    """
+    debug_log('data={}', variable_as_list=[data,], logger=logger)
+    result = dict()
+    result['TxType'] = 'unknown'
+    result['ReferenceAccount'] = 'unknown'
+    try:
+        for key_starts_with_value, account_reference_field_name in ACCOUNT_FIELD_NAME_BASED_ON_TRANSACTION_TYPE.items():
+            if data['EventSourceDataResource']['S3Key'].startswith(key_starts_with_value):
+                logger.info('Transaction Type Match: "{}"   Reference Field Name: "{}"'.format(key_starts_with_value, account_reference_field_name))
+                result['TxType'] = TX_ACCOUNT_TYPE_ID_MAP[key_starts_with_value]
+                result['ReferenceAccount'] = data[account_reference_field_name]
+
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log('result={}', variable_as_list=[result,], logger=logger)
+    return result
 
 
 def update_object_table(
@@ -433,6 +494,16 @@ def process_s3_record(record: dict, logger=get_logger(), boto3_clazz=boto3)->boo
             s3_payload_dict['EventSourceDataResource']['S3Key'] = record['object']['key']
             s3_payload_dict['EventSourceDataResource']['S3Bucket'] = record['bucket']['name']
             logger.info('STEP COMPLETE: S3 Payload Enriched with Event Source Data')
+
+
+            tx_type_and_reference_account = determine_tx_type_and_reference_account(data=s3_payload_dict, logger=logger)
+            logger.info(
+                'STEP COMPLETE: Transaction Type "{}" identified for reference account "{}"'.format(
+                    tx_type_and_reference_account['TxType'],
+                    tx_type_and_reference_account['ReferenceAccount']
+                )
+            )
+
 
             update_object_table(
                 record=record, 
