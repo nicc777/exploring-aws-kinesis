@@ -291,13 +291,38 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
     }
     old_actual_balance = get_dynamodb_record_by_key(key=actual_balance_key, boto3_clazz=boto3_clazz, logger=logger)['Balance']
     new_actual_balance = old_actual_balance + amount
-
     actual_balance_data = {
         'LastTransactionDate'   : { 'N': '{}'.format(tx_date_value)                                 },
         'LastTransactionTime'   : { 'N': '{}'.format(tx_time_value)                                 },
         'EventKey'              : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
         'Balance'               : { 'N': '{}'.format(str(new_actual_balance))                       },
     }
+    create_dynamodb_record(
+        table_name='lab4_accounts_v1',
+        record_data={**actual_balance_key, **actual_balance_data},
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+
+    available_balance_key = {
+        'PK'        : { 'S': tx_data['TargetAccount']   },
+        'SK'        : { 'S': 'SAVINGS#BALANCE#ACTUAL'   },
+    }
+    old_available_balance = get_dynamodb_record_by_key(key=available_balance_key, boto3_clazz=boto3_clazz, logger=logger)['Balance']
+    new_available_balance = old_available_balance + amount
+    available_balance_data = {
+        'LastTransactionDate'   : { 'N': '{}'.format(tx_date_value)                                 },
+        'LastTransactionTime'   : { 'N': '{}'.format(tx_time_value)                                 },
+        'EventKey'              : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
+        'Balance'               : { 'N': '{}'.format(str(new_available_balance))                       },
+    }
+    create_dynamodb_record(
+        table_name='lab4_accounts_v1',
+        record_data={**available_balance_key, **available_balance_data},
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
 
 
     logger.info('Processing Done')
@@ -306,6 +331,7 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
 
 def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
+
 
     logger.info('Processing Done')
     return False
