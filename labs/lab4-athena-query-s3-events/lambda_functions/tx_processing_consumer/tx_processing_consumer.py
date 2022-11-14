@@ -123,11 +123,79 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 ###############################################################################
 
 
+def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    logger.info('Processing Started')
+
+    logger.info('Processing Done')
+    return False
+
+
+def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    logger.info('Processing Started')
+
+    logger.info('Processing Done')
+    return False
+
+
+def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    logger.info('Processing Started')
+
+    logger.info('Processing Done')
+    return False
+
+
+def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    logger.info('Processing Started')
+
+    logger.info('Processing Done')
+    return False
+
+
+def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    logger.info('Processing Started')
+
+    logger.info('Processing Done')
+    return False
+
+
+def outgoing_payment_verified(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    logger.info('Processing Started')
+
+    logger.info('Processing Done')
+    return False
+
+
+def outgoing_payment_rejected(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    logger.info('Processing Started')
+
+    logger.info('Processing Done')
+    return False
+
+
+def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    logger.info('Processing Started')
+
+    logger.info('Processing Done')
+    return False
+
+
 ###############################################################################
 ###                                                                         ###
 ###                         M A I N    H A N D L E R                        ###
 ###                                                                         ###
 ###############################################################################
+
+
+TX_TYPE_HANDLER_MAP = {
+    'CashDeposit': cash_deposit,
+    'VerifyCashDeposit': verify_cash_deposit,
+    'CashWithdrawal': cash_withdrawal,
+    'IncomingPayment': incoming_payment,
+    'UnverifiedOutgoingPayment': outgoing_payment_unverified,
+    'VerifiedOutgoingPayment': outgoing_payment_verified,
+    'RejectedOutgoingPayment': outgoing_payment_rejected,
+    'InterAccountTransfer': inter_account_transfer,
+}
 
     
 def handler(
@@ -180,7 +248,24 @@ def handler(
             }
 
     """
-    
+    try:
+        for record in event['Records']:
+            tx_data = json.loads(record['body'])
+            if 'TransactionType' in tx_data:
+                if tx_data['TransactionType'] in TX_TYPE_HANDLER_MAP:
+                    logger.info('Processing Transaction. tx_data={}'.format(tx_data))
+                    if TX_TYPE_HANDLER_MAP[tx_data['TransactionType']](tx_data=tx_data, logger=logger, boto3_clazz=boto3_clazz) is True:
+                        logger.info('Transaction Processed')
+                    else:
+                        logger.error('Transaction Processing Returned Failure.')
+                else:
+                    logger.error('Field TransactionType has unrecognized value. Cannot proceed with transaction processing. tx_data={}'.format(tx_data))
+            else:
+                logger.error('Expected field TransactionType but not present. Cannot proceed with transaction processing. tx_data={}'.format(tx_data))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
 
 
