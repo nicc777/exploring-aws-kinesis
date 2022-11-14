@@ -303,7 +303,7 @@ Table Name: `lab4_accounts_v1`
 |                         |                                                        | - EffectOnActualBalance (String) (Either "None", "Increase" or "Decrease" with "Amount")                    |
 |                         |                                                        | - EffectOnAvailableBalance (String) (Either "None", "Increase" or "Decrease" with "Amount")                 |
 |                         |                                                        |                                                                                                             |
-| <<account-number>>      | SAVINGS#BALANCE#<type>>#<<customer-number>>            | - LastTransactionDate (NUMBER, format YYYYMMDD)                                                             |
+| <<account-number>>      | SAVINGS#BALANCE#<type>>                                | - LastTransactionDate (NUMBER, format YYYYMMDD)                                                             |
 |                         |    Types: ACTUAL or AVAILABLE                          | - LastTransactionTime (NUMBER, format HHMMSS)                                                               |
 |                         |                                                        | - LastEventKey (STRING, links to <<object-key>>)                                                            |
 |                         |                                                        | - Balance (Number)                                                                                          |
