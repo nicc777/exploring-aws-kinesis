@@ -142,6 +142,37 @@ def create_dynamodb_record(
     return False
 
 
+def get_dynamodb_record_by_key(
+    key: dict,
+    boto3_clazz=boto3,
+    logger=get_logger()
+)->dict:
+    record = dict()
+    try:
+        client=get_client(client_name='dynamodb', region='eu-central-1', boto3_clazz=boto3_clazz)
+        response = client.get_item(
+            TableName='lab4_accounts_v1',
+            Key=key,
+            ConsistentRead=True,
+            ReturnConsumedCapacity='TOTAL'
+        )
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        if 'Item' in response:
+            for field_name, field_data in response['Item'].items():
+                for field_data_type, field_data_value in field_data.items():
+                    if field_data_type == 'S':
+                        record[field_name] = '{}'.format(field_data_value)
+                    if field_data_type == 'N':
+                        record[field_name] = Decimal(field_data_value)
+                    if field_data_type == 'BOOL':
+                        record[field_name] = field_data_value
+        if 'Balance' in record is False:
+            record['Balance'] = Decimal[0]
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return record
+
+
 def send_sqs_tx_cleanup_message(
     body: dict,
     boto3_clazz=boto3,
@@ -229,6 +260,7 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
 
     tx_date_value = _helper_tx_date(timestamp=tx_data['EventTimeStamp'])
     tx_time_value = _helper_tx_time(timestamp=tx_data['EventTimeStamp'])
+    amount = Decimal(tx_data['Amount'])
 
     verified_event_key = {
         'PK'        : { 'S': tx_data['TargetAccount']                                                                                                           },
@@ -251,6 +283,21 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
         boto3_clazz=boto3_clazz,
         logger=logger
     )
+
+
+    actual_balance_key = {
+        'PK'        : { 'S': tx_data['TargetAccount']   },
+        'SK'        : { 'S': 'SAVINGS#BALANCE#ACTUAL'   },
+    }
+    old_actual_balance = get_dynamodb_record_by_key(key=actual_balance_key, boto3_clazz=boto3_clazz, logger=logger)['Balance']
+    new_actual_balance = old_actual_balance + amount
+
+    actual_balance_data = {
+        'LastTransactionDate'   : { 'N': '{}'.format(tx_date_value)                                 },
+        'LastTransactionTime'   : { 'N': '{}'.format(tx_time_value)                                 },
+        'EventKey'              : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
+        'Balance'               : { 'N': '{}'.format(str(new_actual_balance))                       },
+    }
 
 
     logger.info('Processing Done')
