@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 import sys
 from inspect import getframeinfo, stack
+from decimal import Decimal
 # Other imports here...
 
 
@@ -168,6 +169,14 @@ def send_sqs_tx_cleanup_message(
 ###############################################################################
 
 
+def _helper_tx_date(timestamp: int)->str:
+    return Decimal(datetime.utcfromtimestamp(timestamp).strftime('%Y%m%d'))
+
+
+def _helper_tx_time(timestamp: int)->str:
+    return Decimal(datetime.utcfromtimestamp(timestamp).strftime('%H%M%S'))
+
+
 def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
 
@@ -217,6 +226,31 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
             "RequestId": "test0018"
         }
     """
+
+    tx_date_value = _helper_tx_date(timestamp=tx_data['EventTimeStamp'])
+    tx_time_value = _helper_tx_time(timestamp=tx_data['EventTimeStamp'])
+
+    verified_event_key = {
+        'PK'        : { 'S': tx_data['TargetAccount']                                                                                                           },
+        'SK'        : { 'S': 'TRANSACTIONS#VERIFIED#{}#{}'.format(tx_data['EventSourceDataResource']['S3Bucket'], tx_data['EventSourceDataResource']['S3Key'])  },
+    }
+    verified_event_data = {
+        'TransactionDate'           : { 'N': '{}'.format(tx_date_value)                                 },
+        'TransactionTime'           : { 'N': '{}'.format(tx_time_value)                                 },
+        'EventKey'                  : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
+        'EventRawData'              : { 'S': '{}'.format(json.dumps(tx_data))                           },
+        'Amount'                    : { 'N': '{}'.format(tx_data['Amount'])                             },
+        'TransactionType'           : { 'S': '{}'.format(tx_data['TransactionType'])                    },
+        'RequestId'                 : { 'S': '{}'.format(tx_data['RequestId'])                          },
+        'EffectOnActualBalance'     : { 'S': 'Increase'                                                 },
+        'EffectOnAvailableBalance'  : { 'S': 'Increase'                                                 },
+    }
+    create_dynamodb_record(
+        table_name='lab4_accounts_v1',
+        record_data={**verified_event_key, **verified_event_data},
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
 
 
     logger.info('Processing Done')
