@@ -286,12 +286,22 @@ Table Name: `lab4_accounts_v1`
 |                         |                                                        | - EventKey (STRING, links to <<object-key>>)                                                                |
 |                         |                                                        | - EventRawData (String, containing JSON of original transaction)                                            |
 |                         |                                                        | - Amount (Number)                                                                                           |
+|                         |                                                        | - ReferenceAccount (String) (Account primary for this transaction)                                          |
+|                         |                                                        | - TransactionType (String)                                                                                  |
+|                         |                                                        | - RequestId (String)                                                                                        |
+|                         |                                                        | - EffectOnActualBalance (String) (Either "None", "Increase" or "Decrease" with "Amount")                    |
+|                         |                                                        | - EffectOnAvailableBalance (String) (Either "None", "Increase" or "Decrease" with "Amount")                 |
 |                         |                                                        |                                                                                                             |
 | <<account-number>>      | TRANSACTIONS#VERIFIED#<<event-key>>                    | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
 |                         |                                                        | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
 |                         |                                                        | - EventKey (STRING, links to <<object-key>>)                                                                |
 |                         |                                                        | - EventRawData (String, containing JSON of original transaction)                                            |
 |                         |                                                        | - Amount (Number)                                                                                           |
+|                         |                                                        | - ReferenceAccount (String) (Account primary for this transaction)                                          |
+|                         |                                                        | - TransactionType (String)                                                                                  |
+|                         |                                                        | - RequestId (String)                                                                                        |
+|                         |                                                        | - EffectOnActualBalance (String) (Either "None", "Increase" or "Decrease" with "Amount")                    |
+|                         |                                                        | - EffectOnAvailableBalance (String) (Either "None", "Increase" or "Decrease" with "Amount")                 |
 |                         |                                                        |                                                                                                             |
 | <<account-number>>      | SAVINGS#BALANCE#<type>>#<<customer-number>>            | - LastTransactionDate (NUMBER, format YYYYMMDD)                                                             |
 |                         |    Types: ACTUAL or AVAILABLE                          | - LastTransactionTime (NUMBER, format HHMMSS)                                                               |

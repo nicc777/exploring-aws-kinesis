@@ -175,7 +175,8 @@ def handler(
                     "S3Key": "incoming_payment_test0018.event", 
                     "S3Bucket": "lab4-new-events-qpwoeiryt"
                 }, 
-                "TransactionType": "IncomingPayment"
+                "TransactionType": "IncomingPayment",
+                "RequestId": "test0018"
             }
 
     """
