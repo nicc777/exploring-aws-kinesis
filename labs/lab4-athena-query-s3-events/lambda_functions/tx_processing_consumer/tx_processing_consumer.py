@@ -20,6 +20,13 @@ def get_logger(level=logging.INFO):
     ch.setFormatter(formatter)
     logger.addHandler(ch)
     logger.setLevel(level)
+
+    # Disable Boto3 Debug Logging - see https://stackoverflow.com/questions/1661275/disable-boto-logging-without-modifying-the-boto-files
+    logging.getLogger('boto3').setLevel(logging.INFO)
+    logging.getLogger('botocore').setLevel(logging.INFO)
+    logging.getLogger('s3transfer').setLevel(logging.INFO)
+    logging.getLogger('urllib3').setLevel(logging.INFO)
+
     return logger
 
 
@@ -165,11 +172,12 @@ def get_dynamodb_record_by_key(
                     if field_data_type == 'N':
                         record[field_name] = Decimal(field_data_value)
                     if field_data_type == 'BOOL':
-                        record[field_name] = field_data_value
-        if 'Balance' in record is False:
-            record['Balance'] = Decimal[0]
+                        record[field_name] = field_data_value        
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    if 'Balance' not in record:
+            record['Balance'] = Decimal('0')
+    debug_log(message='record={}', variable_as_list=[record,], logger=logger)
     return record
 
 
@@ -306,8 +314,8 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
 
 
     available_balance_key = {
-        'PK'        : { 'S': tx_data['TargetAccount']   },
-        'SK'        : { 'S': 'SAVINGS#BALANCE#ACTUAL'   },
+        'PK'        : { 'S': tx_data['TargetAccount']       },
+        'SK'        : { 'S': 'SAVINGS#BALANCE#AVAILABLE'    },
     }
     old_available_balance = get_dynamodb_record_by_key(key=available_balance_key, boto3_clazz=boto3_clazz, logger=logger)['Balance']
     new_available_balance = old_available_balance + amount
