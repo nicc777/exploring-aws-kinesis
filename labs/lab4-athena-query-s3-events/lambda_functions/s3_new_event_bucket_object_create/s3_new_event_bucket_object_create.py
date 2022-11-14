@@ -7,6 +7,7 @@ from datetime import datetime
 import sys
 from inspect import getframeinfo, stack
 from decimal import Decimal
+import copy
 # Other imports here...
 import hashlib
 
@@ -456,6 +457,19 @@ def update_object_table_add_event(
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
 
 
+def extract_request_id(key: str, logger=get_logger())->str:
+    request_id = None
+    try:
+        for key_prefix in ACCEPTABLE_KEY_PREFIXES:
+            if key.startswith(key_prefix):
+                request_id = copy.deepcopy(key)
+                request_id = request_id.replace(key_prefix, '')
+                request_id = request_id.replace('.event', '')
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return request_id
+
+
 def process_s3_record(
     record: dict,
     logger=get_logger(),
@@ -476,6 +490,14 @@ def process_s3_record(
             s3_payload_dict = json.loads(s3_payload_json)
             debug_log('s3_payload_dict={}', variable_as_list=[s3_payload_dict,], logger=logger)
             logger.info('STEP COMPLETE: S3 Payload Retrieved and Converted')
+
+            request_id = extract_request_id(key=record['object']['key'], logger=logger)
+            if request_id is None:
+                logger.error('Unable to determine request ID - rejecting event.')
+                return False
+            s3_payload_dict['RequestId'] = request_id
+            logger.info('STEP COMPLETE: S3 Payload Enriched with Request ID')
+            
 
             s3_payload_dict['EventSourceDataResource'] = dict()
             s3_payload_dict['EventSourceDataResource']['S3Key'] = record['object']['key']
