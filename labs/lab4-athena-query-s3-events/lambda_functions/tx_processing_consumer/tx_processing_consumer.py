@@ -332,7 +332,6 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
 def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
 
-
     logger.info('Processing Done')
     return False
 
