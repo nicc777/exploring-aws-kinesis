@@ -26,6 +26,10 @@ def get_client(client_name: str, region: str='eu-central-1', boto3_clazz=boto3):
     return boto3_clazz.client(client_name, region_name=region)
 
 
+def get_session(region: str='eu-central-1', boto3_clazz=boto3):
+    return boto3_clazz.Session(region_name=region)
+
+
 # ADD the header as per section ``Module header functions``
 
 CACHE_TTL_DEFAULT = 600
@@ -115,6 +119,47 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 ###############################################################################
 
 
+def create_dynamodb_record(
+    table_name: str,
+    record_data: dict,
+    boto3_clazz=boto3,
+    logger=get_logger()
+)->bool:
+    try:
+        client=get_client(client_name='dynamodb', region='eu-central-1', boto3_clazz=boto3_clazz)
+        response = client.put_item(
+            TableName=table_name,
+            Item=record_data,
+            ReturnValues='NONE',
+            ReturnConsumedCapacity='TOTAL',
+            ReturnItemCollectionMetrics='SIZE'
+        )
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        return True
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return False
+
+
+def send_sqs_tx_cleanup_message(
+    body: dict,
+    boto3_clazz=boto3,
+    logger=get_logger()
+)->bool:
+    try:
+        json_body = json.dumps(body)
+        session = get_session(boto3_clazz=boto3_clazz)
+        sqs = session.resource('sqs')
+        queue = sqs.get_queue_by_name(QueueName='AccountTransactionCleanupQueue')
+        response = queue.send_message(
+            MessageBody=json_body
+        )
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        return True
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return False
+
 
 ###############################################################################
 ###                                                                         ###
@@ -145,7 +190,34 @@ def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool
 
 
 def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    """
+        Processing Characteristics:
+
+            TRANSACTIONS#PENDING# Event     - False
+            TRANSACTIONS#VERIFIED# Event    - True
+            Effect on Actual Balance        - Increase
+            Effect on Available Balance     - Increase
+    """
     logger.info('Processing Started')
+
+    """
+        tx_data = {
+            "EventTimeStamp": 1668399202, 
+            "TargetAccount": "1234567890", 
+            "Amount": "180.00", 
+            "SourceInstitution": 
+            "ABC Bank", 
+            "SourceAccount": "5550101010", 
+            "Reference": "Test Transaction", 
+            "EventSourceDataResource": {
+                "S3Key": "incoming_payment_test0018.event", 
+                "S3Bucket": "lab4-new-events-qpwoeiryt"
+            }, 
+            "TransactionType": "IncomingPayment",
+            "RequestId": "test0018"
+        }
+    """
+
 
     logger.info('Processing Done')
     return False
