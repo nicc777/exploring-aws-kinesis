@@ -132,7 +132,7 @@ def handler(
                 {
                     "messageId": "...",
                     "receiptHandle": "...",
-                    "body": "{\"EventTimeStamp\": 1668274700, \"TargetAccount\": \"1234567890\", \"Amount\": \"120.00\", \"SourceInstitution\": \"ABC Bank\", \"SourceAccount\": \"5550101010\", \"Reference\": \"Test Transaction\", \"EventSourceDataResource\": {\"S3Key\": \"incoming_payment_test0012.event\", \"S3Bucket\": \"lab4-new-events-qpwoeiryt\"}}",
+                    "body": "...data...",
                     "attributes": {
                         ...
                     },
@@ -145,20 +145,22 @@ def handler(
             ]
         }
 
-        body: 
+        body:       NOTE: Exact Fields Depends on TransactionType
 
             {
-                "EventTimeStamp": 1668274700,
-                "TargetAccount": "1234567890",
-                "Amount": "120.00",
-                "SourceInstitution": "ABC Bank",
-                "SourceAccount": "5550101010",
-                "Reference": "Test Transaction",
+                "EventTimeStamp": 1668399202, 
+                "TargetAccount": "1234567890", 
+                "Amount": "180.00", 
+                "SourceInstitution": 
+                "ABC Bank", 
+                "SourceAccount": "5550101010", 
+                "Reference": "Test Transaction", 
                 "EventSourceDataResource": {
-                    "S3Key": "incoming_payment_test0012.event",
+                    "S3Key": "incoming_payment_test0018.event", 
                     "S3Bucket": "lab4-new-events-qpwoeiryt"
-                }
-            } 
+                }, 
+                "TransactionType": "IncomingPayment"
+            }
 
     """
     
