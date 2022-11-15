@@ -287,7 +287,7 @@ def _helper_commit_transaction_events(
     tx_time_value = _helper_tx_time(timestamp=tx_data['EventTimeStamp'])
     for event_type in event_types:
         event_key = {
-            'PK'        : { 'S': tx_data['TargetAccount']                                                                                                                   },
+            'PK'        : { 'S': tx_data['ReferenceAccount']                                                                                                                   },
             'SK'        : { 'S': 'TRANSACTIONS#{}#{}#{}'.format(event_type, tx_data['EventSourceDataResource']['S3Bucket'], tx_data['EventSourceDataResource']['S3Key'])    },
         }
         event_data = {
@@ -320,7 +320,7 @@ def _helper_commit_updated_balances(
     tx_time_value = _helper_tx_time(timestamp=tx_data['EventTimeStamp'])
 
     updated_balances = _helper_calculate_updated_balances(
-        account_ref=tx_data['TargetAccount'],
+        account_ref=tx_data['ReferenceAccount'],
         amount=Decimal(tx_data['Amount']),
         effect_on_actual_balance=effect_on_actual_balance,
         effect_on_available_balance=effect_on_available_balance,
@@ -330,7 +330,7 @@ def _helper_commit_updated_balances(
 
     for balance_type in ('Available', 'Actual'):
         actual_balance_data = {
-            'PK'                        : { 'S': tx_data['TargetAccount']                                   },
+            'PK'                        : { 'S': tx_data['ReferenceAccount']                                   },
             'SK'                        : { 'S': 'SAVINGS#BALANCE#{}'.format(balance_type.upper())          },
             'LastTransactionDate'       : { 'N': '{}'.format(tx_date_value)                                 },
             'LastTransactionTime'       : { 'N': '{}'.format(tx_time_value)                                 },
@@ -346,7 +346,25 @@ def _helper_commit_updated_balances(
 
 
 def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
+    """
+        ....
+    """
     logger.info('Processing Started')
+
+    _helper_commit_transaction_events(
+        tx_data=tx_data, 
+        event_types=_helper_event_types_as_tuple(is_pending=True, is_verified=False), 
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    _helper_commit_updated_balances(
+        tx_data=tx_data, 
+        effect_on_actual_balance='Increase',
+        effect_on_available_balance='None',
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
 
     logger.info('Processing Done')
     return False
@@ -381,6 +399,7 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
                 "S3Bucket": "lab4-new-events-qpwoeiryt"
             }, 
             "TransactionType": "IncomingPayment",
+            "ReferenceAccount": "1234567890",
             "RequestId": "test0018"
         }
     """
@@ -493,12 +512,13 @@ def handler(
                 "ABC Bank", 
                 "SourceAccount": "5550101010", 
                 "Reference": "Test Transaction", 
-                "EventSourceDataResource": {
-                    "S3Key": "incoming_payment_test0018.event", 
-                    "S3Bucket": "lab4-new-events-qpwoeiryt"
-                }, 
-                "TransactionType": "IncomingPayment",
-                "RequestId": "test0018"
+                "EventSourceDataResource": {                            <==> Enriched Data - present in all events
+                    "S3Key": "incoming_payment_test0018.event",         <==> Enriched Data - present in all events
+                    "S3Bucket": "lab4-new-events-qpwoeiryt"             <==> Enriched Data - present in all events
+                },                                                      <==> Enriched Data - present in all events
+                "TransactionType": "IncomingPayment",                   <==> Enriched Data - present in all events
+                "ReferenceAccount": "1234567890",                       <==> Enriched Data - present in all events
+                "RequestId": "test0018"                                 <==> Enriched Data - present in all events
             }
 
     """

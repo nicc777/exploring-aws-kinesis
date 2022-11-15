@@ -507,6 +507,7 @@ def process_s3_record(
 
             tx_type_and_reference_account = determine_tx_type_and_reference_account(data=s3_payload_dict, logger=logger)
             s3_payload_dict['TransactionType'] = tx_type_and_reference_account['TxType']
+            s3_payload_dict['ReferenceAccount'] = tx_type_and_reference_account['ReferenceAccount']
             logger.info(
                 'STEP COMPLETE: Transaction Type "{}" identified for reference account "{}"'.format(
                     tx_type_and_reference_account['TxType'],
