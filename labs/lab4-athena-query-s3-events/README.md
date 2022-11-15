@@ -291,6 +291,7 @@ Table Name: `lab4_accounts_v1`
 |                         |                                                        | - Amount (Number)                                                                                           |
 |                         |                                                        | - TransactionType (String)                                                                                  |
 |                         |                                                        | - RequestId (String)                                                                                        |
+|                         |                                                        | - PreviousRequestIdReference (String, default="n/a")                                                        |
 |                         |                                                        | - EffectOnActualBalance (String) (Either "None", "Increase" or "Decrease" with "Amount")                    |
 |                         |                                                        | - EffectOnAvailableBalance (String) (Either "None", "Increase" or "Decrease" with "Amount")                 |
 |                         |                                                        |                                                                                                             |

@@ -285,6 +285,9 @@ def _helper_commit_transaction_events(
 ):
     tx_date_value = _helper_tx_date(timestamp=tx_data['EventTimeStamp'])
     tx_time_value = _helper_tx_time(timestamp=tx_data['EventTimeStamp'])
+    previous_request_id = "n/a"
+    if 'PreviousRequestIdReference' in tx_data:
+        previous_request_id = tx_data['PreviousRequestIdReference']
     for event_type in event_types:
         event_key = {
             'PK'        : { 'S': tx_data['ReferenceAccount']                                                                                                                },
@@ -298,6 +301,7 @@ def _helper_commit_transaction_events(
             'Amount'                    : { 'N': '{}'.format(tx_data['Amount'])                             },
             'TransactionType'           : { 'S': '{}'.format(tx_data['TransactionType'])                    },
             'RequestId'                 : { 'S': '{}'.format(tx_data['RequestId'])                          },
+            'PreviousRequestIdReference': { 'S': '{}'.format(previous_request_id)                           },
             'EffectOnActualBalance'     : { 'S': 'Increase'                                                 },
             'EffectOnAvailableBalance'  : { 'S': 'Increase'                                                 },
         }
