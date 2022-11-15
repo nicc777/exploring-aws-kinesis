@@ -281,19 +281,8 @@ Table Name: `lab4_accounts_v1`
 | Name: PK                | Name: SK                                               |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 |                         |                                                        |                                                                                                             |
-| <<account-number>>      | TRANSACTIONS#PENDING#<<event-key>>                     | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
-|                         |                                                        | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
-|                         |                                                        | - EventKey (STRING, links to <<object-key>>)                                                                |
-|                         |                                                        | - EventRawData (String, containing JSON of original transaction)                                            |
-|                         |                                                        | - Amount (Number)                                                                                           |
-|                         |                                                        | - ReferenceAccount (String) (Account primary for this transaction)                                          |
-|                         |                                                        | - TransactionType (String)                                                                                  |
-|                         |                                                        | - RequestId (String)                                                                                        |
-|                         |                                                        | - EffectOnActualBalance (String) (Either "None", "Increase" or "Decrease" with "Amount")                    |
-|                         |                                                        | - EffectOnAvailableBalance (String) (Either "None", "Increase" or "Decrease" with "Amount")                 |
-|                         |                                                        |                                                                                                             |
-| <<account-number>>      | TRANSACTIONS#VERIFIED#<<event-key>>                    | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
-|                         |                                                        | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
+| <<account-number>>      | TRANSACTIONS#<<type>>#<<event-key>>                    | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
+|                         |   Types: PENDING or VERIFIED                           | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
 |                         |                                                        | - EventKey (STRING, links to <<object-key>>)                                                                |
 |                         |                                                        | - EventRawData (String, containing JSON of original transaction)                                            |
 |                         |                                                        | - Amount (Number)                                                                                           |
