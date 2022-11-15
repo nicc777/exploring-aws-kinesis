@@ -287,7 +287,7 @@ def _helper_commit_transaction_events(
     tx_time_value = _helper_tx_time(timestamp=tx_data['EventTimeStamp'])
     for event_type in event_types:
         event_key = {
-            'PK'        : { 'S': tx_data['ReferenceAccount']                                                                                                                   },
+            'PK'        : { 'S': tx_data['ReferenceAccount']                                                                                                                },
             'SK'        : { 'S': 'TRANSACTIONS#{}#{}#{}'.format(event_type, tx_data['EventSourceDataResource']['S3Bucket'], tx_data['EventSourceDataResource']['S3Key'])    },
         }
         event_data = {
@@ -311,6 +311,7 @@ def _helper_commit_transaction_events(
 
 def _helper_commit_updated_balances(
     tx_data: dict, 
+    updated_balances: dict=None,
     effect_on_actual_balance: str='None',
     effect_on_available_balance: str='None',
     boto3_clazz=boto3,
@@ -319,18 +320,19 @@ def _helper_commit_updated_balances(
     tx_date_value = _helper_tx_date(timestamp=tx_data['EventTimeStamp'])
     tx_time_value = _helper_tx_time(timestamp=tx_data['EventTimeStamp'])
 
-    updated_balances = _helper_calculate_updated_balances(
-        account_ref=tx_data['ReferenceAccount'],
-        amount=Decimal(tx_data['Amount']),
-        effect_on_actual_balance=effect_on_actual_balance,
-        effect_on_available_balance=effect_on_available_balance,
-        boto3_clazz=boto3_clazz,
-        logger=logger
-    )
+    if updated_balances is None:
+        updated_balances = _helper_calculate_updated_balances(
+            account_ref=tx_data['ReferenceAccount'],
+            amount=Decimal(tx_data['Amount']),
+            effect_on_actual_balance=effect_on_actual_balance,
+            effect_on_available_balance=effect_on_available_balance,
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
 
     for balance_type in ('Available', 'Actual'):
         actual_balance_data = {
-            'PK'                        : { 'S': tx_data['ReferenceAccount']                                   },
+            'PK'                        : { 'S': tx_data['ReferenceAccount']                                },
             'SK'                        : { 'S': 'SAVINGS#BALANCE#{}'.format(balance_type.upper())          },
             'LastTransactionDate'       : { 'N': '{}'.format(tx_date_value)                                 },
             'LastTransactionTime'       : { 'N': '{}'.format(tx_time_value)                                 },
