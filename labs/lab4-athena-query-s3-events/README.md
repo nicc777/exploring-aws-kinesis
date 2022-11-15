@@ -106,6 +106,7 @@ Effect on Available Balance: Increase Balance by `Amount`
     "Amount": "123.40",
     "LocationType": "ATM or Teller",
     "Reference": "Some Free Form Text",
+    "PreviousRequestIdReference": "<<request-id>>",
     "Verified": true,
     "VerifiedCurrency": {
         "100-euro-bills": 1,
@@ -187,7 +188,8 @@ _**Note**_: The `<<request-id>>` corresponds to the original request ID for the 
 {
     "EventTimeStamp": 1234567890,
     "SourceAccount": "<<account number>>",
-    "Reference": "Some Free Form Text"
+    "Reference": "Some Free Form Text",
+    "PreviousRequestIdReference": "<<request-id>>",
 }
 ```
 
@@ -204,7 +206,8 @@ Effect on Available Balance: Increase Balance by `RejectedAmount`
     "EventTimeStamp": 1234567890,
     "SourceAccount": "<<account number>>",
     "Reason": "Incorrect account number (account not found)",
-    "RejectedAmount": "123.45"
+    "RejectedAmount": "123.45",
+    "PreviousRequestIdReference": "<<request-id>>",
 }
 ```
 
