@@ -114,7 +114,7 @@ Effect on Available Balance: Increase Balance by `Amount`
         "20-cents": 2
     ],
     "VerifiedByEmployeeId": "1234567890",
-    "FinalFinding": "5 cents was from incorrect currency and rejected. The coins were returned to the customer."
+    "FinalFinding": "5 cents was from incorrect currency and rejected. The customer was informed that the coins are available for collection at the branch."
 }
 ```
 
