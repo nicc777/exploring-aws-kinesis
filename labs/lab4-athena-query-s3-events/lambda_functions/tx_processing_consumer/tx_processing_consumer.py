@@ -216,6 +216,67 @@ def _helper_tx_time(timestamp: int)->str:
     return Decimal(datetime.utcfromtimestamp(timestamp).strftime('%H%M%S'))
 
 
+def _helper_event_types_as_tuple(
+    is_pending: bool=True,
+    is_verified: bool=False
+)->tuple:
+    event_types = list()
+    if is_pending is True:
+        event_types.append('PENDING')
+    if is_verified is True:
+        event_types.append('VERIFIED')
+    return tuple(event_types)
+
+
+def _helper_get_balance(
+    account_ref: str,
+    type: str='Available',
+    boto3_clazz=boto3,
+    logger=get_logger()
+)->Decimal:
+    try:
+        key = {
+            'PK'        : { 'S': '{}'.format(account_ref)                   },
+            'SK'        : { 'S': 'SAVINGS#BALANCE#{}'.format(type.upper())  },
+        }
+        balance = get_dynamodb_record_by_key(key=key, boto3_clazz=boto3_clazz, logger=logger)['Balance']
+        if isinstance(balance, Decimal) is True:
+            return balance
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return Decimal('0')
+
+
+def _helper_calculate_updated_balances(
+    account_ref: str,
+    amount: Decimal,
+    effect_on_actual_balance: str=None,
+    effect_on_available_balance: str=None,
+    boto3_clazz=boto3,
+    logger=get_logger()
+)->dict:
+    balances = dict()
+    balances['Available'] = _helper_get_balance(account_ref=account_ref, type='Available', boto3_clazz=boto3_clazz, logger=logger)
+    balances['Actual'] = _helper_get_balance(account_ref=account_ref, type='Actual', boto3_clazz=boto3_clazz, logger=logger)
+    effect = dict()
+    effect['Available'] = effect_on_available_balance
+    effect['Actual'] = effect_on_actual_balance
+
+    for balance_type in ('Available', 'Actual'):
+        logger.info('{} Balance PRE: {}'.format(balance_type, balances['Available']))
+        if effect[balance_type] == 'Increase':
+            balances[balance_type] += amount
+            logger.info('{} Balance INCREASED with {} to {}'.format(balance_type, amount, balances['Available']))
+        elif effect[balance_type] == 'Decrease':
+            balances[balance_type] -= amount
+            logger.info('{} Balance DECREASED with {} to {}'.format(balance_type, amount, balances['Available']))
+        else:
+            logger.info('Available Balance REMAINS unchanged at {}'.format(balances['Available']))
+
+    logger.info('FINAL balances on account {}: {}'.format(account_ref, balances))
+    return balances
+
+
 def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
 
@@ -237,68 +298,13 @@ def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool
     return False
 
 
-def get_balance(
-    account_ref: str,
-    type: str='Available',
-    boto3_clazz=boto3,
-    logger=get_logger()
-)->Decimal:
-    try:
-        key = {
-            'PK'        : { 'S': '{}'.format(account_ref)                   },
-            'SK'        : { 'S': 'SAVINGS#BALANCE#{}'.format(type.upper())  },
-        }
-        balance = get_dynamodb_record_by_key(key=key, boto3_clazz=boto3_clazz, logger=logger)['Balance']
-        if isinstance(balance, Decimal) is True:
-            return balance
-    except:
-        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-    return Decimal('0')
-
-
-def calculate_updated_balances(
-    account_ref: str,
-    amount: Decimal,
-    effect_on_actual_balance: str=None,
-    effect_on_available_balance: str=None,
-    boto3_clazz=boto3,
-    logger=get_logger()
-)->dict:
-    balances = dict()
-    balances['Available'] = get_balance(account_ref=account_ref, type='Available', boto3_clazz=boto3_clazz, logger=logger)
-    balances['Actual'] = get_balance(account_ref=account_ref, type='Actual', boto3_clazz=boto3_clazz, logger=logger)
-    effect = dict()
-    effect['Available'] = effect_on_available_balance
-    effect['Actual'] = effect_on_actual_balance
-
-    for balance_type in ('Available', 'Actual'):
-        logger.info('{} Balance PRE: {}'.format(balance_type, balances['Available']))
-        if effect[balance_type] == 'Increase':
-            balances[balance_type] += amount
-            logger.info('{} Balance INCREASED with {} to {}'.format(balance_type, amount, balances['Available']))
-        elif effect[balance_type] == 'Decrease':
-            balances[balance_type] -= amount
-            logger.info('{} Balance DECREASED with {} to {}'.format(balance_type, amount, balances['Available']))
-        else:
-            logger.info('Available Balance REMAINS unchanged at {}'.format(balances['Available']))
-
-    logger.info('FINAL balances on account {}: {}'.format(account_ref, balances))
-    return balances
-
-
-
 def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
-    """
-        Processing Characteristics:
-
-            TRANSACTIONS#PENDING# Event     - False
-            TRANSACTIONS#VERIFIED# Event    - True
-            Effect on Actual Balance        - Increase
-            Effect on Available Balance     - Increase
-    """
     logger.info('Processing Started')
+
+    event_types = _helper_event_types_as_tuple(is_pending=False, is_verified=True)  # event_types = ('VERIFIED',)
+
     amount = Decimal(tx_data['Amount'])
-    updated_balances = calculate_updated_balances(
+    updated_balances = _helper_calculate_updated_balances(
         account_ref=tx_data['TargetAccount'],
         amount=amount,
         effect_on_actual_balance='Increase',
