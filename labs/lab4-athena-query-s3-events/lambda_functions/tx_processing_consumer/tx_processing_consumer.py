@@ -277,6 +277,74 @@ def _helper_calculate_updated_balances(
     return balances
 
 
+def _helper_commit_transaction_events(
+    tx_data: dict, 
+    event_types: tuple,
+    boto3_clazz=boto3,
+    logger=get_logger()
+):
+    tx_date_value = _helper_tx_date(timestamp=tx_data['EventTimeStamp'])
+    tx_time_value = _helper_tx_time(timestamp=tx_data['EventTimeStamp'])
+    for event_type in event_types:
+        event_key = {
+            'PK'        : { 'S': tx_data['TargetAccount']                                                                                                                   },
+            'SK'        : { 'S': 'TRANSACTIONS#{}#{}#{}'.format(event_type, tx_data['EventSourceDataResource']['S3Bucket'], tx_data['EventSourceDataResource']['S3Key'])    },
+        }
+        event_data = {
+            'TransactionDate'           : { 'N': '{}'.format(tx_date_value)                                 },
+            'TransactionTime'           : { 'N': '{}'.format(tx_time_value)                                 },
+            'EventKey'                  : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
+            'EventRawData'              : { 'S': '{}'.format(json.dumps(tx_data))                           },
+            'Amount'                    : { 'N': '{}'.format(tx_data['Amount'])                             },
+            'TransactionType'           : { 'S': '{}'.format(tx_data['TransactionType'])                    },
+            'RequestId'                 : { 'S': '{}'.format(tx_data['RequestId'])                          },
+            'EffectOnActualBalance'     : { 'S': 'Increase'                                                 },
+            'EffectOnAvailableBalance'  : { 'S': 'Increase'                                                 },
+        }
+        create_dynamodb_record(
+            table_name='lab4_accounts_v1',
+            record_data={**event_key, **event_data},
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
+
+
+def _helper_commit_updated_balances(
+    tx_data: dict, 
+    effect_on_actual_balance: str='None',
+    effect_on_available_balance: str='None',
+    boto3_clazz=boto3,
+    logger=get_logger()
+):
+    tx_date_value = _helper_tx_date(timestamp=tx_data['EventTimeStamp'])
+    tx_time_value = _helper_tx_time(timestamp=tx_data['EventTimeStamp'])
+
+    updated_balances = _helper_calculate_updated_balances(
+        account_ref=tx_data['TargetAccount'],
+        amount=Decimal(tx_data['Amount']),
+        effect_on_actual_balance=effect_on_actual_balance,
+        effect_on_available_balance=effect_on_available_balance,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    for balance_type in ('Available', 'Actual'):
+        actual_balance_data = {
+            'PK'                        : { 'S': tx_data['TargetAccount']                                   },
+            'SK'                        : { 'S': 'SAVINGS#BALANCE#{}'.format(balance_type.upper())          },
+            'LastTransactionDate'       : { 'N': '{}'.format(tx_date_value)                                 },
+            'LastTransactionTime'       : { 'N': '{}'.format(tx_time_value)                                 },
+            'EventKey'                  : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
+            'Balance'                   : { 'N': '{}'.format(str(updated_balances[balance_type]))           },
+        }
+        create_dynamodb_record(
+            table_name='lab4_accounts_v1',
+            record_data=actual_balance_data,
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
+
+
 def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
 
@@ -318,60 +386,20 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
     """
     logger.info('Processing Started')
 
-    event_types = _helper_event_types_as_tuple(is_pending=False, is_verified=True)  # event_types = ('VERIFIED',)
+    _helper_commit_transaction_events(
+        tx_data=tx_data, 
+        event_types=_helper_event_types_as_tuple(is_pending=False, is_verified=True),  # event_types = ('VERIFIED',)
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
 
-    amount = Decimal(tx_data['Amount'])
-    updated_balances = _helper_calculate_updated_balances(
-        account_ref=tx_data['TargetAccount'],
-        amount=amount,
+    _helper_commit_updated_balances(
+        tx_data=tx_data, 
         effect_on_actual_balance='Increase',
         effect_on_available_balance='Increase',
         boto3_clazz=boto3_clazz,
         logger=logger
     )
-
-    tx_date_value = _helper_tx_date(timestamp=tx_data['EventTimeStamp'])
-    tx_time_value = _helper_tx_time(timestamp=tx_data['EventTimeStamp'])
-    
-    for event_type in event_types:
-        verified_event_key = {
-            'PK'        : { 'S': tx_data['TargetAccount']                                                                                                           },
-            'SK'        : { 'S': 'TRANSACTIONS#{}#{}#{}'.format(event_type, tx_data['EventSourceDataResource']['S3Bucket'], tx_data['EventSourceDataResource']['S3Key'])  },
-        }
-        verified_event_data = {
-            'TransactionDate'           : { 'N': '{}'.format(tx_date_value)                                 },
-            'TransactionTime'           : { 'N': '{}'.format(tx_time_value)                                 },
-            'EventKey'                  : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
-            'EventRawData'              : { 'S': '{}'.format(json.dumps(tx_data))                           },
-            'Amount'                    : { 'N': '{}'.format(tx_data['Amount'])                             },
-            'TransactionType'           : { 'S': '{}'.format(tx_data['TransactionType'])                    },
-            'RequestId'                 : { 'S': '{}'.format(tx_data['RequestId'])                          },
-            'EffectOnActualBalance'     : { 'S': 'Increase'                                                 },
-            'EffectOnAvailableBalance'  : { 'S': 'Increase'                                                 },
-        }
-        create_dynamodb_record(
-            table_name='lab4_accounts_v1',
-            record_data={**verified_event_key, **verified_event_data},
-            boto3_clazz=boto3_clazz,
-            logger=logger
-        )
-
-
-    for balance_type in ('Available', 'Actual'):
-        actual_balance_data = {
-            'PK'                        : { 'S': tx_data['TargetAccount']                                   },
-            'SK'                        : { 'S': 'SAVINGS#BALANCE#{}'.format(balance_type.upper())          },
-            'LastTransactionDate'       : { 'N': '{}'.format(tx_date_value)                                 },
-            'LastTransactionTime'       : { 'N': '{}'.format(tx_time_value)                                 },
-            'EventKey'                  : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
-            'Balance'                   : { 'N': '{}'.format(str(updated_balances[balance_type]))           },
-        }
-        create_dynamodb_record(
-            table_name='lab4_accounts_v1',
-            record_data=actual_balance_data,
-            boto3_clazz=boto3_clazz,
-            logger=logger
-        )
 
     logger.info('Processing Done')
     return False
