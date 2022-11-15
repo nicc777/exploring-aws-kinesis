@@ -83,13 +83,13 @@ Effect on Available Balance: None
     "LocationType": "ATM or Teller",
     "Reference": "Some Free Form Text",
     "Verified": false,
-    "Currency": [
+    "Currency": {
         "100-euro-bills": 1,
         "20-euro-bills": 1,
         "1-euro-bills": 3,
         "20-cents": 2,
         "5-cents": 1
-    ]
+    }
 }
 ```
 
@@ -135,9 +135,9 @@ Business Rules:
     "Amount": "200.00",
     "LocationType": "ATM or Teller",
     "Reference": "Some Free Form Text",
-    "Currency": [
+    "Currency": {
         "50-euro-bills": 4
-    ]
+    }
 }
 ```
 
