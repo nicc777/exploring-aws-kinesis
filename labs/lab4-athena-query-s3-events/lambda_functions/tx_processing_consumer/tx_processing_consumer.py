@@ -280,6 +280,8 @@ def _helper_calculate_updated_balances(
 def _helper_commit_transaction_events(
     tx_data: dict, 
     event_types: tuple,
+    effect_on_actual_balance: str='None',
+    effect_on_available_balance: str='None',
     boto3_clazz=boto3,
     logger=get_logger()
 ):
@@ -302,8 +304,8 @@ def _helper_commit_transaction_events(
             'TransactionType'           : { 'S': '{}'.format(tx_data['TransactionType'])                    },
             'RequestId'                 : { 'S': '{}'.format(tx_data['RequestId'])                          },
             'PreviousRequestIdReference': { 'S': '{}'.format(previous_request_id)                           },
-            'EffectOnActualBalance'     : { 'S': 'Increase'                                                 },
-            'EffectOnAvailableBalance'  : { 'S': 'Increase'                                                 },
+            'EffectOnActualBalance'     : { 'S': '{}'.format(effect_on_actual_balance)                      },
+            'EffectOnAvailableBalance'  : { 'S': '{}'.format(effect_on_available_balance)                   },
         }
         create_dynamodb_record(
             table_name='lab4_accounts_v1',
@@ -357,17 +359,25 @@ def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     """
     logger.info('Processing Started')
 
+    effect_on_actual_balance        = 'Increase'
+    effect_on_available_balance     = 'None'
+    is_pending                      = True
+    is_verified                     = False
+
+
     _helper_commit_transaction_events(
         tx_data=tx_data, 
-        event_types=_helper_event_types_as_tuple(is_pending=True, is_verified=False), 
+        event_types=_helper_event_types_as_tuple(is_pending=is_pending, is_verified=is_verified), 
+        effect_on_actual_balance=effect_on_actual_balance,
+        effect_on_available_balance=effect_on_available_balance,
         boto3_clazz=boto3_clazz,
         logger=logger
     )
 
     _helper_commit_updated_balances(
         tx_data=tx_data, 
-        effect_on_actual_balance='Increase',
-        effect_on_available_balance='None',
+        effect_on_actual_balance=effect_on_actual_balance,
+        effect_on_available_balance=effect_on_available_balance,
         boto3_clazz=boto3_clazz,
         logger=logger
     )
@@ -411,17 +421,25 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
     """
     logger.info('Processing Started')
 
+    effect_on_actual_balance        = 'Increase'
+    effect_on_available_balance     = 'None'
+    is_pending                      = True
+    is_verified                     = False
+
+
     _helper_commit_transaction_events(
         tx_data=tx_data, 
-        event_types=_helper_event_types_as_tuple(is_pending=False, is_verified=True),  # event_types = ('VERIFIED',)
+        event_types=_helper_event_types_as_tuple(is_pending=is_pending, is_verified=is_verified),  # event_types = ('VERIFIED',)
+        effect_on_actual_balance=effect_on_actual_balance,
+        effect_on_available_balance=effect_on_available_balance,
         boto3_clazz=boto3_clazz,
         logger=logger
     )
 
     _helper_commit_updated_balances(
         tx_data=tx_data, 
-        effect_on_actual_balance='Increase',
-        effect_on_available_balance='Increase',
+        effect_on_actual_balance=effect_on_actual_balance,
+        effect_on_available_balance=effect_on_available_balance,
         boto3_clazz=boto3_clazz,
         logger=logger
     )
