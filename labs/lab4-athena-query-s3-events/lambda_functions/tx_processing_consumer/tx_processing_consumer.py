@@ -352,37 +352,21 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
     )
 
 
-    actual_balance_data = {
-        'PK'                        : { 'S': tx_data['TargetAccount']                                   },
-        'SK'                        : { 'S': 'SAVINGS#BALANCE#ACTUAL'                                   },
-        'LastTransactionDate'       : { 'N': '{}'.format(tx_date_value)                                 },
-        'LastTransactionTime'       : { 'N': '{}'.format(tx_time_value)                                 },
-        'EventKey'                  : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
-        'Balance'                   : { 'N': '{}'.format(str(updated_balances['Actual']))               },
-    }
-    create_dynamodb_record(
-        table_name='lab4_accounts_v1',
-        record_data=actual_balance_data,
-        boto3_clazz=boto3_clazz,
-        logger=logger
-    )
-
-
-    available_balance_data = {
-        'PK'                        : { 'S': tx_data['TargetAccount']                                   },
-        'SK'                        : { 'S': 'SAVINGS#BALANCE#AVAILABLE'                                },
-        'LastTransactionDate'       : { 'N': '{}'.format(tx_date_value)                                 },
-        'LastTransactionTime'       : { 'N': '{}'.format(tx_time_value)                                 },
-        'EventKey'                  : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
-        'Balance'                   : { 'N': '{}'.format(str(updated_balances['Available']))            },
-    }
-    create_dynamodb_record(
-        table_name='lab4_accounts_v1',
-        record_data=available_balance_data,
-        boto3_clazz=boto3_clazz,
-        logger=logger
-    )
-
+    for balance_type in ('Available', 'Actual'):
+        actual_balance_data = {
+            'PK'                        : { 'S': tx_data['TargetAccount']                                   },
+            'SK'                        : { 'S': 'SAVINGS#BALANCE#{}'.format(balance_type.upper())          },
+            'LastTransactionDate'       : { 'N': '{}'.format(tx_date_value)                                 },
+            'LastTransactionTime'       : { 'N': '{}'.format(tx_time_value)                                 },
+            'EventKey'                  : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
+            'Balance'                   : { 'N': '{}'.format(str(updated_balances[balance_type]))           },
+        }
+        create_dynamodb_record(
+            table_name='lab4_accounts_v1',
+            record_data=actual_balance_data,
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
 
     logger.info('Processing Done')
     return False
