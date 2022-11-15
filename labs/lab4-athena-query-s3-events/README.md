@@ -107,12 +107,12 @@ Effect on Available Balance: Increase Balance by `Amount`
     "LocationType": "ATM or Teller",
     "Reference": "Some Free Form Text",
     "Verified": true,
-    "VerifiedCurrency": [
+    "VerifiedCurrency": {
         "100-euro-bills": 1,
         "20-euro-bills": 1,
         "1-euro-bills": 3,
         "20-cents": 2
-    ],
+    },
     "VerifiedByEmployeeId": "1234567890",
     "FinalFinding": "5 cents was from incorrect currency and rejected. The customer was informed that the coins are available for collection at the branch."
 }
