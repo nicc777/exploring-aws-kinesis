@@ -422,7 +422,7 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
     logger.info('Processing Started')
 
     effect_on_actual_balance        = 'Increase'
-    effect_on_available_balance     = 'None'
+    effect_on_available_balance     = 'Increase'
     is_pending                      = True
     is_verified                     = False
 
@@ -553,7 +553,7 @@ def handler(
                 if tx_data['TransactionType'] in TX_TYPE_HANDLER_MAP:
                     logger.info('Processing Transaction. tx_data={}'.format(tx_data))
                     if TX_TYPE_HANDLER_MAP[tx_data['TransactionType']](tx_data=tx_data, logger=logger, boto3_clazz=boto3_clazz) is True:
-                        logger.info('Transaction Processed')
+                        logger.info('Transaction Processed for Event: {}'.format(tx_data['EventSourceDataResource']))
                     else:
                         logger.error('Transaction Processing Returned Failure.')
                 else:
