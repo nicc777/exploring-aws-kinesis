@@ -299,20 +299,6 @@ def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool
 
 
 def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
-    logger.info('Processing Started')
-
-    event_types = _helper_event_types_as_tuple(is_pending=False, is_verified=True)  # event_types = ('VERIFIED',)
-
-    amount = Decimal(tx_data['Amount'])
-    updated_balances = _helper_calculate_updated_balances(
-        account_ref=tx_data['TargetAccount'],
-        amount=amount,
-        effect_on_actual_balance='Increase',
-        effect_on_available_balance='Increase',
-        boto3_clazz=boto3_clazz,
-        logger=logger
-    )
-
     """
         tx_data = {
             "EventTimeStamp": 1668399202, 
@@ -330,32 +316,45 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
             "RequestId": "test0018"
         }
     """
+    logger.info('Processing Started')
+
+    event_types = _helper_event_types_as_tuple(is_pending=False, is_verified=True)  # event_types = ('VERIFIED',)
+
+    amount = Decimal(tx_data['Amount'])
+    updated_balances = _helper_calculate_updated_balances(
+        account_ref=tx_data['TargetAccount'],
+        amount=amount,
+        effect_on_actual_balance='Increase',
+        effect_on_available_balance='Increase',
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
 
     tx_date_value = _helper_tx_date(timestamp=tx_data['EventTimeStamp'])
     tx_time_value = _helper_tx_time(timestamp=tx_data['EventTimeStamp'])
     
-
-    verified_event_key = {
-        'PK'        : { 'S': tx_data['TargetAccount']                                                                                                           },
-        'SK'        : { 'S': 'TRANSACTIONS#VERIFIED#{}#{}'.format(tx_data['EventSourceDataResource']['S3Bucket'], tx_data['EventSourceDataResource']['S3Key'])  },
-    }
-    verified_event_data = {
-        'TransactionDate'           : { 'N': '{}'.format(tx_date_value)                                 },
-        'TransactionTime'           : { 'N': '{}'.format(tx_time_value)                                 },
-        'EventKey'                  : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
-        'EventRawData'              : { 'S': '{}'.format(json.dumps(tx_data))                           },
-        'Amount'                    : { 'N': '{}'.format(tx_data['Amount'])                             },
-        'TransactionType'           : { 'S': '{}'.format(tx_data['TransactionType'])                    },
-        'RequestId'                 : { 'S': '{}'.format(tx_data['RequestId'])                          },
-        'EffectOnActualBalance'     : { 'S': 'Increase'                                                 },
-        'EffectOnAvailableBalance'  : { 'S': 'Increase'                                                 },
-    }
-    create_dynamodb_record(
-        table_name='lab4_accounts_v1',
-        record_data={**verified_event_key, **verified_event_data},
-        boto3_clazz=boto3_clazz,
-        logger=logger
-    )
+    for event_type in event_types:
+        verified_event_key = {
+            'PK'        : { 'S': tx_data['TargetAccount']                                                                                                           },
+            'SK'        : { 'S': 'TRANSACTIONS#{}#{}#{}'.format(event_type, tx_data['EventSourceDataResource']['S3Bucket'], tx_data['EventSourceDataResource']['S3Key'])  },
+        }
+        verified_event_data = {
+            'TransactionDate'           : { 'N': '{}'.format(tx_date_value)                                 },
+            'TransactionTime'           : { 'N': '{}'.format(tx_time_value)                                 },
+            'EventKey'                  : { 'S': '{}'.format(tx_data['EventSourceDataResource']['S3Key'])   },
+            'EventRawData'              : { 'S': '{}'.format(json.dumps(tx_data))                           },
+            'Amount'                    : { 'N': '{}'.format(tx_data['Amount'])                             },
+            'TransactionType'           : { 'S': '{}'.format(tx_data['TransactionType'])                    },
+            'RequestId'                 : { 'S': '{}'.format(tx_data['RequestId'])                          },
+            'EffectOnActualBalance'     : { 'S': 'Increase'                                                 },
+            'EffectOnAvailableBalance'  : { 'S': 'Increase'                                                 },
+        }
+        create_dynamodb_record(
+            table_name='lab4_accounts_v1',
+            record_data={**verified_event_key, **verified_event_data},
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
 
 
     for balance_type in ('Available', 'Actual'):
