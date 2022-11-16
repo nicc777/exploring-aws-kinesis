@@ -389,6 +389,22 @@ def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
 def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
 
+    effect_on_actual_balance        = 'None'
+    effect_on_available_balance     = 'Increase'
+    is_pending                      = False
+    is_verified                     = True
+
+    current_balances = _helper_calculate_updated_balances(
+        account_ref=tx_data['ReferenceAccount'],
+        amount=Decimal(tx_data['Amount']),
+        effect_on_actual_balance='None',
+        effect_on_available_balance='None',
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    # Retrieve the original transaction - we need that to calculate the net effect on balances.
+
     logger.info('Processing Done')
     return False
 
