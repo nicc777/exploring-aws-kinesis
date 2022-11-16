@@ -313,8 +313,6 @@ Global Secondary Indexes:
 | Partition Key (PK)              | Sort Key (ST) Attribute               |                                 |
 +---------------------------------+---------------------------------------+---------------------------------+
 | EventKey                        | SK                                    | EventKeyIdx                     |
-| PreviousRequestIdReference      | SK                                    | PreviousRequestIdReferenceIdx   |
-| RequestId                       | SK                                    | RequestIdIdx                    |
 +---------------------------------+---------------------------------------+--------------------------------+
 ```
 
