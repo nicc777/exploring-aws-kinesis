@@ -279,7 +279,7 @@ def get_dynamodb_record_by_primary_index_query_with_filter(
         if 'Items' in response:
             for item in response['Items']:
                 record = dict()
-                for field_name, field_data in item:
+                for field_name, field_data in item.items():
                     for field_data_type, field_data_value in field_data.items():
                         if field_data_type == 'S':
                             record[field_name] = '{}'.format(field_data_value)
