@@ -59,6 +59,8 @@ Resources:
         AttributeType: S
       - AttributeName: PreviousRequestIdReference
         AttributeType: S
+      - AttributeName: RequestId
+        AttributeType: S
       GlobalSecondaryIndexes:
       - IndexName: "EventKeyIdx"
         KeySchema: 
@@ -71,6 +73,14 @@ Resources:
       - IndexName: "PreviousRequestIdReferenceIdx"
         KeySchema: 
         - AttributeName: "PreviousRequestIdReference"
+          KeyType: HASH
+        - AttributeName: "SK"
+          KeyType: RANGE
+        Projection: 
+          ProjectionType: "ALL"
+      - IndexName: "RequestIdIdx"
+        KeySchema: 
+        - AttributeName: "RequestId"
           KeyType: HASH
         - AttributeName: "SK"
           KeyType: RANGE

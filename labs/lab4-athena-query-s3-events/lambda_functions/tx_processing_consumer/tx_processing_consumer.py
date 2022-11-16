@@ -181,6 +181,62 @@ def get_dynamodb_record_by_key(
     return record
 
 
+def get_dynamodb_record_by_indexed_query(
+    key: dict,
+    index_name: str,
+    boto3_clazz=boto3,
+    logger=get_logger(),
+    next_token: dict=None
+)->dict:
+    record = dict()
+    try:
+        client=get_client(client_name='dynamodb', region='eu-central-1', boto3_clazz=boto3_clazz)
+        
+        response = dict()
+        if next_token is None:
+            response = client.query(
+                TableName='lab4_accounts_v1',
+                IndexName=index_name,
+                Select='ALL_ATTRIBUTES',
+                Limit=10,
+                ConsistentRead=True,
+                KeyConditions=key,
+                ReturnConsumedCapacity='TOTAL'
+            )
+        else:
+            response = client.query(
+                TableName='lab4_accounts_v1',
+                IndexName=index_name,
+                Select='ALL_ATTRIBUTES',
+                Limit=10,
+                ConsistentRead=True,
+                KeyConditions=key,
+                ReturnConsumedCapacity='TOTAL',
+                ExclusiveStartKey=next_token
+            )
+
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        if 'Items' in response:
+            for item in response['Items']:
+                for field_name, field_data in item:
+                    for field_data_type, field_data_value in field_data.items():
+                        if field_data_type == 'S':
+                            record[field_name] = '{}'.format(field_data_value)
+                        if field_data_type == 'N':
+                            record[field_name] = Decimal(field_data_value)
+                        if field_data_type == 'BOOL':
+                            record[field_name] = field_data_value   
+
+        if 'LastEvaluatedKey' in response:
+            record = { **record, **get_dynamodb_record_by_indexed_query(key=key,index_name=index_name,boto3_clazz=boto3_clazz,logger=logger,next_token=response['LastEvaluatedKey']) }
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    if 'Balance' not in record:
+            record['Balance'] = Decimal('0')
+    debug_log(message='record={}', variable_as_list=[record,], logger=logger)
+    return record
+
+
 def send_sqs_tx_cleanup_message(
     body: dict,
     boto3_clazz=boto3,
@@ -404,6 +460,16 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
     )
 
     # Retrieve the original transaction - we need that to calculate the net effect on balances.
+    key = {
+        'PreviousRequestIdReference'    : { 'S': tx_data['PreviousRequestIdReference']                      },
+        # 'SK'                            : { 'S': 'SAVINGS#BALANCE#{}'.format(balance_type.upper())          },
+    }
+    previous_records = get_dynamodb_record_by_indexed_query(
+        key={'RequestId': { 'S': tx_data['PreviousRequestIdReference'] },},
+        index_name='RequestIdIdx',
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
 
     logger.info('Processing Done')
     return False

@@ -313,6 +313,7 @@ Global Secondary Indexes:
 +---------------------------------+---------------------------------------+---------------------------------+
 | EventKey                        | SK                                    | EventKeyIdx                     |
 | PreviousRequestIdReference      | SK                                    | PreviousRequestIdReferenceIdx   |
+| RequestId                       | SK                                    | RequestIdIdx                    |
 +---------------------------------+---------------------------------------+--------------------------------+
 ```
 
