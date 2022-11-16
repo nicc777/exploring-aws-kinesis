@@ -452,7 +452,7 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
     is_pending                      = False
     is_verified                     = True
 
-    current_balances = _helper_calculate_updated_balances(
+    account_balances = _helper_calculate_updated_balances(
         account_ref=tx_data['ReferenceAccount'],
         amount=Decimal(tx_data['Amount']),
         effect_on_actual_balance='None',
@@ -478,13 +478,32 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
     if len(previous_record) > 0:
         original_amount = Decimal(previous_record['Amount'])
         if verified_amount.compare(original_amount) != Decimal('0'):
-            current_balances['Actual'] = current_balances['Actual'] - original_amount + verified_amount
-        current_balances['Available'] = current_balances['Available'] + verified_amount
+            account_balances['Actual'] = account_balances['Actual'] - original_amount + verified_amount
+            effect_on_actual_balance = 'Adjusted'
+            logger.warning('Amounts differ - Actual balance adjusted to reflect verified amount')
+        account_balances['Available'] = account_balances['Available'] + verified_amount
+        logger.info('NEW Actual Balance: {}'.format(account_balances['Actual']))
+        logger.info('NEW Available Balance: {}'.format(account_balances['Available']))
     else:
         logger.error('Failed to process transaction as previous pending transaction could not be found')
         return False
 
     # Commit to DB
+    _helper_commit_transaction_events(
+        tx_data=tx_data, 
+        event_types=_helper_event_types_as_tuple(is_pending=is_pending, is_verified=is_verified), 
+        effect_on_actual_balance=effect_on_actual_balance,
+        effect_on_available_balance=effect_on_available_balance,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    _helper_commit_updated_balances(
+        tx_data=tx_data, 
+        updated_balances=account_balances,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
 
     logger.info('Processing Done')
     return True
