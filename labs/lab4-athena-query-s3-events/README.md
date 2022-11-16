@@ -21,6 +21,7 @@
   - [S3 SNS Notifications - Data Structures](#s3-sns-notifications---data-structures)
     - [Message of a S3 Create Type Event (PUT)](#message-of-a-s3-create-type-event-put)
     - [Message of a S3 Remove Type Event (DELETE)](#message-of-a-s3-remove-type-event-delete)
+  - [DynamoDB](#dynamodb)
 
 # Lab 4 Goals
 
@@ -542,3 +543,7 @@ The `Message` field contains the actual S3 event
     ]
 }
 ```
+
+## DynamoDB
+
+Only Local Secondary Indexes support consistent reads. In the context of the application, this was important. 

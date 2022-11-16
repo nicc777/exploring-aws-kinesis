@@ -184,6 +184,7 @@ def get_dynamodb_record_by_key(
 def get_dynamodb_record_by_indexed_query(
     key: dict,
     index_name: str,
+    use_consistent_read: bool=True,
     boto3_clazz=boto3,
     logger=get_logger(),
     next_token: dict=None
@@ -199,7 +200,7 @@ def get_dynamodb_record_by_indexed_query(
                 IndexName=index_name,
                 Select='ALL_ATTRIBUTES',
                 Limit=10,
-                ConsistentRead=True,
+                ConsistentRead=use_consistent_read,
                 KeyConditions=key,
                 ReturnConsumedCapacity='TOTAL'
             )
@@ -209,7 +210,7 @@ def get_dynamodb_record_by_indexed_query(
                 IndexName=index_name,
                 Select='ALL_ATTRIBUTES',
                 Limit=10,
-                ConsistentRead=True,
+                ConsistentRead=use_consistent_read,
                 KeyConditions=key,
                 ReturnConsumedCapacity='TOTAL',
                 ExclusiveStartKey=next_token
@@ -230,7 +231,7 @@ def get_dynamodb_record_by_indexed_query(
                 records.append(record)
 
         if 'LastEvaluatedKey' in response:
-            records += get_dynamodb_record_by_indexed_query(key=key,index_name=index_name,boto3_clazz=boto3_clazz,logger=logger,next_token=response['LastEvaluatedKey'])
+            records += get_dynamodb_record_by_indexed_query(key=key,index_name=index_name,use_consistent_read=use_consistent_read,boto3_clazz=boto3_clazz,logger=logger,next_token=response['LastEvaluatedKey'])
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     if 'Balance' not in records:
@@ -465,9 +466,19 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
     previous_record = dict()
     verified_amount = Decimal(tx_data['Amount'])
     try:
+        key_condition = {
+            'RequestId': {
+                'AttributeValueList': [
+                    {
+                        'S': tx_data['PreviousRequestIdReference'],
+                    },
+                ],
+                'ComparisonOperator': 'EQ'
+            }
+        }
         previous_record = json.loads(
             get_dynamodb_record_by_indexed_query(
-                key={'RequestId': { 'S': tx_data['PreviousRequestIdReference'] },},
+                key=key_condition,
                 index_name='RequestIdIdx',
                 boto3_clazz=boto3_clazz,
                 logger=logger

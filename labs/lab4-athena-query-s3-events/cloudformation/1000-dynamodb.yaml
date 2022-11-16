@@ -78,6 +78,7 @@ Resources:
           KeyType: RANGE
         Projection: 
           ProjectionType: "ALL"
+      LocalSecondaryIndexes:
       - IndexName: "RequestIdIdx"
         KeySchema: 
         - AttributeName: "RequestId"
