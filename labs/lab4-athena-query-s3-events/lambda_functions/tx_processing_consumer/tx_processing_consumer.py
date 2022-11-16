@@ -184,7 +184,7 @@ def get_dynamodb_record_by_key(
 def get_dynamodb_record_by_indexed_query(
     key: dict,
     index_name: str,
-    use_consistent_read: bool=True,
+    use_consistent_read: bool=False,
     boto3_clazz=boto3,
     logger=get_logger(),
     next_token: dict=None
@@ -232,6 +232,65 @@ def get_dynamodb_record_by_indexed_query(
 
         if 'LastEvaluatedKey' in response:
             records += get_dynamodb_record_by_indexed_query(key=key,index_name=index_name,use_consistent_read=use_consistent_read,boto3_clazz=boto3_clazz,logger=logger,next_token=response['LastEvaluatedKey'])
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    if 'Balance' not in records:
+            records['Balance'] = Decimal('0')
+    debug_log(message='record={}', variable_as_list=[records,], logger=logger)
+    return records
+
+
+def get_dynamodb_record_by_primary_index_query_with_filter(
+    key: dict,
+    query_filter: dict,
+    use_consistent_read: bool=False,
+    boto3_clazz=boto3,
+    logger=get_logger(),
+    next_token: dict=None
+)->list:
+    records = list()
+    try:
+        client=get_client(client_name='dynamodb', region='eu-central-1', boto3_clazz=boto3_clazz)
+        
+        response = dict()
+        if next_token is None:
+            response = client.query(
+                TableName='lab4_accounts_v1',
+                Select='ALL_ATTRIBUTES',
+                Limit=10,
+                ConsistentRead=use_consistent_read,
+                KeyConditions=key,
+                ReturnConsumedCapacity='TOTAL',
+                QueryFilter=query_filter
+            )
+        else:
+            response = client.query(
+                TableName='lab4_accounts_v1',
+                Select='ALL_ATTRIBUTES',
+                Limit=10,
+                ConsistentRead=use_consistent_read,
+                KeyConditions=key,
+                ReturnConsumedCapacity='TOTAL',
+                ExclusiveStartKey=next_token,
+                QueryFilter=query_filter
+            )
+
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        if 'Items' in response:
+            for item in response['Items']:
+                record = dict()
+                for field_name, field_data in item:
+                    for field_data_type, field_data_value in field_data.items():
+                        if field_data_type == 'S':
+                            record[field_name] = '{}'.format(field_data_value)
+                        if field_data_type == 'N':
+                            record[field_name] = Decimal(field_data_value)
+                        if field_data_type == 'BOOL':
+                            record[field_name] = field_data_value   
+                records.append(record)
+
+        if 'LastEvaluatedKey' in response:
+            records += get_dynamodb_record_by_primary_index_query_with_filter(key=key,use_consistent_read=use_consistent_read,boto3_clazz=boto3_clazz,logger=logger,next_token=response['LastEvaluatedKey'])
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     if 'Balance' not in records:
@@ -466,20 +525,31 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
     previous_record = dict()
     verified_amount = Decimal(tx_data['Amount'])
     try:
-        key_condition = {
-            'RequestId': {
+        key = {
+            'PK': {
                 'AttributeValueList': [
                     {
-                        'S': tx_data['PreviousRequestIdReference'],
+                        'S': tx_data['ReferenceAccount'],
                     },
                 ],
                 'ComparisonOperator': 'EQ'
             }
         }
+        filter = {
+                'RequestId': {
+                    'AttributeValueList': [
+                        {
+                            'S': '{}'.format(tx_data['PreviousRequestIdReference']),
+                        },
+                    ],
+                    'ComparisonOperator': 'EQ'
+                }
+            }
         previous_record = json.loads(
-            get_dynamodb_record_by_indexed_query(
-                key=key_condition,
-                index_name='RequestIdIdx',
+            get_dynamodb_record_by_primary_index_query_with_filter(
+                key=key,
+                query_filter=filter,
+                use_consistent_read=True,
                 boto3_clazz=boto3_clazz,
                 logger=logger
             )[0]['EventRawData']
