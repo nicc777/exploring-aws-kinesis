@@ -544,4 +544,4 @@ The `Message` field contains the actual S3 event
 
 ## DynamoDB
 
-Only Local Secondary Indexes support consistent reads. In the context of the application, this was important. 
+Only Local Secondary Indexes support consistent reads. In the context of the application, this was important. As a result, I decided not to add local indexes, but to rely on primary key queries with filters, using consistent reads.
