@@ -287,15 +287,14 @@ def get_dynamodb_record_by_primary_index_query_with_filter(
                             record[field_name] = Decimal(field_data_value)
                         if field_data_type == 'BOOL':
                             record[field_name] = field_data_value   
+                logger.info('Retrieved record: {}'.format(record))
                 records.append(record)
 
         if 'LastEvaluatedKey' in response:
             records += get_dynamodb_record_by_primary_index_query_with_filter(key=key,use_consistent_read=use_consistent_read,boto3_clazz=boto3_clazz,logger=logger,next_token=response['LastEvaluatedKey'])
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-    if 'Balance' not in records:
-            records['Balance'] = Decimal('0')
-    debug_log(message='record={}', variable_as_list=[records,], logger=logger)
+    debug_log(message='records={}', variable_as_list=[records,], logger=logger)
     return records
 
 
