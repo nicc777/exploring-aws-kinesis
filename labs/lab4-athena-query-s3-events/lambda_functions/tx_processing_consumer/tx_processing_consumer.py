@@ -187,8 +187,8 @@ def get_dynamodb_record_by_indexed_query(
     boto3_clazz=boto3,
     logger=get_logger(),
     next_token: dict=None
-)->dict:
-    record = dict()
+)->list:
+    records = list()
     try:
         client=get_client(client_name='dynamodb', region='eu-central-1', boto3_clazz=boto3_clazz)
         
@@ -218,6 +218,7 @@ def get_dynamodb_record_by_indexed_query(
         debug_log(message='response={}', variable_as_list=[response,], logger=logger)
         if 'Items' in response:
             for item in response['Items']:
+                record = dict()
                 for field_name, field_data in item:
                     for field_data_type, field_data_value in field_data.items():
                         if field_data_type == 'S':
@@ -226,15 +227,16 @@ def get_dynamodb_record_by_indexed_query(
                             record[field_name] = Decimal(field_data_value)
                         if field_data_type == 'BOOL':
                             record[field_name] = field_data_value   
+                records.append(record)
 
         if 'LastEvaluatedKey' in response:
-            record = { **record, **get_dynamodb_record_by_indexed_query(key=key,index_name=index_name,boto3_clazz=boto3_clazz,logger=logger,next_token=response['LastEvaluatedKey']) }
+            records += get_dynamodb_record_by_indexed_query(key=key,index_name=index_name,boto3_clazz=boto3_clazz,logger=logger,next_token=response['LastEvaluatedKey'])
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
-    if 'Balance' not in record:
-            record['Balance'] = Decimal('0')
-    debug_log(message='record={}', variable_as_list=[record,], logger=logger)
-    return record
+    if 'Balance' not in records:
+            records['Balance'] = Decimal('0')
+    debug_log(message='record={}', variable_as_list=[records,], logger=logger)
+    return records
 
 
 def send_sqs_tx_cleanup_message(
@@ -439,7 +441,7 @@ def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     )
 
     logger.info('Processing Done')
-    return False
+    return True
 
 
 def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
@@ -460,19 +462,32 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
     )
 
     # Retrieve the original transaction - we need that to calculate the net effect on balances.
-    key = {
-        'PreviousRequestIdReference'    : { 'S': tx_data['PreviousRequestIdReference']                      },
-        # 'SK'                            : { 'S': 'SAVINGS#BALANCE#{}'.format(balance_type.upper())          },
-    }
-    previous_records = get_dynamodb_record_by_indexed_query(
-        key={'RequestId': { 'S': tx_data['PreviousRequestIdReference'] },},
-        index_name='RequestIdIdx',
-        boto3_clazz=boto3_clazz,
-        logger=logger
-    )
+    previous_record = dict()
+    verified_amount = Decimal(tx_data['Amount'])
+    try:
+        previous_record = json.loads(
+            get_dynamodb_record_by_indexed_query(
+                key={'RequestId': { 'S': tx_data['PreviousRequestIdReference'] },},
+                index_name='RequestIdIdx',
+                boto3_clazz=boto3_clazz,
+                logger=logger
+            )[0]['EventRawData']
+        )
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    if len(previous_record) > 0:
+        original_amount = Decimal(previous_record['Amount'])
+        if verified_amount.compare(original_amount) != Decimal('0'):
+            current_balances['Actual'] = current_balances['Actual'] - original_amount + verified_amount
+        current_balances['Available'] = current_balances['Available'] + verified_amount
+    else:
+        logger.error('Failed to process transaction as previous pending transaction could not be found')
+        return False
+
+    # Commit to DB
 
     logger.info('Processing Done')
-    return False
+    return True
 
 
 def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
@@ -527,35 +542,35 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
     )
 
     logger.info('Processing Done')
-    return False
+    return True
 
 
 def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
 
     logger.info('Processing Done')
-    return False
+    return True
 
 
 def outgoing_payment_verified(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
 
     logger.info('Processing Done')
-    return False
+    return True
 
 
 def outgoing_payment_rejected(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
 
     logger.info('Processing Done')
-    return False
+    return True
 
 
 def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
 
     logger.info('Processing Done')
-    return False
+    return True
 
 
 ###############################################################################
