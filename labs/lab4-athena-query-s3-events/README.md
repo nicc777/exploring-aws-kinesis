@@ -207,7 +207,6 @@ Effect on Available Balance: Increase Balance by `RejectedAmount`
     "EventTimeStamp": 1234567890,
     "SourceAccount": "<<account number>>",
     "Reason": "Incorrect account number (account not found)",
-    "RejectedAmount": "123.45",
     "PreviousRequestIdReference": "<<request-id>>"
 }
 ```
