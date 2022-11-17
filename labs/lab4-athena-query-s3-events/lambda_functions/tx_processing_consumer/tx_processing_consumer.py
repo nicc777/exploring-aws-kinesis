@@ -475,6 +475,7 @@ def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
         ....
     """
     logger.info('Processing Started')
+    debug_log('tx_data={}', variable_as_list=[tx_data,], logger=logger)
 
     effect_on_actual_balance        = 'Increase'
     effect_on_available_balance     = 'None'
@@ -505,6 +506,7 @@ def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
 
 def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
+    debug_log('tx_data={}', variable_as_list=[tx_data,], logger=logger)
 
     effect_on_actual_balance        = 'None'
     effect_on_available_balance     = 'Increase'
@@ -591,6 +593,7 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
 
 def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
+    debug_log('tx_data={}', variable_as_list=[tx_data,], logger=logger)
 
     effect_on_actual_balance        = 'Decrease'
     effect_on_available_balance     = 'Decrease'
@@ -658,6 +661,7 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
         }
     """
     logger.info('Processing Started')
+    debug_log('tx_data={}', variable_as_list=[tx_data,], logger=logger)
 
     effect_on_actual_balance        = 'Increase'
     effect_on_available_balance     = 'Increase'
@@ -688,6 +692,7 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
 
 def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
+    debug_log('tx_data={}', variable_as_list=[tx_data,], logger=logger)
 
     logger.info('Processing Done')
     return True
@@ -695,6 +700,7 @@ def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=
 
 def outgoing_payment_verified(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
+    debug_log('tx_data={}', variable_as_list=[tx_data,], logger=logger)
 
     logger.info('Processing Done')
     return True
@@ -702,6 +708,7 @@ def outgoing_payment_verified(tx_data: dict, logger=get_logger(), boto3_clazz=bo
 
 def outgoing_payment_rejected(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
+    debug_log('tx_data={}', variable_as_list=[tx_data,], logger=logger)
 
     logger.info('Processing Done')
     return True
@@ -709,6 +716,7 @@ def outgoing_payment_rejected(tx_data: dict, logger=get_logger(), boto3_clazz=bo
 
 def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
+    debug_log('tx_data={}', variable_as_list=[tx_data,], logger=logger)
 
     logger.info('Processing Done')
     return True
