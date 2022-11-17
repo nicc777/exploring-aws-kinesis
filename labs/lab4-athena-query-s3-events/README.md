@@ -190,7 +190,7 @@ _**Note**_: The `<<request-id>>` corresponds to the original request ID for the 
     "EventTimeStamp": 1234567890,
     "SourceAccount": "<<account number>>",
     "Reference": "Some Free Form Text",
-    "PreviousRequestIdReference": "<<request-id>>",
+    "PreviousRequestIdReference": "<<request-id>>"
 }
 ```
 
