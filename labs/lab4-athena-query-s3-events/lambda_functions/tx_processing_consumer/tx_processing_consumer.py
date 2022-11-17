@@ -249,9 +249,10 @@ def get_dynamodb_record_by_primary_index_query_with_filter(
     next_token: dict=None
 )->list:
     records = list()
+    debug_log(message='key={}', variable_as_list=[key,], logger=logger)
+    debug_log(message='query_filter={}', variable_as_list=[query_filter,], logger=logger)
     try:
         client=get_client(client_name='dynamodb', region='eu-central-1', boto3_clazz=boto3_clazz)
-        
         response = dict()
         if next_token is None:
             response = client.query(
