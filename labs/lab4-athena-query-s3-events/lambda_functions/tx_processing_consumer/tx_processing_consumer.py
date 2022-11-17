@@ -552,8 +552,11 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
                 logger=logger
             )[0]['EventRawData']
         )
+        logger.info('Previous unverified transaction data: {}'.format(previous_record))
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        return False
+
     if len(previous_record) > 0:
         original_amount = Decimal(previous_record['Amount'])
         if verified_amount.compare(original_amount) != Decimal('0'):
@@ -721,6 +724,70 @@ def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=
 def outgoing_payment_verified(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
     debug_log('tx_data={}', variable_as_list=[tx_data,], logger=logger)
+
+    effect_on_actual_balance        = 'None'
+    effect_on_available_balance     = 'None'
+    is_pending                      = False
+    is_verified                     = True
+
+    # Get amount from previous pending transaction
+    previous_record = dict()
+    try:
+        key = {
+            'PK': {
+                'AttributeValueList': [
+                    {
+                        'S': tx_data['ReferenceAccount'],
+                    },
+                ],
+                'ComparisonOperator': 'EQ'
+            }
+        }
+        filter = {
+                'RequestId': {
+                    'AttributeValueList': [
+                        {
+                            'S': '{}'.format(tx_data['PreviousRequestIdReference']),
+                        },
+                    ],
+                    'ComparisonOperator': 'EQ'
+                }
+            }
+        previous_record = json.loads(
+            get_dynamodb_record_by_primary_index_query_with_filter(
+                key=key,
+                query_filter=filter,
+                use_consistent_read=True,
+                boto3_clazz=boto3_clazz,
+                logger=logger
+            )[0]['EventRawData']
+        )
+        logger.info('Previous unverified transaction data: {}'.format(previous_record))
+        tx_data['Amount'] = previous_record['Amount']
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        return False
+
+    if len(previous_record) == 0:
+        logger.error('No previous pending record was found')
+        return False
+
+    _helper_commit_transaction_events(
+        tx_data=tx_data, 
+        event_types=_helper_event_types_as_tuple(is_pending=is_pending, is_verified=is_verified), 
+        effect_on_actual_balance=effect_on_actual_balance,
+        effect_on_available_balance=effect_on_available_balance,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    _helper_commit_updated_balances(
+        tx_data=tx_data, 
+        effect_on_actual_balance=effect_on_actual_balance,
+        effect_on_available_balance=effect_on_available_balance,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
 
     logger.info('Processing Done')
     return True
