@@ -381,15 +381,15 @@ def _helper_calculate_updated_balances(
     effect['Actual'] = effect_on_actual_balance
 
     for balance_type in ('Available', 'Actual'):
-        logger.info('{} Balance PRE: {}'.format(balance_type, balances['Available']))
+        logger.info('{} Balance PRE: {}'.format(balance_type, balances[balance_type]))
         if effect[balance_type] == 'Increase':
             balances[balance_type] += amount
-            logger.info('{} Balance INCREASED with {} to {}'.format(balance_type, amount, balances['Available']))
+            logger.info('{} Balance INCREASED with {} to {}'.format(balance_type, amount, balances[balance_type]))
         elif effect[balance_type] == 'Decrease':
             balances[balance_type] -= amount
-            logger.info('{} Balance DECREASED with {} to {}'.format(balance_type, amount, balances['Available']))
+            logger.info('{} Balance DECREASED with {} to {}'.format(balance_type, amount, balances[balance_type]))
         else:
-            logger.info('Available Balance REMAINS unchanged at {}'.format(balances['Available']))
+            logger.info('Available Balance REMAINS unchanged at {}'.format(balances[balance_type]))
 
     logger.info('FINAL balances on account {}: {}'.format(account_ref, balances))
     return balances
