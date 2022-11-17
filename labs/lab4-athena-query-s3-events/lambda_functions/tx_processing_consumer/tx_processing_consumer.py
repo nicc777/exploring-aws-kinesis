@@ -661,8 +661,8 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
 
     effect_on_actual_balance        = 'Increase'
     effect_on_available_balance     = 'Increase'
-    is_pending                      = True
-    is_verified                     = False
+    is_pending                      = False
+    is_verified                     = True
 
 
     _helper_commit_transaction_events(
