@@ -208,7 +208,7 @@ Effect on Available Balance: Increase Balance by `RejectedAmount`
     "SourceAccount": "<<account number>>",
     "Reason": "Incorrect account number (account not found)",
     "RejectedAmount": "123.45",
-    "PreviousRequestIdReference": "<<request-id>>",
+    "PreviousRequestIdReference": "<<request-id>>"
 }
 ```
 
