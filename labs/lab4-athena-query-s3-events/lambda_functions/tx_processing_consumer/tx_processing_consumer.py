@@ -616,6 +616,7 @@ def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool
     if available.compare(withdraw_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
         logger.error('Insufficient Funds')
         return False
+    logger.info('Funds are available')
 
     # Adjust balances
     account_balances['Actual'] = account_balances['Actual'] - withdraw_amount    
@@ -699,6 +700,27 @@ def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=
     is_pending                      = True
     is_verified                     = False
 
+    # Check funds available
+    account_balances = _helper_calculate_updated_balances(
+        account_ref=tx_data['ReferenceAccount'],
+        amount=Decimal(tx_data['Amount']),
+        effect_on_actual_balance='None',
+        effect_on_available_balance='None',
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+    available = account_balances['Available']
+    outgoing_payment_amount = Decimal(tx_data['Amount'])
+    logger.info('Requesting to send payment of {} from available balance of {}'.format(str(outgoing_payment_amount), str(available)))
+
+    if available.compare(outgoing_payment_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
+        logger.error('Insufficient Funds')
+        return False
+    logger.info('Funds are available')
+
+    # Adjust balances
+    account_balances['Actual'] = account_balances['Actual'] - outgoing_payment_amount    
+    account_balances['Available'] = account_balances['Available'] - outgoing_payment_amount  
 
     _helper_commit_transaction_events(
         tx_data=tx_data, 
@@ -711,8 +733,7 @@ def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=
 
     _helper_commit_updated_balances(
         tx_data=tx_data, 
-        effect_on_actual_balance=effect_on_actual_balance,
-        effect_on_available_balance=effect_on_available_balance,
+        updated_balances=account_balances,
         boto3_clazz=boto3_clazz,
         logger=logger
     )
