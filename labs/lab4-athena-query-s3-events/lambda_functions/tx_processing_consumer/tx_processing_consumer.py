@@ -471,9 +471,6 @@ def _helper_commit_updated_balances(
 
 
 def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
-    """
-        ....
-    """
     logger.info('Processing Started')
     debug_log('tx_data={}', variable_as_list=[tx_data,], logger=logger)
 
@@ -693,6 +690,29 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
 def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
     debug_log('tx_data={}', variable_as_list=[tx_data,], logger=logger)
+
+    effect_on_actual_balance        = 'Decrease'
+    effect_on_available_balance     = 'Decrease'
+    is_pending                      = True
+    is_verified                     = False
+
+
+    _helper_commit_transaction_events(
+        tx_data=tx_data, 
+        event_types=_helper_event_types_as_tuple(is_pending=is_pending, is_verified=is_verified), 
+        effect_on_actual_balance=effect_on_actual_balance,
+        effect_on_available_balance=effect_on_available_balance,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    _helper_commit_updated_balances(
+        tx_data=tx_data, 
+        effect_on_actual_balance=effect_on_actual_balance,
+        effect_on_available_balance=effect_on_available_balance,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
 
     logger.info('Processing Done')
     return True
