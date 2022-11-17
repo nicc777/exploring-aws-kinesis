@@ -457,6 +457,8 @@ The `Records[].body` field, contains more detail about the SNS message send to t
 
 The `Message` field contains the actual S3 event
 
+> _**Important**_: I noticed several examples of S3 events not being generated. This seems to be mostly when an existing key is deleted and then `PUT` again. From some reason, the subsequent `PUT` of the same object does not create corresponding events. Further investigation may be required.
+
 ### Message of a S3 Create Type Event (PUT)
 
 ```json
