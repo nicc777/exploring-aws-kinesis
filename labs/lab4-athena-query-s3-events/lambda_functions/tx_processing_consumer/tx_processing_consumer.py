@@ -292,7 +292,7 @@ def get_dynamodb_record_by_primary_index_query_with_filter(
                 records.append(record)
 
         if 'LastEvaluatedKey' in response:
-            records += get_dynamodb_record_by_primary_index_query_with_filter(key=key,use_consistent_read=use_consistent_read,boto3_clazz=boto3_clazz,logger=logger,next_token=response['LastEvaluatedKey'])
+            records += get_dynamodb_record_by_primary_index_query_with_filter(key=key,query_filter=query_filter,use_consistent_read=use_consistent_read,boto3_clazz=boto3_clazz,logger=logger,next_token=response['LastEvaluatedKey'])
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     debug_log(message='records={}', variable_as_list=[records,], logger=logger)
