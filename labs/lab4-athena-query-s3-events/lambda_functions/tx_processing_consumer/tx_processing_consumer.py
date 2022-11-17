@@ -595,8 +595,28 @@ def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool
     effect_on_actual_balance        = 'Decrease'
     effect_on_available_balance     = 'Decrease'
     is_pending                      = False
-    is_verified                     = True
+    is_verified                     = True    
 
+    # Check funds available
+    account_balances = _helper_calculate_updated_balances(
+        account_ref=tx_data['ReferenceAccount'],
+        amount=Decimal(tx_data['Amount']),
+        effect_on_actual_balance='None',
+        effect_on_available_balance='None',
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+    available = account_balances['Available']
+    withdraw_amount = Decimal(tx_data['Amount'])
+    logger.info('Requesting to withdraw {} from available balance of {}'.format(str(withdraw_amount), str(available)))
+
+    if available.compare(withdraw_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
+        logger.error('Insufficient Funds')
+        return False
+
+    # Adjust balances
+    account_balances['Actual'] = account_balances['Actual'] - withdraw_amount    
+    account_balances['Available'] = account_balances['Available'] - withdraw_amount    
 
     _helper_commit_transaction_events(
         tx_data=tx_data, 
@@ -609,8 +629,7 @@ def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool
 
     _helper_commit_updated_balances(
         tx_data=tx_data, 
-        effect_on_actual_balance=effect_on_actual_balance,
-        effect_on_available_balance=effect_on_available_balance,
+        updated_balances=account_balances,
         boto3_clazz=boto3_clazz,
         logger=logger
     )
