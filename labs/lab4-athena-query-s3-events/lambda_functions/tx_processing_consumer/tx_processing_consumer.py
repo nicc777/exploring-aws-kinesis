@@ -8,6 +8,7 @@ import sys
 from inspect import getframeinfo, stack
 from decimal import Decimal
 # Other imports here...
+import copy
 
 
 def get_logger(level=logging.INFO):
@@ -890,6 +891,82 @@ def outgoing_payment_rejected(tx_data: dict, logger=get_logger(), boto3_clazz=bo
 def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     logger.info('Processing Started')
     debug_log('tx_data={}', variable_as_list=[tx_data,], logger=logger)
+
+    effect_on_actual_balance_outgoing        = 'Decrease'
+    effect_on_available_balance_outgoing     = 'Decrease'
+    is_pending_outgoing                      = False
+    is_verified_outgoing                     = True
+
+    effect_on_actual_balance_incoming        = 'Increase'
+    effect_on_available_balance_incoming     = 'Increase'
+    is_pending_incoming                      = False
+    is_verified_incoming                     = True
+
+    tx_data_outgoing = copy.deepcopy(tx_data)
+    tx_data_incoming = copy.deepcopy(tx_data)
+    tx_data_incoming['ReferenceAccount'] = copy.deepcopy(tx_data_outgoing['TargetAccount'])
+    logger.info('Processing transfer from account {} to account {}'.format(tx_data_outgoing['ReferenceAccount'],tx_data_incoming['ReferenceAccount']))
+
+    # Check funds available
+    account_balances_outgoing = _helper_calculate_updated_balances(
+        account_ref=tx_data_outgoing['ReferenceAccount'],
+        amount=Decimal(tx_data['Amount']),
+        effect_on_actual_balance='None',
+        effect_on_available_balance='None',
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+    available_outgoing = account_balances_outgoing['Available']
+    outgoing_transfer_amount = Decimal(tx_data['Amount'])
+    logger.info('Requesting transfer of {} from available balance of {}'.format(str(outgoing_transfer_amount), str(available_outgoing)))
+
+    if available_outgoing.compare(outgoing_transfer_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
+        logger.error('Insufficient Funds')
+        return False
+    logger.info('Funds are available')
+
+    # Adjust balances
+    account_balances_outgoing['Actual'] = account_balances_outgoing['Actual'] - outgoing_transfer_amount    
+    account_balances_outgoing['Available'] = account_balances_outgoing['Available'] - outgoing_transfer_amount  
+
+    # Process OUTGOING
+    _helper_commit_transaction_events(
+        tx_data=tx_data_outgoing, 
+        event_types=_helper_event_types_as_tuple(is_pending=is_pending_outgoing, is_verified=is_verified_outgoing), 
+        effect_on_actual_balance=effect_on_actual_balance_outgoing,
+        effect_on_available_balance=effect_on_available_balance_outgoing,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    _helper_commit_updated_balances(
+        tx_data=tx_data, 
+        updated_balances=account_balances_outgoing,
+        effect_on_actual_balance=effect_on_actual_balance_outgoing,
+        effect_on_available_balance=effect_on_available_balance_outgoing,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+
+    # Process INCOMING
+    _helper_commit_transaction_events(
+        tx_data=tx_data_incoming, 
+        event_types=_helper_event_types_as_tuple(is_pending=is_pending_incoming, is_verified=is_verified_incoming),  # event_types = ('VERIFIED',)
+        effect_on_actual_balance=effect_on_actual_balance_incoming,
+        effect_on_available_balance=effect_on_available_balance_incoming,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    _helper_commit_updated_balances(
+        tx_data=tx_data, 
+        effect_on_actual_balance=effect_on_actual_balance_incoming,
+        effect_on_available_balance=effect_on_available_balance_incoming,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
 
     logger.info('Processing Done')
     return True
