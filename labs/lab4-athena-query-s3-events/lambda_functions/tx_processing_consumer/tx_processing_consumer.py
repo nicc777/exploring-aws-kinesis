@@ -648,6 +648,18 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
         logger.info('Previous unverified transaction data: {}'.format(previous_record))
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        update_object_table_add_event(
+            origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
+            event_timestamp=tx_data['EventTimeStamp'],
+            tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+            tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+            reference_account_number=tx_data['ReferenceAccount'],
+            event_type='ProcessingEvent',
+            is_error=True,
+            error_message='EXCEPTION: {}'.format(traceback.format_exc()),
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
         return False
 
     if len(previous_record) > 0:
@@ -974,6 +986,18 @@ def outgoing_payment_verified(tx_data: dict, logger=get_logger(), boto3_clazz=bo
         tx_data['Amount'] = previous_record['Amount']
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        update_object_table_add_event(
+            origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
+            event_timestamp=tx_data['EventTimeStamp'],
+            tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+            tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+            reference_account_number=tx_data['ReferenceAccount'],
+            event_type='ProcessingEvent',
+            is_error=True,
+            error_message='EXCEPTION: {}'.format(traceback.format_exc()),
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
         return False
 
     if len(previous_record) == 0:
@@ -1072,6 +1096,18 @@ def outgoing_payment_rejected(tx_data: dict, logger=get_logger(), boto3_clazz=bo
         tx_data['Amount'] = previous_record['Amount']
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        update_object_table_add_event(
+            origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
+            event_timestamp=tx_data['EventTimeStamp'],
+            tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+            tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+            reference_account_number=tx_data['ReferenceAccount'],
+            event_type='ProcessingEvent',
+            is_error=True,
+            error_message='EXCEPTION: {}'.format(traceback.format_exc()),
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
         return False
 
     if len(previous_record) == 0:
