@@ -551,35 +551,4 @@ The DynamoDB COnsistent Read story is still problematic for me. I have abandoned
 
 After I concluded basic functional testing, I cleared the bucket and ran all transactions again. However, I noticed the final balance was wrong and upon further investigation I found that the transactions verifying a previous transaction were all failing because the lookup of the previous transaction failed. It would appear that using a consistent read operation does not yield the intended result, as the previous transaction record (unverified transaction) was not yet available at the time of the read request.
 
-I have updated my replay script (see below) to include first a sleep of 5 seconds:
-
-```shell
-#!/bin/sh
-
-export AWS_PROFILE="od_sandbox_superadmin"
-export AWS_REGION="eu-central-1"
-
-export BUCKET="lab4-new-events-qpwoeiryt"
-
-
-aws s3 rm s3://$BUCKET --recursive
-aws s3 cp ./incoming_payment_test0019.event              s3://$BUCKET/incoming_payment_test0019.event
-aws s3 cp ./incoming_payment_test0020.event              s3://$BUCKET/incoming_payment_test0020.event
-aws s3 cp ./incoming_payment_test0021.event              s3://$BUCKET/incoming_payment_test0021.event
-aws s3 cp ./incoming_payment_test0022.event              s3://$BUCKET/incoming_payment_test0022.event
-aws s3 cp ./cash_deposit_test_0024.event                 s3://$BUCKET/cash_deposit_test0024.event
-aws s3 cp ./cash_deposit_test_0025.event                 s3://$BUCKET/cash_deposit_test0025.event
-aws s3 cp ./cash_deposit_test_0026.event                 s3://$BUCKET/cash_deposit_test0026.event
-aws s3 cp ./verify_cash_deposit_test_0027.event          s3://$BUCKET/verify_cash_deposit_test0027.event
-sleep 5
-aws s3 cp ./cash_withdrawal_test_0028.event              s3://$BUCKET/cash_withdrawal_test0028.event
-aws s3 cp ./outgoing_payment_unverified_test_0029.event  s3://$BUCKET/outgoing_payment_unverified_test0029.event
-sleep 5
-aws s3 cp ./outgoing_payment_verified_test_0030.event    s3://$BUCKET/outgoing_payment_verified_test0030.event
-aws s3 cp ./outgoing_payment_unverified_test_0031.event  s3://$BUCKET/outgoing_payment_unverified_test0031.event
-sleep 3
-aws s3 cp ./outgoing_payment_rejected_test_0032.event    s3://$BUCKET/outgoing_payment_rejected_test0032.event
-aws s3 cp ./inter_account_transfer_test_0033.event       s3://$BUCKET/inter_account_transfer_test0033.event
-aws s3 cp ./cash_withdrawal_test0034.event               s3://$BUCKET/cash_withdrawal_test0034.event
-```
-
+After numerous scenarios and testing, I have concluded that some sleep time is required between a unverified event and a verified event referencing the previous event. For small data samples, 5 seconds seems to be perfectly fine. However, this sleep time should be kept in mind when replaying a lot of transactions (1000's?).
