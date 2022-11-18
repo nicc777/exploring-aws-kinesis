@@ -732,7 +732,8 @@ def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool
     withdraw_amount = Decimal(tx_data['Amount'])
     logger.info('Requesting to withdraw {} from available balance of {}'.format(str(withdraw_amount), str(available)))
 
-    if available.compare(withdraw_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
+    # if int(available.compare(withdraw_amount)) < 0:   # Negative balances not allowed - reject transaction
+    if int(available.compare(withdraw_amount)) < 0:
         logger.error('Insufficient Funds')
         update_object_table_add_event(
             origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
@@ -872,7 +873,8 @@ def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=
     outgoing_payment_amount = Decimal(tx_data['Amount'])
     logger.info('Requesting to send payment of {} from available balance of {}'.format(str(outgoing_payment_amount), str(available)))
 
-    if available.compare(outgoing_payment_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
+    # if available.compare(outgoing_payment_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
+    if int(available.compare(outgoing_payment_amount)) < 0:
         logger.error('Insufficient Funds')
         update_object_table_add_event(
             origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
@@ -1156,7 +1158,8 @@ def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3
     outgoing_transfer_amount = Decimal(tx_data['Amount'])
     logger.info('Requesting transfer of {} from available balance of {} on account reference {}'.format(str(outgoing_transfer_amount), str(available_outgoing), tx_data_outgoing['ReferenceAccount']))
 
-    if available_outgoing.compare(outgoing_transfer_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
+    # if available_outgoing.compare(outgoing_transfer_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
+    if int(available_outgoing.compare(outgoing_transfer_amount)) < 0:
         logger.error('Insufficient Funds')
         update_object_table_add_event(
             origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
