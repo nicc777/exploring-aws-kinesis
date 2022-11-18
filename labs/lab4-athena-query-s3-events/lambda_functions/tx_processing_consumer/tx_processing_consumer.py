@@ -372,16 +372,16 @@ def update_object_table_add_event(
 ):
     try:
         object_event_key = {
-            'PK'                : { 'S'     : 'KEY#{}'.format(origin_event_key)                     },
-            'SK'                : { 'S'     : 'EVENT#{}'.format(event_timestamp)                    },
+            'PK'                : { 'S'     : 'KEY#{}'.format(origin_event_key)                         },
+            'SK'                : { 'S'     : 'EVENT#{}'.format(get_utc_timestamp(with_decimal=False))  },
         }
         object_event_data = {
-            'TransactionDate'   : { 'N'     : '{}'.format(tx_date)                                  },
-            'TransactionTime'   : { 'N'     : '{}'.format(tx_time)                                  },
-            'EventType'         : { 'S'     : event_type                                            },
-            'AccountNumber'     : { 'S'     : '{}'.format(reference_account_number)                 },
-            'ErrorState'        : { 'BOOL'  : is_error                                              },
-            'ErrorReason'       : { 'S'     : error_message                                         },
+            'TransactionDate'   : { 'N'     : '{}'.format(tx_date)                                      },
+            'TransactionTime'   : { 'N'     : '{}'.format(tx_time)                                      },
+            'EventType'         : { 'S'     : event_type                                                },
+            'AccountNumber'     : { 'S'     : '{}'.format(reference_account_number)                     },
+            'ErrorState'        : { 'BOOL'  : is_error                                                  },
+            'ErrorReason'       : { 'S'     : error_message                                             },
         }
         object_event = {**object_event_key, **object_event_data}
 
@@ -578,7 +578,7 @@ def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
 
     # Add event object processing record
     update_object_table_add_event(
-        origin_event_key=tx_data['EventSourceDataResource'], 
+        origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
         event_timestamp=tx_data['EventTimeStamp'],
         tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
         tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -662,7 +662,7 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
     else:
         logger.error('Failed to process transaction as previous pending transaction could not be found')
         update_object_table_add_event(
-            origin_event_key=tx_data['EventSourceDataResource'], 
+            origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
             event_timestamp=tx_data['EventTimeStamp'],
             tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
             tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -694,7 +694,7 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
 
     # Add event object processing record
     update_object_table_add_event(
-        origin_event_key=tx_data['EventSourceDataResource'], 
+        origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
         event_timestamp=tx_data['EventTimeStamp'],
         tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
         tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -735,7 +735,7 @@ def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool
     if available.compare(withdraw_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
         logger.error('Insufficient Funds')
         update_object_table_add_event(
-            origin_event_key=tx_data['EventSourceDataResource'], 
+            origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
             event_timestamp=tx_data['EventTimeStamp'],
             tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
             tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -771,7 +771,7 @@ def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool
 
     # Add event object processing record
     update_object_table_add_event(
-        origin_event_key=tx_data['EventSourceDataResource'], 
+        origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
         event_timestamp=tx_data['EventTimeStamp'],
         tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
         tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -834,7 +834,7 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
 
     # Add event object processing record
     update_object_table_add_event(
-        origin_event_key=tx_data['EventSourceDataResource'], 
+        origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
         event_timestamp=tx_data['EventTimeStamp'],
         tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
         tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -875,7 +875,7 @@ def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=
     if available.compare(outgoing_payment_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
         logger.error('Insufficient Funds')
         update_object_table_add_event(
-            origin_event_key=tx_data['EventSourceDataResource'], 
+            origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
             event_timestamp=tx_data['EventTimeStamp'],
             tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
             tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -911,7 +911,7 @@ def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=
 
     # Add event object processing record
     update_object_table_add_event(
-        origin_event_key=tx_data['EventSourceDataResource'], 
+        origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
         event_timestamp=tx_data['EventTimeStamp'],
         tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
         tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -977,7 +977,7 @@ def outgoing_payment_verified(tx_data: dict, logger=get_logger(), boto3_clazz=bo
     if len(previous_record) == 0:
         logger.error('No previous pending record was found')
         update_object_table_add_event(
-            origin_event_key=tx_data['EventSourceDataResource'], 
+            origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
             event_timestamp=tx_data['EventTimeStamp'],
             tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
             tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -1009,7 +1009,7 @@ def outgoing_payment_verified(tx_data: dict, logger=get_logger(), boto3_clazz=bo
 
     # Add event object processing record
     update_object_table_add_event(
-        origin_event_key=tx_data['EventSourceDataResource'], 
+        origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
         event_timestamp=tx_data['EventTimeStamp'],
         tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
         tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -1075,7 +1075,7 @@ def outgoing_payment_rejected(tx_data: dict, logger=get_logger(), boto3_clazz=bo
     if len(previous_record) == 0:
         logger.error('No previous pending record was found')
         update_object_table_add_event(
-            origin_event_key=tx_data['EventSourceDataResource'], 
+            origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
             event_timestamp=tx_data['EventTimeStamp'],
             tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
             tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -1107,7 +1107,7 @@ def outgoing_payment_rejected(tx_data: dict, logger=get_logger(), boto3_clazz=bo
 
     # Add event object processing record
     update_object_table_add_event(
-        origin_event_key=tx_data['EventSourceDataResource'], 
+        origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
         event_timestamp=tx_data['EventTimeStamp'],
         tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
         tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -1159,7 +1159,7 @@ def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3
     if available_outgoing.compare(outgoing_transfer_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
         logger.error('Insufficient Funds')
         update_object_table_add_event(
-            origin_event_key=tx_data['EventSourceDataResource'], 
+            origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
             event_timestamp=tx_data['EventTimeStamp'],
             tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
             tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
@@ -1222,7 +1222,7 @@ def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3
 
     # Add event object processing record
     update_object_table_add_event(
-        origin_event_key=tx_data['EventSourceDataResource'], 
+        origin_event_key=tx_data['EventSourceDataResource']['S3Key'],
         event_timestamp=tx_data['EventTimeStamp'],
         tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
         tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
