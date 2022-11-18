@@ -382,17 +382,17 @@ def _helper_calculate_updated_balances(
     effect['Actual'] = effect_on_actual_balance
 
     for balance_type in ('Available', 'Actual'):
-        logger.info('{} Balance PRE: {}'.format(balance_type, balances[balance_type]))
+        logger.info('[account_reference={}] {} Balance PRE: {}'.format(account_ref, balance_type, balances[balance_type]))
         if effect[balance_type] == 'Increase':
             balances[balance_type] += amount
-            logger.info('{} Balance INCREASED with {} to {}'.format(balance_type, amount, balances[balance_type]))
+            logger.info('[account_reference={}] {} Balance INCREASED with {} to {}'.format(account_ref, balance_type, amount, balances[balance_type]))
         elif effect[balance_type] == 'Decrease':
             balances[balance_type] -= amount
-            logger.info('{} Balance DECREASED with {} to {}'.format(balance_type, amount, balances[balance_type]))
+            logger.info('[account_reference={}] {} Balance DECREASED with {} to {}'.format(account_ref, balance_type, amount, balances[balance_type]))
         else:
-            logger.info('Available Balance REMAINS unchanged at {}'.format(balances[balance_type]))
+            logger.info('[account_reference={}] Available Balance REMAINS unchanged at {}'.format(account_ref, balances[balance_type]))
 
-    logger.info('FINAL balances on account {}: {}'.format(account_ref, balances))
+    logger.info('[account_reference={}] FINAL balances on account {}: {}'.format(account_ref, account_ref, balances))
     return balances
 
 
@@ -908,6 +908,7 @@ def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3
     logger.info('Processing transfer from account {} to account {}'.format(tx_data_outgoing['ReferenceAccount'],tx_data_incoming['ReferenceAccount']))
 
     # Check funds available
+    logger.info('STEP: Check funds available on OUTGOING account {}'.format(tx_data_outgoing['ReferenceAccount']))
     account_balances_outgoing = _helper_calculate_updated_balances(
         account_ref=tx_data_outgoing['ReferenceAccount'],
         amount=Decimal(tx_data['Amount']),
@@ -918,7 +919,7 @@ def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3
     )
     available_outgoing = account_balances_outgoing['Available']
     outgoing_transfer_amount = Decimal(tx_data['Amount'])
-    logger.info('Requesting transfer of {} from available balance of {}'.format(str(outgoing_transfer_amount), str(available_outgoing)))
+    logger.info('Requesting transfer of {} from available balance of {} on account reference {}'.format(str(outgoing_transfer_amount), str(available_outgoing), tx_data_outgoing['ReferenceAccount']))
 
     if available_outgoing.compare(outgoing_transfer_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
         logger.error('Insufficient Funds')
@@ -926,10 +927,12 @@ def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3
     logger.info('Funds are available')
 
     # Adjust balances
+    logger.info('STEP: Adjusting account balances on OUTGOING account {}'.format(tx_data_outgoing['ReferenceAccount']))
     account_balances_outgoing['Actual'] = account_balances_outgoing['Actual'] - outgoing_transfer_amount    
     account_balances_outgoing['Available'] = account_balances_outgoing['Available'] - outgoing_transfer_amount  
 
     # Process OUTGOING
+    logger.info('STEP: Committing transaction EVENT on OUTGOING account {}'.format(tx_data_outgoing['ReferenceAccount']))
     _helper_commit_transaction_events(
         tx_data=tx_data_outgoing, 
         event_types=_helper_event_types_as_tuple(is_pending=is_pending_outgoing, is_verified=is_verified_outgoing), 
@@ -939,6 +942,7 @@ def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3
         logger=logger
     )
 
+    logger.info('STEP: Committing transaction UPDATE_BALANCES on OUTGOING account {}'.format(tx_data_outgoing['ReferenceAccount']))
     _helper_commit_updated_balances(
         tx_data=tx_data, 
         updated_balances=account_balances_outgoing,
@@ -950,6 +954,7 @@ def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3
 
 
     # Process INCOMING
+    logger.info('STEP: Committing transaction EVENT on INCOMING account {}'.format(tx_data_incoming['ReferenceAccount']))
     _helper_commit_transaction_events(
         tx_data=tx_data_incoming, 
         event_types=_helper_event_types_as_tuple(is_pending=is_pending_incoming, is_verified=is_verified_incoming),  # event_types = ('VERIFIED',)
@@ -959,8 +964,9 @@ def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3
         logger=logger
     )
 
+    logger.info('STEP: Committing transaction UPDATE_BALANCES on INCOMING account {}'.format(tx_data_incoming['ReferenceAccount']))
     _helper_commit_updated_balances(
-        tx_data=tx_data, 
+        tx_data=tx_data_incoming, 
         effect_on_actual_balance=effect_on_actual_balance_incoming,
         effect_on_available_balance=effect_on_available_balance_incoming,
         boto3_clazz=boto3_clazz,
