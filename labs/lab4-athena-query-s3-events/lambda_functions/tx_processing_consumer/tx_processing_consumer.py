@@ -322,6 +322,83 @@ def send_sqs_tx_cleanup_message(
 
 ###############################################################################
 ###                                                                         ###
+###                 E V E N T    S T A T E     U P D A T E S                ###
+###                                                                         ###
+###############################################################################
+
+def update_object_sate(
+    tx_data: dict,
+    logger=get_logger(),
+    boto3_clazz=boto3
+):
+    try:
+        tx_date = _helper_tx_date(timestamp=tx_data['EventTimeStamp'])
+        tx_time = _helper_tx_time(timestamp=tx_data['EventTimeStamp'])
+        object_state_key = {
+            'PK'                : { 'S'     : 'KEY#{}'.format(tx_data['EventSourceDataResource']['S3Key'])  },
+            'SK'                : { 'S'     : 'STATE'                                                       },
+        }
+        object_state_data = {
+            'TransactionDate'   : { 'N'     : '{}'.format(tx_date)                                          },
+            'TransactionTime'   : { 'N'     : '{}'.format(tx_time)                                          },
+            'InEventBucket'     : { 'BOOL'  : True                                                          },
+            'InArchiveBucket'   : { 'BOOL'  : False                                                         },
+            'InRejectedBucket'  : { 'BOOL'  : False                                                         },
+            'AccountNumber'     : { 'S'     : '{}'.format(tx_data['ReferenceAccount'])                      },
+            'Processed'         : { 'BOOL'  : True                                                          },
+        }
+        object_state = {**object_state_key, **object_state_data}
+        create_dynamodb_record(
+            table_name='lab4_event_objects_v1',
+            record_data=object_state,
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
+        logger.info('OBJECT STATE RECORD UPDATED')
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+def update_object_table_add_event(
+    origin_event_key: str, 
+    event_timestamp: str,
+    tx_date: Decimal,
+    tx_time: Decimal,
+    reference_account_number: str,
+    event_type: str='ProcessingEvent',
+    is_error: bool=False,
+    error_message: str='no-error',
+    boto3_clazz=boto3,
+    logger=get_logger()
+):
+    try:
+        object_event_key = {
+            'PK'                : { 'S'     : 'KEY#{}'.format(origin_event_key)                     },
+            'SK'                : { 'S'     : 'EVENT#{}'.format(event_timestamp)                    },
+        }
+        object_event_data = {
+            'TransactionDate'   : { 'N'     : '{}'.format(tx_date)                                  },
+            'TransactionTime'   : { 'N'     : '{}'.format(tx_time)                                  },
+            'EventType'         : { 'S'     : event_type                                            },
+            'AccountNumber'     : { 'S'     : '{}'.format(reference_account_number)                 },
+            'ErrorState'        : { 'BOOL'  : is_error                                              },
+            'ErrorReason'       : { 'S'     : error_message                                         },
+        }
+        object_event = {**object_event_key, **object_event_data}
+
+        create_dynamodb_record(
+            table_name='lab4_event_objects_v1',
+            record_data=object_event,
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
+        logger.info('OBJECT STATE EVENT RECORD CREATED')
+
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
+###############################################################################
+###                                                                         ###
 ###               T R A N S A C T I O N    P R O C E S S I N G              ###
 ###                                                                         ###
 ###############################################################################
@@ -499,6 +576,20 @@ def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
         logger=logger
     )
 
+    # Add event object processing record
+    update_object_table_add_event(
+        origin_event_key=tx_data['EventSourceDataResource'], 
+        event_timestamp=tx_data['EventTimeStamp'],
+        tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+        tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+        reference_account_number=tx_data['ReferenceAccount'],
+        event_type='ProcessingEvent',
+        is_error=False,
+        error_message='no-error',
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
     logger.info('Processing Done')
     return True
 
@@ -570,6 +661,18 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
         logger.info('NEW Available Balance: {}'.format(account_balances['Available']))
     else:
         logger.error('Failed to process transaction as previous pending transaction could not be found')
+        update_object_table_add_event(
+            origin_event_key=tx_data['EventSourceDataResource'], 
+            event_timestamp=tx_data['EventTimeStamp'],
+            tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+            tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+            reference_account_number=tx_data['ReferenceAccount'],
+            event_type='ProcessingEvent',
+            is_error=True,
+            error_message='No previous pending record was found',
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
         return False
 
     # Commit to DB
@@ -585,6 +688,20 @@ def verify_cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->
     _helper_commit_updated_balances(
         tx_data=tx_data, 
         updated_balances=account_balances,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    # Add event object processing record
+    update_object_table_add_event(
+        origin_event_key=tx_data['EventSourceDataResource'], 
+        event_timestamp=tx_data['EventTimeStamp'],
+        tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+        tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+        reference_account_number=tx_data['ReferenceAccount'],
+        event_type='ProcessingEvent',
+        is_error=False,
+        error_message='no-error',
         boto3_clazz=boto3_clazz,
         logger=logger
     )
@@ -617,6 +734,18 @@ def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool
 
     if available.compare(withdraw_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
         logger.error('Insufficient Funds')
+        update_object_table_add_event(
+            origin_event_key=tx_data['EventSourceDataResource'], 
+            event_timestamp=tx_data['EventTimeStamp'],
+            tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+            tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+            reference_account_number=tx_data['ReferenceAccount'],
+            event_type='ProcessingEvent',
+            is_error=True,
+            error_message='Insufficient funds in Source account {} - Available {} but amount requested was {}'.format(tx_data['ReferenceAccount'], account_balances['Available'], withdraw_amount),
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
         return False
     logger.info('Funds are available')
 
@@ -636,6 +765,20 @@ def cash_withdrawal(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool
     _helper_commit_updated_balances(
         tx_data=tx_data, 
         updated_balances=account_balances,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    # Add event object processing record
+    update_object_table_add_event(
+        origin_event_key=tx_data['EventSourceDataResource'], 
+        event_timestamp=tx_data['EventTimeStamp'],
+        tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+        tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+        reference_account_number=tx_data['ReferenceAccount'],
+        event_type='ProcessingEvent',
+        is_error=False,
+        error_message='no-error',
         boto3_clazz=boto3_clazz,
         logger=logger
     )
@@ -689,6 +832,20 @@ def incoming_payment(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->boo
         logger=logger
     )
 
+    # Add event object processing record
+    update_object_table_add_event(
+        origin_event_key=tx_data['EventSourceDataResource'], 
+        event_timestamp=tx_data['EventTimeStamp'],
+        tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+        tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+        reference_account_number=tx_data['ReferenceAccount'],
+        event_type='ProcessingEvent',
+        is_error=False,
+        error_message='no-error',
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
     logger.info('Processing Done')
     return True
 
@@ -717,6 +874,18 @@ def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=
 
     if available.compare(outgoing_payment_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
         logger.error('Insufficient Funds')
+        update_object_table_add_event(
+            origin_event_key=tx_data['EventSourceDataResource'], 
+            event_timestamp=tx_data['EventTimeStamp'],
+            tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+            tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+            reference_account_number=tx_data['ReferenceAccount'],
+            event_type='ProcessingEvent',
+            is_error=True,
+            error_message='Insufficient funds in Source account {} - Available {} but amount requested was {}'.format(tx_data['ReferenceAccount'], account_balances['Available'], outgoing_payment_amount),
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
         return False
     logger.info('Funds are available')
 
@@ -736,6 +905,20 @@ def outgoing_payment_unverified(tx_data: dict, logger=get_logger(), boto3_clazz=
     _helper_commit_updated_balances(
         tx_data=tx_data, 
         updated_balances=account_balances,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    # Add event object processing record
+    update_object_table_add_event(
+        origin_event_key=tx_data['EventSourceDataResource'], 
+        event_timestamp=tx_data['EventTimeStamp'],
+        tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+        tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+        reference_account_number=tx_data['ReferenceAccount'],
+        event_type='ProcessingEvent',
+        is_error=False,
+        error_message='no-error',
         boto3_clazz=boto3_clazz,
         logger=logger
     )
@@ -793,6 +976,18 @@ def outgoing_payment_verified(tx_data: dict, logger=get_logger(), boto3_clazz=bo
 
     if len(previous_record) == 0:
         logger.error('No previous pending record was found')
+        update_object_table_add_event(
+            origin_event_key=tx_data['EventSourceDataResource'], 
+            event_timestamp=tx_data['EventTimeStamp'],
+            tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+            tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+            reference_account_number=tx_data['ReferenceAccount'],
+            event_type='ProcessingEvent',
+            is_error=True,
+            error_message='No previous pending record was found',
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
         return False
 
     _helper_commit_transaction_events(
@@ -808,6 +1003,20 @@ def outgoing_payment_verified(tx_data: dict, logger=get_logger(), boto3_clazz=bo
         tx_data=tx_data, 
         effect_on_actual_balance=effect_on_actual_balance,
         effect_on_available_balance=effect_on_available_balance,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    # Add event object processing record
+    update_object_table_add_event(
+        origin_event_key=tx_data['EventSourceDataResource'], 
+        event_timestamp=tx_data['EventTimeStamp'],
+        tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+        tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+        reference_account_number=tx_data['ReferenceAccount'],
+        event_type='ProcessingEvent',
+        is_error=False,
+        error_message='no-error',
         boto3_clazz=boto3_clazz,
         logger=logger
     )
@@ -865,6 +1074,18 @@ def outgoing_payment_rejected(tx_data: dict, logger=get_logger(), boto3_clazz=bo
 
     if len(previous_record) == 0:
         logger.error('No previous pending record was found')
+        update_object_table_add_event(
+            origin_event_key=tx_data['EventSourceDataResource'], 
+            event_timestamp=tx_data['EventTimeStamp'],
+            tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+            tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+            reference_account_number=tx_data['ReferenceAccount'],
+            event_type='ProcessingEvent',
+            is_error=True,
+            error_message='No previous pending record was found',
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
         return False
 
     _helper_commit_transaction_events(
@@ -880,6 +1101,20 @@ def outgoing_payment_rejected(tx_data: dict, logger=get_logger(), boto3_clazz=bo
         tx_data=tx_data, 
         effect_on_actual_balance=effect_on_actual_balance,
         effect_on_available_balance=effect_on_available_balance,
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
+
+    # Add event object processing record
+    update_object_table_add_event(
+        origin_event_key=tx_data['EventSourceDataResource'], 
+        event_timestamp=tx_data['EventTimeStamp'],
+        tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+        tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+        reference_account_number=tx_data['ReferenceAccount'],
+        event_type='ProcessingEvent',
+        is_error=False,
+        error_message='no-error',
         boto3_clazz=boto3_clazz,
         logger=logger
     )
@@ -923,6 +1158,18 @@ def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3
 
     if available_outgoing.compare(outgoing_transfer_amount) < Decimal('0') is True:   # Negative balances not allowed - reject transaction
         logger.error('Insufficient Funds')
+        update_object_table_add_event(
+            origin_event_key=tx_data['EventSourceDataResource'], 
+            event_timestamp=tx_data['EventTimeStamp'],
+            tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+            tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+            reference_account_number=tx_data['ReferenceAccount'],
+            event_type='ProcessingEvent',
+            is_error=True,
+            error_message='Insufficient funds in Source account {} - Available {} but amount requested was {}'.format(tx_data_outgoing['ReferenceAccount'], account_balances_outgoing['Available'], outgoing_transfer_amount),
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
         return False
     logger.info('Funds are available')
 
@@ -973,6 +1220,19 @@ def inter_account_transfer(tx_data: dict, logger=get_logger(), boto3_clazz=boto3
         logger=logger
     )
 
+    # Add event object processing record
+    update_object_table_add_event(
+        origin_event_key=tx_data['EventSourceDataResource'], 
+        event_timestamp=tx_data['EventTimeStamp'],
+        tx_date=_helper_tx_date(timestamp=tx_data['EventTimeStamp']),
+        tx_time=_helper_tx_time(timestamp=tx_data['EventTimeStamp']),
+        reference_account_number=tx_data['ReferenceAccount'],
+        event_type='ProcessingEvent',
+        is_error=False,
+        error_message='no-error',
+        boto3_clazz=boto3_clazz,
+        logger=logger
+    )
 
     logger.info('Processing Done')
     return True
@@ -1045,7 +1305,7 @@ def handler(
                 "TransactionType": "IncomingPayment",                   <==> Enriched Data - present in all events
                 "ReferenceAccount": "1234567890",                       <==> Enriched Data - present in all events
                 "RequestId": "test0018"                                 <==> Enriched Data - present in all events
-            }
+            }        
 
     """
     try:
@@ -1058,6 +1318,11 @@ def handler(
                         logger.info('Transaction Processed for Event: {}'.format(tx_data['EventSourceDataResource']))
                     else:
                         logger.error('Transaction Processing Returned Failure.')
+                    update_object_sate(
+                        tx_data=tx_data,
+                        logger=logger,
+                        boto3_clazz=boto3_clazz
+                    )
                 else:
                     logger.error('Field TransactionType has unrecognized value. Cannot proceed with transaction processing. tx_data={}'.format(tx_data))
             else:
