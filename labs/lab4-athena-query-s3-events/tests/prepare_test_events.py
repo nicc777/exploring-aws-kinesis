@@ -13,5 +13,9 @@ if file_name is None:
 
 print('Parsing test data file: {}'.format(file_name))
 
+if os.path.exists(file_name) is False:
+    raise Exception('ERR: File does not appear to exist')
 
+if os.path.isfile(file_name) is False:
+    raise Exception('ERR: Not a file?')
 
