@@ -25,7 +25,6 @@ test_data = list()
 with open(file_name, newline='') as csv_file:
     reader = csv.DictReader(csv_file)
     keys = reader.fieldnames
-    print('Field names: {}'.format(keys))
     for row in reader:
         record = dict()
         for key in keys:
