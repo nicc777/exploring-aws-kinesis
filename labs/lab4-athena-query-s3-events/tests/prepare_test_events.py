@@ -2,6 +2,7 @@ import csv
 import json
 import os
 import sys
+import boto3
 
 
 file_name = None
@@ -18,4 +19,18 @@ if os.path.exists(file_name) is False:
 
 if os.path.isfile(file_name) is False:
     raise Exception('ERR: Not a file?')
+
+reader = None
+test_data = list()
+with open(file_name, newline='') as csv_file:
+    reader = csv.DictReader(csv_file)
+    keys = reader.fieldnames
+    print('Field names: {}'.format(keys))
+    for row in reader:
+        record = dict()
+        for key in keys:
+            record[key] = row[key]
+        test_data.append(record)
+
+print('JSON test_data={}'.format(json.dumps(test_data)))
 
