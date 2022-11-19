@@ -32,5 +32,6 @@ with open(file_name, newline='') as csv_file:
             record[key] = row[key]
         test_data.append(record)
 
-print('JSON test_data={}'.format(json.dumps(test_data)))
+# print('JSON test_data={}'.format(json.dumps(test_data)))
+print('Test Data contains {} records/transaction events'.format(len(test_data)-1))
 
