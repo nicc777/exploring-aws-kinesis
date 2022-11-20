@@ -44,24 +44,6 @@ def build_cash_deposit_event(data: dict)->dict:
     event_data = dict()
     print('Preparing a cash deposit event for source account {}'.format(data['Reference Account']))
 
-    """
-        {
-            "EventTimeStamp": 1234567890,
-            "TargetAccount": "<<account number>>",
-            "Amount": "123.45",
-            "LocationType": "ATM or Teller",
-            "Reference": "Some Free Form Text",
-            "Verified": false,
-            "Currency": {
-                "100-euro-bills": 1,
-                "20-euro-bills": 1,
-                "1-euro-bills": 3,
-                "20-cents": 2,
-                "5-cents": 1
-            }
-        }
-    """
-
     tx_datetime = datetime(
         int(data['Transaction Date Year']),
         int(data['Transaction Date Month']),
@@ -105,8 +87,19 @@ def build_incoming_payment_event(data: dict)->dict:
 
 
 def upload_event(event_data: dict, key_name: str)->bool:
-    print('   Uploading data to key: {}'.format(key_name))
-    print('      data: {}'.format(json.dumps(event_data)))
+    if len(event_data) > 0:
+        print('   Uploading data to key: {}'.format(key_name))
+        print('      data: {}'.format(json.dumps(event_data)))
+        s3_client = boto3.client('s3')
+        s3_client.put_object(
+            ACL='private',
+            Body=json.dumps(event_data).encode('utf-8'),
+            Bucket='lab4-new-events-qpwoeiryt',
+            Key=key_name
+        )
+
+    else:
+        print('   Can not upload key "{}" to S3 because there is no event data'.format(key_name))
     return True
 
 
