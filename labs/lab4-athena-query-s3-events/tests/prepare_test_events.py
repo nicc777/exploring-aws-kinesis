@@ -44,13 +44,6 @@ def build_cash_deposit_event(data: dict)->dict:
     event_data = dict()
     print('Preparing a cash deposit event for source account {}'.format(data['Reference Account']))
 
-    return event_data
-
-
-def build_incoming_payment_event(data: dict)->dict:
-    event_data = dict()
-    print('Preparing an incoming payment event for source account {}'.format(data['Reference Account']))
-
     """
         {
             "EventTimeStamp": 1234567890,
@@ -76,15 +69,44 @@ def build_incoming_payment_event(data: dict)->dict:
         int(int(data['Transaction Date 24HR Time'])/100),
         int(data['Transaction Date 24HR Time'][2:4])
     )
-    event_data['EventTimeStamp'] = int(tx_datetime.timestamp())
+    event_data['EventTimeStamp']                = int(tx_datetime.timestamp())
     print('   Transaction timestamp: {} -> {}'.format(tx_datetime, event_data['EventTimeStamp']))
+    
+    event_data['TargetAccount']                 = data['Reference Account']
+    event_data['Amount']                        = data['Amount']
+    event_data['LocationType']                  = data['Location']
+    event_data['Reference']                     = data['Reference']
+    
+    event_data['Verified']                      = False
+    if data['Instant Verify Flag'].lower() == 'true':
+        event_data['Verified']                  = True
+
+    event_data['Currency']                      = dict()
+    event_data['Currency']['100-euro-bills']    = data['Notes-100']
+    event_data['Currency']['50-euro-bills']     = data['Notes-50']
+    event_data['Currency']['20-euro-bills']     = data['Notes-20']
+    event_data['Currency']['10-euro-bills']     = data['Notes-10']
+    event_data['Currency']['50-cents']          = data['Coins-50']
+    event_data['Currency']['20-cents']          = data['Coins-20']
+    event_data['Currency']['10-cents']          = data['Coins-10']
+    event_data['Currency']['5-cents']           = data['Coins-5']
+
+    return event_data
+
+
+def build_incoming_payment_event(data: dict)->dict:
+    event_data = dict()
+    print('Preparing an incoming payment event for source account {}'.format(data['Reference Account']))
+
+    
 
     return event_data
 
 
 
-def upload_event(event_data: dict)->bool:
-    
+def upload_event(event_data: dict, key_name: str)->bool:
+    print('   Uploading data to key: {}'.format(key_name))
+    print('      data: {}'.format(json.dumps(event_data)))
     return True
 
 
@@ -95,4 +117,7 @@ EVENT_BUILD_MAPPING = {
 
 
 for event_record in test_data:
-    EVENT_BUILD_MAPPING[event_record['Transaction Type']](data=copy.deepcopy(event_record))
+    upload_event(
+        event_data=EVENT_BUILD_MAPPING[event_record['Transaction Type']](data=copy.deepcopy(event_record)),
+        key_name='{}{}.event'.format(event_record['Transaction Type'], event_record['RequestId'])
+    )
