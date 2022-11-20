@@ -4,6 +4,7 @@ import os
 import sys
 import boto3
 import copy
+from datetime import datetime
 
 
 file_name = None
@@ -68,7 +69,15 @@ def build_incoming_payment_event(data: dict)->dict:
         }
     """
 
-    event_data['EventTimeStamp'] = 0
+    tx_datetime = datetime(
+        int(data['Transaction Date Year']),
+        int(data['Transaction Date Month']),
+        int(data['Transaction Date Day']),
+        int(int(data['Transaction Date 24HR Time'])/100),
+        int(data['Transaction Date 24HR Time'][2:4])
+    )
+    event_data['EventTimeStamp'] = int(tx_datetime.timestamp())
+    print('   Transaction timestamp: {} -> {}'.format(tx_datetime, event_data['EventTimeStamp']))
 
     return event_data
 
