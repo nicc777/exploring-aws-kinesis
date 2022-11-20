@@ -50,6 +50,26 @@ def build_incoming_payment_event(data: dict)->dict:
     event_data = dict()
     print('Preparing an incoming payment event for source account {}'.format(data['Reference Account']))
 
+    """
+        {
+            "EventTimeStamp": 1234567890,
+            "TargetAccount": "<<account number>>",
+            "Amount": "123.45",
+            "LocationType": "ATM or Teller",
+            "Reference": "Some Free Form Text",
+            "Verified": false,
+            "Currency": {
+                "100-euro-bills": 1,
+                "20-euro-bills": 1,
+                "1-euro-bills": 3,
+                "20-cents": 2,
+                "5-cents": 1
+            }
+        }
+    """
+
+    event_data['EventTimeStamp'] = 0
+
     return event_data
 
 
