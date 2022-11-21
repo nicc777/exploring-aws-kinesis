@@ -109,8 +109,11 @@ EVENT_BUILD_MAPPING = {
 }
 
 
+tx_counter = 0
 for event_record in test_data:
+    tx_counter += 1
+    request_id = f'r{tx_counter:07}'
     upload_event(
         event_data=EVENT_BUILD_MAPPING[event_record['Transaction Type']](data=copy.deepcopy(event_record)),
-        key_name='{}{}.event'.format(event_record['Transaction Type'], event_record['RequestId'])
+        key_name='{}{}.event'.format(event_record['Transaction Type'], request_id)
     )
