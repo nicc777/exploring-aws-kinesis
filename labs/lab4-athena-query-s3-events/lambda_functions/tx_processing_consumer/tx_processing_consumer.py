@@ -558,6 +558,12 @@ def cash_deposit(tx_data: dict, logger=get_logger(), boto3_clazz=boto3)->bool:
     is_pending                      = True
     is_verified                     = False
 
+    if 'Verified' in tx_data:
+        if isinstance(tx_data['Verified'], bool):
+            if tx_data['Verified'] is True:
+                effect_on_available_balance = 'Increase'
+                is_pending = False
+                is_verified = True
 
     _helper_commit_transaction_events(
         tx_data=tx_data, 
