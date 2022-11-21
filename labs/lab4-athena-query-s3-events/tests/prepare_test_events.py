@@ -80,7 +80,12 @@ def build_incoming_payment_event(data: dict)->dict:
     event_data = dict()
     print('Preparing an incoming payment event for source account {}'.format(data['Reference Account']))
 
-    
+    event_data['EventTimeStamp']                = _create_datetime_object_from_test_data(data=data)
+    event_data['TargetAccount']                 = data['Reference Account']
+    event_data['Amount']                        = data['Amount']
+    event_data['SourceInstitution']             = data['Source Bank']
+    event_data['SourceAccount']                 = data['Source Reference']
+    event_data['Reference']                     = data['Reference']
 
     return event_data
 
