@@ -37,13 +37,7 @@ with open(file_name, newline='') as csv_file:
 print('Test Data contains {} records/transaction events'.format(len(test_data)-1))
 
 
-
-
-
-def build_cash_deposit_event(data: dict)->dict:
-    event_data = dict()
-    print('Preparing a cash deposit event for source account {}'.format(data['Reference Account']))
-
+def _create_datetime_object_from_test_data(data: dict)->int:
     tx_datetime = datetime(
         int(data['Transaction Date Year']),
         int(data['Transaction Date Month']),
@@ -51,9 +45,15 @@ def build_cash_deposit_event(data: dict)->dict:
         int(int(data['Transaction Date 24HR Time'])/100),
         int(data['Transaction Date 24HR Time'][2:4])
     )
-    event_data['EventTimeStamp']                = int(tx_datetime.timestamp())
-    print('   Transaction timestamp: {} -> {}'.format(tx_datetime, event_data['EventTimeStamp']))
-    
+    return int(tx_datetime.timestamp())
+
+
+
+def build_cash_deposit_event(data: dict)->dict:
+    event_data = dict()
+    print('Preparing a cash deposit event for source account {}'.format(data['Reference Account']))
+
+    event_data['EventTimeStamp']                = _create_datetime_object_from_test_data(data=data)
     event_data['TargetAccount']                 = data['Reference Account']
     event_data['Amount']                        = data['Amount']
     event_data['LocationType']                  = data['Location']
