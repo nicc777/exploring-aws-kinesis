@@ -126,6 +126,11 @@ def build_incoming_payment_event(data: dict)->dict:
     return event_data
 
 
+#######################################################################################################################
+###                                                                                                                 ###
+###                                         TEST DATA PROCESSING AND UPLOAD                                         ###
+###                                                                                                                 ###
+#######################################################################################################################
 
 def upload_event(event_data: dict, key_name: str)->bool:
     if len(event_data) > 0:
@@ -143,12 +148,6 @@ def upload_event(event_data: dict, key_name: str)->bool:
         print('   Can not upload key "{}" to S3 because there is no event data'.format(key_name))
     return True
 
-
-#######################################################################################################################
-###                                                                                                                 ###
-###                                         TEST DATA PROCESSING AND UPLOAD                                         ###
-###                                                                                                                 ###
-#######################################################################################################################
 
 EVENT_BUILD_MAPPING = {
     'cash_deposit_': build_cash_deposit_event,
