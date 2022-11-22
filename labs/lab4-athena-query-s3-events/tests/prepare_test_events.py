@@ -126,6 +126,29 @@ def build_incoming_payment_event(data: dict)->dict:
     return event_data
 
 
+def build_cash_withdrawal_event(data: dict)->dict:
+    event_data = dict()
+    print('Preparing a cash withdrawal event for source account {}'.format(data['Reference Account']))
+
+    event_data['EventTimeStamp']                = _create_datetime_object_from_test_data(data=data)
+    event_data['SourceAccount']                 = data['Reference Account']
+    event_data['Amount']                        = data['Amount']
+    event_data['LocationType']                  = data['Location']
+    event_data['Reference']                     = data['Reference']
+    
+    event_data['Currency']                      = dict()
+    event_data['Currency']['100-euro-bills']    = data['Notes-100']
+    event_data['Currency']['50-euro-bills']     = data['Notes-50']
+    event_data['Currency']['20-euro-bills']     = data['Notes-20']
+    event_data['Currency']['10-euro-bills']     = data['Notes-10']
+    event_data['Currency']['50-cents']          = data['Coins-50']
+    event_data['Currency']['20-cents']          = data['Coins-20']
+    event_data['Currency']['10-cents']          = data['Coins-10']
+    event_data['Currency']['5-cents']           = data['Coins-5']
+
+    return event_data
+
+
 #######################################################################################################################
 ###                                                                                                                 ###
 ###                                         TEST DATA PROCESSING AND UPLOAD                                         ###
@@ -153,6 +176,7 @@ EVENT_BUILD_MAPPING = {
     'cash_deposit_': build_cash_deposit_event,
     'incoming_payment_': build_incoming_payment_event,
     'verify_cash_deposit_': build_verify_cash_deposit_event,
+    'cash_withdrawal_': build_cash_withdrawal_event,
 }
 
 
