@@ -48,6 +48,11 @@ def _create_datetime_object_from_test_data(data: dict)->int:
     return int(tx_datetime.timestamp())
 
 
+#######################################################################################################################
+###                                                                                                                 ###
+###                                              BUILD EVENT FUNCTIONS                                              ###
+###                                                                                                                 ###
+#######################################################################################################################
 
 def build_cash_deposit_event(data: dict)->dict:
     event_data = dict()
@@ -74,6 +79,7 @@ def build_cash_deposit_event(data: dict)->dict:
     event_data['Currency']['5-cents']           = data['Coins-5']
 
     return event_data
+
 
 def build_verify_cash_deposit_event(data: dict)->dict:
     event_data = dict()
@@ -137,6 +143,12 @@ def upload_event(event_data: dict, key_name: str)->bool:
         print('   Can not upload key "{}" to S3 because there is no event data'.format(key_name))
     return True
 
+
+#######################################################################################################################
+###                                                                                                                 ###
+###                                         TEST DATA PROCESSING AND UPLOAD                                         ###
+###                                                                                                                 ###
+#######################################################################################################################
 
 EVENT_BUILD_MAPPING = {
     'cash_deposit_': build_cash_deposit_event,
