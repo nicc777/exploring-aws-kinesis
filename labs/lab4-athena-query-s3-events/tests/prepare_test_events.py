@@ -84,6 +84,7 @@ def build_verify_cash_deposit_event(data: dict)->dict:
     event_data['Amount']                        = data['Amount']
     event_data['LocationType']                  = data['Location']
     event_data['Reference']                     = data['Reference']
+    event_data['PreviousRequestIdReference']    = data['Linked RequestId']
     
     event_data['Verified']                      = False
     if data['Instant Verify Flag'].lower() == 'true':
@@ -98,6 +99,9 @@ def build_verify_cash_deposit_event(data: dict)->dict:
     event_data['Currency']['20-cents']          = data['Coins-20']
     event_data['Currency']['10-cents']          = data['Coins-10']
     event_data['Currency']['5-cents']           = data['Coins-5']
+
+    event_data['VerifiedByEmployeeId']          = data['Verified by Employee ID']
+    event_data['FinalFinding']                  = data['Final Finding']
 
     return event_data
 
@@ -137,6 +141,7 @@ def upload_event(event_data: dict, key_name: str)->bool:
 EVENT_BUILD_MAPPING = {
     'cash_deposit_': build_cash_deposit_event,
     'incoming_payment_': build_incoming_payment_event,
+    'verify_cash_deposit_': build_verify_cash_deposit_event,
 }
 
 
