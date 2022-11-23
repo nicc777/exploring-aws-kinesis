@@ -164,7 +164,6 @@ def build_outgoing_payment_rejected_event(data: dict)->dict:
     return event_data
 
 
-
 def build_cash_withdrawal_event(data: dict)->dict:
     event_data = dict()
     print('Preparing a cash withdrawal event for source account {}'.format(data['Reference Account']))
