@@ -131,7 +131,7 @@ def build_outgoing_payment_unverified_event(data: dict)->dict:
     print('Preparing an unverified outgoing payment event for source account {}'.format(data['Reference Account']))
 
     event_data['EventTimeStamp']                = _create_datetime_object_from_test_data(data=data)
-    event_data['TargetAccount']                 = data['Reference Account']
+    event_data['SourceAccount']                 = data['Reference Account']
     event_data['Amount']                        = data['Amount']
     event_data['TargetInstitution']             = data['Destination Bank']
     event_data['TargetAccount']                 = data['Destination Account Reference']
@@ -145,7 +145,7 @@ def build_outgoing_payment_verified_event(data: dict)->dict:
     print('Preparing an verified on previous outgoing payment event for source account {}'.format(data['Reference Account']))
 
     event_data['EventTimeStamp']                = _create_datetime_object_from_test_data(data=data)
-    event_data['TargetAccount']                 = data['Reference Account']
+    event_data['SourceAccount']                 = data['Reference Account']
     event_data['Reference']                     = data['Reference']
     event_data['PreviousRequestIdReference']    = data['Linked RequestId']
 
@@ -157,7 +157,7 @@ def build_outgoing_payment_rejected_event(data: dict)->dict:
     print('Preparing a rejected payment event for source account {}'.format(data['Reference Account']))
 
     event_data['EventTimeStamp']                = _create_datetime_object_from_test_data(data=data)
-    event_data['TargetAccount']                 = data['Reference Account']
+    event_data['SourceAccount']                 = data['Reference Account']
     event_data['Reason']                        = data['Final Finding']
     event_data['PreviousRequestIdReference']    = data['Linked RequestId']
 
