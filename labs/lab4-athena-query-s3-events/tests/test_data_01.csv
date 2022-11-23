@@ -6,3 +6,4 @@
 "2022","10","3","0500","cash_deposit_","100010","100","A deposit","ATM 123","Cash Deposit at ATM","false","0","0","5","0","0","0","0","0","AAA Bank","n/a","n/a","n/a","n/a","n/a","n/a"
 "2022","10","3","1030","verify_cash_deposit_","100010","100","A deposit","ATM 123","Cash Deposit at ATM","true","0","0","5","0","0","0","0","0","AAA Bank","n/a","r0000005","n/a","n/a","e0001","ATM Reconciled"
 "2022","10","3","1100","cash_withdrawal_","100020","50","Cash Withdrawal","ATM 500","Cash Withdrawal at ATM","n/a","0","1","0","0","0","0","0","0","n/a","n/a","n/a","n/a","n/a","n/a","n/a"
+"2022","10","4","0900","outgoing_payment_unverified_","100030","250","Pay ABC","Internet","Pay ABC","n/a","0","0","0","0","0","0","0","0","BBB Bank","9900990099","n/a","AAA Bank","Pay ABC","n/a","n/a"
