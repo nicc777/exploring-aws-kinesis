@@ -234,5 +234,7 @@ for event_record in test_data:
         event_data=EVENT_BUILD_MAPPING[event_record['Transaction Type']](data=copy.deepcopy(event_record)),
         key_name='{}{}.event'.format(event_record['Transaction Type'], request_id)
     )
+    print()
     if STEP is True:
         input('Press ENTER for next transaction')
+    print()
