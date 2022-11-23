@@ -152,6 +152,19 @@ def build_outgoing_payment_verified_event(data: dict)->dict:
     return event_data
 
 
+def build_outgoing_payment_rejected_event(data: dict)->dict:
+    event_data = dict()
+    print('Preparing a rejected payment event for source account {}'.format(data['Reference Account']))
+
+    event_data['EventTimeStamp']                = _create_datetime_object_from_test_data(data=data)
+    event_data['TargetAccount']                 = data['Reference Account']
+    event_data['Reason']                        = data['Final Finding']
+    event_data['PreviousRequestIdReference']    = data['Linked RequestId']
+
+    return event_data
+
+
+
 def build_cash_withdrawal_event(data: dict)->dict:
     event_data = dict()
     print('Preparing a cash withdrawal event for source account {}'.format(data['Reference Account']))
@@ -205,6 +218,7 @@ EVENT_BUILD_MAPPING = {
     'cash_withdrawal_': build_cash_withdrawal_event,
     'outgoing_payment_unverified_': build_outgoing_payment_unverified_event,
     'outgoing_payment_verified_': build_outgoing_payment_verified_event,
+    'outgoing_payment_rejected_': build_outgoing_payment_rejected_event,
 }
 
 
