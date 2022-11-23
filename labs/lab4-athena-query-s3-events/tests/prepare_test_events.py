@@ -7,9 +7,14 @@ import copy
 from datetime import datetime
 
 
+STEP = False
+
 file_name = None
 if len(sys.argv) > 1:
     file_name = sys.argv[1]
+
+if len(sys.argv) > 2:
+    STEP = True
 
 if file_name is None:
     raise Exception('A filename containing test data must be provided')
@@ -229,3 +234,5 @@ for event_record in test_data:
         event_data=EVENT_BUILD_MAPPING[event_record['Transaction Type']](data=copy.deepcopy(event_record)),
         key_name='{}{}.event'.format(event_record['Transaction Type'], request_id)
     )
+    if STEP is True:
+        input('Press ENTER for next transaction')
