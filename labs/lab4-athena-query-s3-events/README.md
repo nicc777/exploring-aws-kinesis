@@ -46,13 +46,13 @@ Another aspect to keep in mind is that S3 does not provide a list filter. You ei
 
 ## Security Notes
 
-The implementation and sample code cannot be considered secure. There are numerous issues, including:
+The implementation and sample code cannot be considered secure. There are numerous known issues, including:
 
 * A complete lack of authorization (all events are assumed to be properly authorized by the time the event data file is created)
 * The event sequence numbers are sequential, instead of being a random number (best practices deviation)
 * There are an absolute minimum amount of data validation. The focus is on event recovery and replay and not on code or logic purity and absolute correctness
 * The AWS policies to resources will be tighter in production scenarios
-* Proper audit trail logs have not been considered (out of scope in terms of the experiment) 
+* Proper audit trail logs have not been considered (considered out of scope in terms of the experiment goals) 
 
 ## S3 Buckets
 
