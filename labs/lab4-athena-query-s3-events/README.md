@@ -1,6 +1,7 @@
 
 - [Lab 4 Goals](#lab-4-goals)
 - [Initial Scenario Planning](#initial-scenario-planning)
+  - [Security Notes](#security-notes)
   - [S3 Buckets](#s3-buckets)
   - [Event Data](#event-data)
     - [Cash Deposit Event](#cash-deposit-event)
@@ -42,6 +43,16 @@ Another question I have would be to see if I can replay data from archives like 
 Another aspect to keep in mind is that S3 does not provide a list filter. You either list all the objects or you get a specific object. Traditionally it is best to also use a secondary service like DynamoDB to store the meta data around objects, so that you can query objects from DynamoDB and then retrieve the object data as required from S3. This will probably be a key in selecting only objects created after a certain point in time for event replay. Further more, the archive status can be tracked in DynamoDB in order to kick off processes to restore those objects to a normal storage tier for retrieval and replay.
 
 # Initial Scenario Planning
+
+## Security Notes
+
+The implementation and sample code cannot be considered secure. There are numerous issues, including:
+
+* A complete lack of authorization (all events are assumed to be properly authorized by the time the event data file is created)
+* The event sequence numbers are sequential, instead of being a random number (best practices deviation)
+* There are an absolute minimum amount of data validation. The focus is on event recovery and replay and not on code or logic purity and absolute correctness
+* The AWS policies to resources will be tighter in production scenarios
+* Proper audit trail logs have not been considered (out of scope in terms of the experiment) 
 
 ## S3 Buckets
 
