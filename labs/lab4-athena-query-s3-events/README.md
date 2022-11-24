@@ -14,6 +14,8 @@
     - [Transfer from one account to another](#transfer-from-one-account-to-another)
   - [Event Data Objects in DynamoDB](#event-data-objects-in-dynamodb)
   - [Transaction Data in DynamoDB](#transaction-data-in-dynamodb)
+  - [Restoring / Recovery Planning and Thinking](#restoring--recovery-planning-and-thinking)
+    - [Points of Failure/Restore](#points-of-failurerestore)
 - [Implementation](#implementation)
   - [Deploying the DynamoDB Stack](#deploying-the-dynamodb-stack)
   - [Deploying the New Event S3 Bucket Resources](#deploying-the-new-event-s3-bucket-resources)
@@ -331,6 +333,20 @@ Notes:
 * The `SAVINGS#BALANCE` balances reflect the balance of all `TRANSACTIONS#VERIFIED` transactions. Unverified transactions does not yet influence the final balance.
 * The Available balance is the balance available for transactions. 
 * It should be accepted that any cash will only be released once the transaction is a `TRANSACTIONS#VERIFIED` type transaction.
+
+## Restoring / Recovery Planning and Thinking
+
+### Points of Failure/Restore
+
+Failures leading to some kind of restoring/recovering operationally can happen at various points in the key transactional process pipeline.
+
+![Pipeline](../../images/design-Lab_4-Transactional-Pipeline.drawio.png)
+
+From the diagram, the following errors could occur:
+
+| Infrastructure Affected | Type / Description of Error                                                                                                             | Impact                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| (1) New Events Buckets  | Not all events get created because of an error further upstream, for example a certain channel, like Internet Banking, having an issue. | Think of a transaction being done on an account on more than one channel, but one channel has an issue and it's events does not get created in S3 immediately. Eventually they may get created, or not at all. However, at a point in time after the failure more transactions processed from other channels may still accumulate affecting balances and various other business rules, and it is therefore important to have some kind of mechanism to disregard events from the broken channel once they are created (but no longer needing to be processed). It can be assumed that all events from the problematic channel can be ignored until service is fully restored. However, some transactions may have been processed in error, which means that the accounts table have to be restored to a point in time as well, and all events except events from the problematic channel must be replayed in order to reflect the true state of each account. |
 
 # Implementation
 
