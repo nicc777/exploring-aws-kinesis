@@ -21,8 +21,9 @@ Parameters:
     Type: String
     Description: "The S3 bucket name containing the Lambda function ZIP file"
 
-  DynamoDbStackNameParam:
+  DynamoDbObjectTableName:
     Type: String
+    Default: "lab4_event_objects_v1"
 
 # Rules:
 #   set of rules
@@ -392,8 +393,7 @@ Resources:
             Resource:
               Fn::Sub: 
               - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
-              - TableName: 
-                  Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
+              - TableName: !Ref DynamoDbObjectTableName
       RoleName: S3NewEventLambdaFunctionRole
 
   S3NewEventLambdaFunctionLogGroup:
@@ -415,8 +415,7 @@ Resources:
       Environment:
         Variables: 
           DEBUG: "1"
-          DYNAMODB_OBJECT_TABLE_NAME:
-            Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
+          DYNAMODB_OBJECT_TABLE_NAME: !Ref DynamoDbObjectTableName
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: "s3_new_event_bucket_object_create.zip"
@@ -493,12 +492,10 @@ Resources:
             Resource:
             - Fn::Sub:
               - Sub "arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/${TableName}/index/*"
-              - TableName: 
-                  Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
+              - TableName: !Ref DynamoDbObjectTableName
             - Fn::Sub: 
               - "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TableName}"
-              - TableName: 
-                  Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
+              - TableName: !Ref DynamoDbObjectTableName
       RoleName: S3NewEventDeleteLambdaFunctionRole
 
   S3NewEventDeleteLambdaFunctionLogGroup:
@@ -520,8 +517,7 @@ Resources:
       Environment:
         Variables: 
           DEBUG: "1"
-          DYNAMODB_OBJECT_TABLE_NAME:
-            Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
+          DYNAMODB_OBJECT_TABLE_NAME: !Ref DynamoDbObjectTableName
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: "s3_new_event_bucket_object_delete.zip"

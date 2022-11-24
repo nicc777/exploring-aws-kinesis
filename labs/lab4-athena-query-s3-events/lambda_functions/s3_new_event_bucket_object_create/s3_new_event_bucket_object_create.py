@@ -156,7 +156,7 @@ def create_dynamodb_record(
     try:
         client=get_client(client_name='dynamodb', region='eu-central-1', boto3_clazz=boto3_clazz)
         response = client.put_item(
-            TableName='lab4_event_objects_v1',
+            TableName=os.getenv('DYNAMODB_OBJECT_TABLE_NAME'),
             Item=record_data,
             ReturnValues='NONE',
             ReturnConsumedCapacity='TOTAL',
