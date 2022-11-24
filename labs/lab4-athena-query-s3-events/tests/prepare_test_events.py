@@ -192,6 +192,18 @@ def build_cash_withdrawal_event(data: dict)->dict:
     return event_data
 
 
+def build_inter_account_transfer_event(data: dict)->dict:
+    event_data = dict()
+    print('Preparing an inter-account transfer event for source account {}'.format(data['Reference Account']))
+
+    event_data['EventTimeStamp']                = _create_datetime_object_from_test_data(data=data)
+    event_data['SourceAccount']                 = data['Reference Account']
+    event_data['TargetAccount']                 = data['Destination Account Reference']
+    event_data['Amount']                        = data['Amount']
+    event_data['Reference']                     = data['Reference']
+
+    return event_data
+
 #######################################################################################################################
 ###                                                                                                                 ###
 ###                                         TEST DATA PROCESSING AND UPLOAD                                         ###
@@ -223,6 +235,7 @@ EVENT_BUILD_MAPPING = {
     'outgoing_payment_unverified_': build_outgoing_payment_unverified_event,
     'outgoing_payment_verified_': build_outgoing_payment_verified_event,
     'outgoing_payment_rejected_': build_outgoing_payment_rejected_event,
+    'inter_account_transfer_': build_inter_account_transfer_event,
 }
 
 
