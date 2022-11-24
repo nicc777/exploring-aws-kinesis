@@ -13,6 +13,7 @@ Parameters:
 
   ArchiveBucketNameParam:
     Type: String
+
   ArchiveInventoryBucketNameParam:
     Type: String
 
@@ -414,6 +415,8 @@ Resources:
       Environment:
         Variables: 
           DEBUG: "1"
+          DYNAMODB_OBJECT_TABLE_NAME:
+            Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: "s3_new_event_bucket_object_create.zip"
@@ -517,6 +520,8 @@ Resources:
       Environment:
         Variables: 
           DEBUG: "1"
+          DYNAMODB_OBJECT_TABLE_NAME:
+            Fn::ImportValue: !Sub "${DynamoDbStackNameParam}-ObjectTableName"
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: "s3_new_event_bucket_object_delete.zip"
