@@ -25,6 +25,7 @@
     - [Message of a S3 Create Type Event (PUT)](#message-of-a-s3-create-type-event-put)
     - [Message of a S3 Remove Type Event (DELETE)](#message-of-a-s3-remove-type-event-delete)
   - [DynamoDB](#dynamodb)
+  - [Operational Processes involving Restoring Services and Applying Point-In-Time Recovery with Event Replay](#operational-processes-involving-restoring-services-and-applying-point-in-time-recovery-with-event-replay)
 
 # Lab 4 Goals
 
@@ -582,3 +583,13 @@ The DynamoDB COnsistent Read story is still problematic for me. I have abandoned
 After I concluded basic functional testing, I cleared the bucket and ran all transactions again. However, I noticed the final balance was wrong and upon further investigation I found that the transactions verifying a previous transaction were all failing because the lookup of the previous transaction failed. It would appear that using a consistent read operation does not yield the intended result, as the previous transaction record (unverified transaction) was not yet available at the time of the read request.
 
 After numerous scenarios and testing, I have concluded that some sleep time is required between a unverified event and a verified event referencing the previous event. For small data samples, 5 seconds seems to be perfectly fine. However, this sleep time should be kept in mind when replaying a lot of transactions (1000's?). This makes me start to think of solutions around replaying of events. It really looks like it depends from where you want to replay: either from the source event (S3) or will it be fine to record the DynamoDB events somehow and just replay those? Perhaps I should stream DynamoDB inserts/updates on a queue as well? Assuming these are all VERIFIED updates, the replay should not have to worry about any verification - just push the updates through...
+
+## Operational Processes involving Restoring Services and Applying Point-In-Time Recovery with Event Replay
+
+My initial assessment can be described as the following:
+
+* There is a concept of a transactional pipeline where a transactional message flows through several components before finally and processed and the final transaction state is capture in the accounting table with the balances being updated.
+* Infrastructure failures and other service interruptions can happen at any point in the transactional pipeline and may cause various issues requiring more than on approach to service recovery.
+* A number of flags and other parameters are required to instruct the Lambda functions in the transactional pipeline what to process and what to ignore. It could be transaction from a specific channel must be ignored, or transaction for a specific account (or accounts) or everything.
+* During a DynamoDB table restore a new table is created. Lambda functions therefore has to be instructed of the new tables somehow.
+* At this early point already I can recognize that the operational processes also require additional scripts in order to orchestrate the recovery process.
