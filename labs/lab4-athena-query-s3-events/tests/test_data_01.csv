@@ -11,3 +11,4 @@
 "2022","10","5","1200","outgoing_payment_unverified_","100010","1000","Pay ABC","Internet","Pay ABC","n/a","0","0","0","0","0","0","0","0","BBB Bank","8800880088","n/a","AAA Bank","Pay ABC","n/a","n/a"
 "2022","10","5","1205","outgoing_payment_unverified_","100010","100","Pay ABC","Internet","Pay ABC","n/a","0","0","0","0","0","0","0","0","BBB Bank","8800880088","n/a","AAA Bank","Pay ABC","n/a","n/a"
 "2022","10","5","1600","outgoing_payment_rejected_","100010","100","Pay ABC","Internet","Pay ABC","n/a","0","0","0","0","0","0","0","0","BBB Bank","8800880088","r0000011","AAA Bank","Pay ABC","n/a","Account not found"
+"2022","10","7","1000","inter_account_transfer_","100030","400","n/a","Internet","My Transfer","n/a","0","0","0","0","0","0","0","0","n/a","100010","n/a","n/a","n/a","n/a","n/a"
