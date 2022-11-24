@@ -159,7 +159,7 @@ def get_dynamodb_record_by_key(
     try:
         client=get_client(client_name='dynamodb', region='eu-central-1', boto3_clazz=boto3_clazz)
         response = client.get_item(
-            TableName='lab4_accounts_v1',
+            TableName=os.getenv('DYNAMODB_ACCOUNTS_TABLE_NAME'),
             Key=key,
             ConsistentRead=True,
             ReturnConsumedCapacity='TOTAL'
@@ -197,7 +197,7 @@ def get_dynamodb_record_by_indexed_query(
         response = dict()
         if next_token is None:
             response = client.query(
-                TableName='lab4_accounts_v1',
+                TableName=os.getenv('DYNAMODB_ACCOUNTS_TABLE_NAME'),
                 IndexName=index_name,
                 Select='ALL_ATTRIBUTES',
                 Limit=10,
@@ -207,7 +207,7 @@ def get_dynamodb_record_by_indexed_query(
             )
         else:
             response = client.query(
-                TableName='lab4_accounts_v1',
+                TableName=os.getenv('DYNAMODB_ACCOUNTS_TABLE_NAME'),
                 IndexName=index_name,
                 Select='ALL_ATTRIBUTES',
                 Limit=10,
@@ -257,7 +257,7 @@ def get_dynamodb_record_by_primary_index_query_with_filter(
         response = dict()
         if next_token is None:
             response = client.query(
-                TableName='lab4_accounts_v1',
+                TableName=os.getenv('DYNAMODB_ACCOUNTS_TABLE_NAME'),
                 Select='ALL_ATTRIBUTES',
                 Limit=10,
                 ConsistentRead=use_consistent_read,
@@ -267,7 +267,7 @@ def get_dynamodb_record_by_primary_index_query_with_filter(
             )
         else:
             response = client.query(
-                TableName='lab4_accounts_v1',
+                TableName=os.getenv('DYNAMODB_ACCOUNTS_TABLE_NAME'),
                 Select='ALL_ATTRIBUTES',
                 Limit=10,
                 ConsistentRead=use_consistent_read,
@@ -349,7 +349,7 @@ def update_object_sate(
         }
         object_state = {**object_state_key, **object_state_data}
         create_dynamodb_record(
-            table_name='lab4_event_objects_v1',
+            table_name=os.getenv('DYNAMODB_OBJECT_TABLE_NAME'),
             record_data=object_state,
             boto3_clazz=boto3_clazz,
             logger=logger
@@ -386,7 +386,7 @@ def update_object_table_add_event(
         object_event = {**object_event_key, **object_event_data}
 
         create_dynamodb_record(
-            table_name='lab4_event_objects_v1',
+            table_name=os.getenv('DYNAMODB_OBJECT_TABLE_NAME'),
             record_data=object_event,
             boto3_clazz=boto3_clazz,
             logger=logger
@@ -504,7 +504,7 @@ def _helper_commit_transaction_events(
             'EffectOnAvailableBalance'  : { 'S': '{}'.format(effect_on_available_balance)                   },
         }
         create_dynamodb_record(
-            table_name='lab4_accounts_v1',
+            table_name=os.getenv('DYNAMODB_ACCOUNTS_TABLE_NAME'),
             record_data={**event_key, **event_data},
             boto3_clazz=boto3_clazz,
             logger=logger
@@ -542,7 +542,7 @@ def _helper_commit_updated_balances(
             'Balance'                   : { 'N': '{}'.format(str(updated_balances[balance_type]))           },
         }
         create_dynamodb_record(
-            table_name='lab4_accounts_v1',
+            table_name=os.getenv('DYNAMODB_ACCOUNTS_TABLE_NAME'),
             record_data=actual_balance_data,
             boto3_clazz=boto3_clazz,
             logger=logger
@@ -1309,6 +1309,9 @@ def handler(
     boto3_clazz=boto3,
     run_from_main: bool=False
 ):
+    if os.getenv('DYNAMODB_RESTORE_IN_PROGRESS', '0') != '0':
+        logger.error('ABANDON PROCESSING - DynamoDB Restore in Progress')
+        raise Exception('Processing Abandoned due to DB Restore in progress.')
     refresh_environment_cache(logger=logger)
     if cache['Environment']['Data']['DEBUG'] is True and run_from_main is False:
         logger  = get_logger(level=logging.DEBUG)

@@ -13,6 +13,18 @@ Parameters:
     Type: String
     Description: "The S3 key of the ZIP file containing the packaged Lambda function. DO NOT include the .zip extension - it will be added automatically"
 
+  DynamoDbObjectTableName:
+    Type: String
+    Default: "lab4_event_objects_v1"
+
+  DynamoDbAccountsTableName:
+    Type: String
+    Default: "lab4_accounts_v1"
+
+  DynamoDbRestoreInProgressParam:
+    Type: String
+    Default: "0"
+
 Resources:
 
 #######################################################################################################################
@@ -168,6 +180,9 @@ Resources:
       Environment:
         Variables: 
           DEBUG: "1"
+          DYNAMODB_OBJECT_TABLE_NAME: !Ref DynamoDbObjectTableName
+          DYNAMODB_ACCOUNTS_TABLE_NAME: !Ref DynamoDbAccountsTableName
+          DYNAMODB_RESTORE_IN_PROGRESS: !Ref DynamoDbRestoreInProgressParam
       Code: 
         S3Bucket: !Ref S3SourceBucketParam
         S3Key: !Sub "${TransactionProcessingLambdaFunctionSrcZipParam}.zip"
