@@ -42,3 +42,17 @@ Create a volume for persistance:
 ```shell
 podman volume create lab4-redis
 ```
+
+Start the container:
+
+```shell
+podman run --name lab4-redis -v lab4-redis:/data -d redis redis-server --save 60 1 --loglevel warning
+```
+
+The container should now be running:
+
+```shell
+podman container ls
+CONTAINER ID  IMAGE                           COMMAND               CREATED        STATUS            PORTS       NAMES
+71c9b8a05e6f  docker.io/library/redis:latest  redis-server --sa...  8 seconds ago  Up 9 seconds ago              lab4-redis
+```
