@@ -415,6 +415,7 @@ def process_s3_record(
             if tx_processing_state != 'all-ok':
                 logger.error('Cannot Continue - Reject Message')
                 return False
+            logger.info('STEP COMPLETE: Global Transaction Processing State is OK')
 
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
