@@ -9,6 +9,7 @@ from inspect import getframeinfo, stack
 # Other imports here...
 import copy
 import redis
+import chardet 
 
 
 ###############################################################################
@@ -73,6 +74,8 @@ def refresh_environment_cache(logger=get_logger()):
             'CACHE_TTL': get_cache_ttl(logger=logger),
             'DEBUG': get_debug(),
             # Other ENVIRONMENT variables can be added here... The environment will be re-read after the CACHE_TTL 
+            'REDIS_HOST': '{}'.format(os.getenv('REDIS_HOST', 'localhost')),
+            'REDIS_PORT': int(os.getenv('REDIS_PORT', '6379'))
         }
     }
     logger.debug('cache: {}'.format((json.dumps(cache))))
@@ -133,7 +136,80 @@ def get_s3_object_payload(
 ###############################################################################
 
 
-def cache_get_tx_processing_state()
+CONFIGURED_STATES = {
+    'tx_processing_state': (
+        'pending',
+        'all-ok',
+        'emergency-stop',
+    )
+}
+
+
+def cache_create_state(
+    host: str,
+    port: int,
+    state_type: str='tx_processing_state',
+    state: str='pending',
+    state_reason: str='No Reason Provided',
+    logger=get_logger()
+)->bool:
+    try:
+        r = redis.Redis(host=host, port=port, db=0)
+        r.set('{}'.format(state_type), '{}'.format(state))
+        r.set('{}_reason'.format(state_type), '{}'.format(state_reason))
+        return True
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return False
+
+
+def cache_get_state(
+    host: str,
+    port: int,
+    state_type: str='tx_processing_state',
+    create_default_state_if_none_found: bool=True,
+    default_state_if_none_found: str='pending',
+    default_state_reason_if_none_found: str='Fresh Start',
+    logger=get_logger()
+)->str:
+    state = 'all-ok'
+    try:
+        r = redis.Redis(host=host, port=port, db=0)
+        state = r.get(state_type)
+        if state is None:
+            if create_default_state_if_none_found is True:
+                if cache_create_state(
+                    host=host,
+                    port=port,
+                    state_type='{}'.format(state_type),
+                    state='{}'.format(default_state_if_none_found),
+                    state_reason='{}'.format(default_state_reason_if_none_found),
+                    logger=logger
+                ) is False:
+                    logger.error('Failed to set initial "{}" state'.format(state_type))
+                    state = 'fail'
+                    return state
+                state = r.get('{}'.format(state_type))
+            else:
+                return None
+        
+        state_encoding = chardet.detect(state)['encoding']
+        logger.debug('Retrieved State: {}    -> encoding: {}'.format(state, state_encoding))
+        state = state.decode(state_encoding)
+
+        state_reason = r.get('{}_reason'.format(state_type))
+        state_reason_encoding = chardet.detect(state_reason)['encoding']
+        state_reason = state_reason.decode(state_reason_encoding)
+
+
+        logger.info('CACHED STATE RETRIEVED: {} ({})'.format(state, state_reason))
+        if state not in CONFIGURED_STATES[state_type]:
+            logger.error('Unrecognized value for state for "{}"'.format(state_type))
+            state = 'fail'
+            return state
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return state
 
 
 ###############################################################################
@@ -330,6 +406,16 @@ def process_s3_record(
                 )
             )
 
+            tx_processing_state = cache_get_state(
+                host=cache['Environment']['Data']['REDIS_HOST'],
+                port=cache['Environment']['Data']['REDIS_PORT'],
+                state_type='tx_processing_state',
+                logger=logger
+            )
+            if tx_processing_state != 'all-ok':
+                logger.error('Cannot Continue - Reject Message')
+                return False
+
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
         return False
@@ -364,6 +450,7 @@ def handler(
             logger.info('SUCCESSFULLY PROCESSED S3 RECORD: {}'.format(s3_record))
         else:
             logger.info('FAILED TO PROCESS S3 RECORD: {}'.format(s3_record))
+            raise Exception('FAILED TO PROCESS S3 RECORD')
     
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
 

@@ -6,6 +6,7 @@
         "boto",
         "botocore",
         "ccefab",
+        "chardet",
         "chkconfig",
         "clazz",
         "Cooldown",
