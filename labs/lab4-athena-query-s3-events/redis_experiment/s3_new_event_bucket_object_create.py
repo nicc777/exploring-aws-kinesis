@@ -31,10 +31,6 @@ def get_logger(level=logging.INFO):
     return logger
 
 
-def get_client(client_name: str, region: str='eu-central-1', boto3_clazz=boto3):
-    return boto3_clazz.client(client_name, region_name=region)
-
-
 # ADD the header as per section ``Module header functions``
 
 CACHE_TTL_DEFAULT = 600
@@ -101,6 +97,32 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 ###                      A W S    I N T E G R A T I O N                     ###
 ###                                                                         ###
 ###############################################################################
+
+
+def get_client(client_name: str, region: str='eu-central-1', boto3_clazz=boto3):
+    return boto3_clazz.client(client_name, region_name=region)
+
+
+def get_s3_object_payload(
+    s3_bucket: str,
+    s3_key: str,
+    boto3_clazz=boto3,
+    logger=get_logger()
+)->str:
+    key_json_data = ''
+    try:
+        client=get_client(client_name="s3", boto3_clazz=boto3_clazz)
+        response = client.get_object(
+            Bucket=s3_bucket,
+            Key=s3_key
+        )
+        debug_log('response={}', variable_as_list=[response,], logger=logger)
+        if 'Body' in response:
+            key_json_data = response['Body'].read().decode('utf-8')
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log('key_json_data={}', variable_as_list=[key_json_data,], logger=logger)
+    return key_json_data
 
 
 ###############################################################################
@@ -250,6 +272,32 @@ def extract_request_id(key: str, logger=get_logger())->str:
     return request_id
 
 
+def process_s3_record(
+    record: dict,
+    logger=get_logger(),
+    boto3_clazz=boto3
+)->bool:
+    logger.info('PROCESSING RECORD: {}'.format(record))
+    try:
+        if int(record['object']['size']) > 1024:
+            logger.warning('Skipping S3 record as it is larger than the acceptable maximum size of 1KiB')
+            return False
+        if validate_key_is_recognized(key=record['object']['key'], logger=logger) is True:
+            s3_payload_json = get_s3_object_payload(
+                s3_bucket=record['bucket']['name'],
+                s3_key=record['object']['key'],
+                boto3_clazz=boto3_clazz,
+                logger=logger
+            )
+            s3_payload_dict = json.loads(s3_payload_json)
+            debug_log('s3_payload_dict={}', variable_as_list=[s3_payload_dict,], logger=logger)
+            logger.info('STEP COMPLETE: S3 Payload Retrieved and Converted')
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        return False
+    return True
+
+
 ###############################################################################
 ###                                                                         ###
 ###                         M A I N    H A N D L E R                        ###
@@ -274,6 +322,10 @@ def handler(
     debug_log('s3_records={}', variable_as_list=[s3_records,], logger=logger)
     for s3_record in s3_records:
         debug_log('s3_record={}', variable_as_list=[s3_record,], logger=logger)
+        if process_s3_record(record=s3_record, logger=logger, boto3_clazz=boto3_clazz) is True:
+            logger.info('SUCCESSFULLY PROCESSED S3 RECORD: {}'.format(s3_record))
+        else:
+            logger.info('FAILED TO PROCESS S3 RECORD: {}'.format(s3_record))
     
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
 
@@ -359,6 +411,45 @@ example_event_1 = {
 }
 
 
+cash_deposit_payload = {
+    "EventTimeStamp": 1664611200,
+    "TargetAccount": "100020",
+    "Amount": "500",
+    "LocationType": "Branch A",
+    "Reference": "Open 100020",
+    "Verified": True,
+    "Currency": {
+        "100-euro-bills": "5",
+        "50-euro-bills": "0",
+        "20-euro-bills": "0",
+        "10-euro-bills": "0",
+        "50-cents": "0",
+        "20-cents": "0",
+        "10-cents": "0",
+        "5-cents": "0"
+    }
+}
+
+class AwsS3Client:
+    
+    def __init__(self, key_payload: str=''):
+        self.key_payload = key_payload
+
+    def get_object(self, *args, **kwargs):
+        return self.key_payload
+
+
+class Boto3Mock:
+    
+    def __init__(self, s3_client=AwsS3Client()):
+        self.s3_client = s3_client
+
+    def client(self, *args, **kwargs):
+        for n in args:
+            if n == 's3':
+                return self.s3_client
+
+
 if __name__ == '__main__':
     logger = logging.getLogger("my_lambda")
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(funcName)s:%(lineno)d -  %(levelname)s - %(message)s')
@@ -376,4 +467,12 @@ if __name__ == '__main__':
     else:    
         logger.setLevel(logging.INFO)
 
-    handler(event=example_event_1, context=None, logger=logger, run_from_main=True)
+    s3_client = AwsS3Client(key_payload='{}'.format(json.dumps(cash_deposit_payload)))
+
+    handler(
+        event=example_event_1, 
+        context=None, 
+        logger=logger, 
+        boto3_clazz=Boto3Mock(s3_client=s3_client),
+        run_from_main=True
+    )
