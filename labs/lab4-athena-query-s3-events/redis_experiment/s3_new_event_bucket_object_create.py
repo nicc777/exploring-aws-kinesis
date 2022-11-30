@@ -430,18 +430,58 @@ cash_deposit_payload = {
     }
 }
 
-class AwsS3Client:
-    
+
+class MockBotocoreResponseStreamingBody:
+
     def __init__(self, key_payload: str=''):
         self.key_payload = key_payload
+        if isinstance(key_payload, str):
+            self.key_payload = key_payload.encode('utf-8')
 
-    def get_object(self, *args, **kwargs):
+    def read(self, *args, **kwargs):
         return self.key_payload
 
 
-class Boto3Mock:
+class MockAwsS3Client:
     
-    def __init__(self, s3_client=AwsS3Client()):
+    def __init__(self, botocore_response_StreamingBody=MockBotocoreResponseStreamingBody()):
+        self.botocore_response_StreamingBody = botocore_response_StreamingBody
+
+    def get_object(self, *args, **kwargs):
+        response = {
+            'ResponseMetadata': {
+                'RequestId': 'AAAAAAAAAAAAAAAA', 
+                'HostId': '...', 
+                'HTTPStatusCode': 200, 
+                'HTTPHeaders': {
+                    'x-amz-id-2': '...', 
+                    'x-amz-request-id': 'AAAAAAAAAAAAAAAA', 
+                    'date': 'Thu, 24 Nov 2022 05:52:59 GMT', 
+                    'last-modified': 'Thu, 24 Nov 2022 05:52:56 GMT', 
+                    'x-amz-expiration': 'expiry-date="Fri, 02 Dec 2022 00:00:00 GMT", rule-id="lab4-new-events-qpwoeiryt-archive-lifecycle-01"', 
+                    'etag': '"f150258aeb1e6f51b0315424f99790ba"', 
+                    'accept-ranges': 'bytes', 
+                    'content-type': 'binary/octet-stream', 
+                    'server': 'AmazonS3', 
+                    'content-length': '318'
+                }, 
+                'RetryAttempts': 0
+            }, 
+            'AcceptRanges': 'bytes', 
+            'Expiration': 'expiry-date="Fri, 02 Dec 2022 00:00:00 GMT", rule-id="lab4-new-events-qpwoeiryt-archive-lifecycle-01"', 
+            'LastModified': None, 
+            'ContentLength': 318, 
+            'ETag': '"f150258aeb1e6f51b0315424f99790ba"', 
+            'ContentType': 'binary/octet-stream', 
+            'Metadata': {}, 
+            'Body': self.botocore_response_StreamingBody
+        }
+        return response
+
+
+class MockBoto3:
+    
+    def __init__(self, s3_client=MockAwsS3Client()):
         self.s3_client = s3_client
 
     def client(self, *args, **kwargs):
@@ -467,12 +507,16 @@ if __name__ == '__main__':
     else:    
         logger.setLevel(logging.INFO)
 
-    s3_client = AwsS3Client(key_payload='{}'.format(json.dumps(cash_deposit_payload)))
+    s3_client = MockAwsS3Client(
+        botocore_response_StreamingBody=MockBotocoreResponseStreamingBody(
+            key_payload='{}'.format(json.dumps(cash_deposit_payload).encode('utf-8'))
+        )
+    )
 
     handler(
         event=example_event_1, 
         context=None, 
         logger=logger, 
-        boto3_clazz=Boto3Mock(s3_client=s3_client),
+        boto3_clazz=MockBoto3(s3_client=s3_client),
         run_from_main=True
     )
