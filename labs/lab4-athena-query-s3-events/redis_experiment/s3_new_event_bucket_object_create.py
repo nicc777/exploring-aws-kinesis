@@ -511,7 +511,7 @@ if __name__ == '__main__':
     key_payload_as_str_encoded = key_payload_as_str.encode('utf-8')
     s3_client = MockAwsS3Client(
         botocore_response_StreamingBody=MockBotocoreResponseStreamingBody(
-            key_payload='{}'.format(key_payload_as_str_encoded)
+            key_payload=key_payload_as_str_encoded
         )
     )
 
