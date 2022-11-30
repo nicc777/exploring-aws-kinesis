@@ -119,6 +119,7 @@ def get_s3_object_payload(
         debug_log('response={}', variable_as_list=[response,], logger=logger)
         if 'Body' in response:
             key_json_data = response['Body'].read().decode('utf-8')
+            debug_log('type={}   key_json_data={}', variable_as_list=[type(key_json_data), key_json_data,], logger=logger)
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     debug_log('key_json_data={}', variable_as_list=[key_json_data,], logger=logger)
@@ -289,6 +290,7 @@ def process_s3_record(
                 boto3_clazz=boto3_clazz,
                 logger=logger
             )
+            debug_log('type={}   s3_payload_json={}', variable_as_list=[type(s3_payload_json), s3_payload_json,], logger=logger)
             s3_payload_dict = json.loads(s3_payload_json)
             debug_log('s3_payload_dict={}', variable_as_list=[s3_payload_dict,], logger=logger)
             logger.info('STEP COMPLETE: S3 Payload Retrieved and Converted')
@@ -435,8 +437,6 @@ class MockBotocoreResponseStreamingBody:
 
     def __init__(self, key_payload: str=''):
         self.key_payload = key_payload
-        if isinstance(key_payload, str):
-            self.key_payload = key_payload.encode('utf-8')
 
     def read(self, *args, **kwargs):
         return self.key_payload
@@ -507,9 +507,11 @@ if __name__ == '__main__':
     else:    
         logger.setLevel(logging.INFO)
 
+    key_payload_as_str = '{}'.format(json.dumps(cash_deposit_payload))
+    key_payload_as_str_encoded = key_payload_as_str.encode('utf-8')
     s3_client = MockAwsS3Client(
         botocore_response_StreamingBody=MockBotocoreResponseStreamingBody(
-            key_payload='{}'.format(json.dumps(cash_deposit_payload).encode('utf-8'))
+            key_payload='{}'.format(key_payload_as_str_encoded)
         )
     )
 
