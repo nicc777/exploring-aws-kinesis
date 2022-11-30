@@ -56,3 +56,10 @@ podman container ls
 CONTAINER ID  IMAGE                           COMMAND               CREATED        STATUS            PORTS                     NAMES
 c1e439839b07  docker.io/library/redis:latest  redis-server --sa...  4 seconds ago  Up 4 seconds ago  127.0.0.1:6379->6379/tcp  lab4-redis
 ```
+
+For python, install the client:
+
+```shell
+pip3 install redis
+```
+
