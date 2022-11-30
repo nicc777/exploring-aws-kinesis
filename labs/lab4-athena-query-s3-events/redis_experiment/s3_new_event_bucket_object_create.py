@@ -117,6 +117,80 @@ def handler(
 ###############################################################################
 
 
+example_message_1 = {
+    "Records": [
+        {
+            "eventVersion": "2.1",
+            "eventSource": "aws:s3",
+            "awsRegion": "eu-central-1",
+            "eventTime": "2022-11-24T05:52:55.504Z",
+            "eventName": "ObjectCreated:Put",
+            "userIdentity": {
+                "principalId": "AWS:AAAAAAAAAAAAAAAAAAAAA"
+            },
+            "requestParameters": {
+                "sourceIPAddress": "105.242.239.113"
+            },
+            "responseElements": {
+                "x-amz-request-id": "XXXXXXXXXXXXXXXX",
+                "x-amz-id-2": "..."
+            },
+            "s3": {
+                "s3SchemaVersion": "1.0",
+                "configurationId": "...",
+                "bucket": {
+                    "name": "lab4-new-events-qpwoeiryt",
+                    "ownerIdentity": {
+                        "principalId": "AAAAAAAAAAAAAA"
+                    },
+                    "arn": "arn:aws:s3:::lab4-new-events-qpwoeiryt"
+                },
+                "object": {
+                    "key": "cash_deposit_r0000002.event",
+                    "size": 318,
+                    "eTag": "f150258aeb1e6f51b0315424f99790ba",
+                    "sequencer": "00637F06B748921D1B"
+                }
+            }
+        }
+    ]
+}
+
+example_body_1 = {
+    "Type": "Notification",
+    "MessageId": "38b7b564-3142-5c4b-9423-ee9d39ba3c45",
+    "TopicArn": "arn:aws:sns:eu-central-1:342872205792:S3NewEventStoreNotification",
+    "Subject": "Amazon S3 Notification",
+    "Message": '{}'.format(json.dumps(example_message_1)),
+    "Timestamp": "2022-11-24T05:52:56.065Z",
+    "SignatureVersion": "1",
+    "Signature": "...",
+    "SigningCertURL": "...",
+    "UnsubscribeURL": "..."
+}
+
+example_event_1 = {
+    'Records': [
+        {
+            'messageId': '0bae8bd5-6fd4-4262-ae37-eb36ac519f1c', 
+            'receiptHandle': '...', 
+            'body': '{}'.format(json.dumps(example_body_1)), 
+            'attributes': {
+                'ApproximateReceiveCount': '1', 
+                'SentTimestamp': '1669269176107', 
+                'SenderId': 'AIDAISDDSWNBEXIA6J64K', 
+                'ApproximateFirstReceiveTimestamp': '1669269176110'
+            }, 
+            'messageAttributes': {}, 
+            'md5OfBody': 'c6ee7a53b14abc6004d1aa288757fe56', 
+            'eventSource': 'aws:sqs', 
+            'eventSourceARN': 'arn:aws:sqs:eu-central-1:342872205792:S3NewEventStoreNotificationQueue', 
+            'awsRegion': 'eu-central-1'
+        }
+    ]
+}
+
+
 if __name__ == '__main__':
     logger = logging.getLogger("my_lambda")
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(funcName)s:%(lineno)d -  %(levelname)s - %(message)s')
@@ -133,4 +207,5 @@ if __name__ == '__main__':
         logger.setLevel(logging.DEBUG)
     else:    
         logger.setLevel(logging.INFO)
-    handler(event={}, context=None, logger=logger, run_from_main=True)
+
+    handler(event=example_event_1, context=None, logger=logger, run_from_main=True)
