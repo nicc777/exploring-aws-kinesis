@@ -7,6 +7,8 @@ from datetime import datetime
 import sys
 from inspect import getframeinfo, stack
 # Other imports here...
+import copy
+import redis
 
 
 ###############################################################################
@@ -198,6 +200,54 @@ def extract_s3_event_messages(event: dict, logger=get_logger())->tuple:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     logger.info('ACCEPTED RECORDS QTY: {}'.format(len(messages)))
     return tuple(messages)
+
+
+def validate_key_is_recognized(key: str, logger=get_logger())->bool:
+    if key is None:
+        logger.error('Key cannot be None')
+        return False
+    if isinstance(key, str) is False:
+        logger.error('Key must be a string')
+        return False
+    if key.endswith('.event') is False:
+        logger.error('Key has invalid extension')
+        return False
+    for acceptable_key_prefix in ACCEPTABLE_KEY_PREFIXES:
+        if key.startswith(acceptable_key_prefix):
+            return True
+    logger.error('Key unrecognized')
+    return False
+
+
+def determine_tx_type_and_reference_account(data: dict, logger=get_logger())->dict:
+    debug_log('data={}', variable_as_list=[data,], logger=logger)
+    result = dict()
+    result['TxType'] = 'unknown'
+    result['ReferenceAccount'] = 'unknown'
+    try:
+        for key_starts_with_value, account_reference_field_name in ACCOUNT_FIELD_NAME_BASED_ON_TRANSACTION_TYPE.items():
+            if data['EventSourceDataResource']['S3Key'].startswith(key_starts_with_value):
+                logger.info('Transaction Type Match: "{}"   Reference Field Name: "{}"'.format(key_starts_with_value, account_reference_field_name))
+                result['TxType'] = TX_ACCOUNT_TYPE_ID_MAP[key_starts_with_value]
+                result['ReferenceAccount'] = data[account_reference_field_name]
+
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log('result={}', variable_as_list=[result,], logger=logger)
+    return result
+
+
+def extract_request_id(key: str, logger=get_logger())->str:
+    request_id = None
+    try:
+        for key_prefix in ACCEPTABLE_KEY_PREFIXES:
+            if key.startswith(key_prefix):
+                request_id = copy.deepcopy(key)
+                request_id = request_id.replace(key_prefix, '')
+                request_id = request_id.replace('.event', '')
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return request_id
 
 
 ###############################################################################
