@@ -115,6 +115,91 @@ def debug_log(message: str, variables_as_dict: dict=dict(), variable_as_list: li
 ###############################################################################
 
 
+SUPPORTED_EVENTS = (
+    'ObjectCreated:Put',
+)
+
+ACCEPTABLE_KEY_PREFIXES = (
+    'cash_deposit_',
+    'verify_cash_deposit_',
+    'cash_withdrawal_',
+    'incoming_payment_',
+    'outgoing_payment_unverified_',
+    'outgoing_payment_verified_',
+    'outgoing_payment_rejected_',
+    'inter_account_transfer_',
+)
+
+ACCOUNT_FIELD_NAME_BASED_ON_TRANSACTION_TYPE = {
+    # "Event Key Prefix"            : "Field Name"
+    'cash_deposit_'                 : 'TargetAccount',
+    'verify_cash_deposit_'          : 'TargetAccount',
+    'cash_withdrawal_'              : 'SourceAccount',
+    'incoming_payment_'             : 'TargetAccount',
+    'outgoing_payment_unverified_'  : 'SourceAccount',
+    'outgoing_payment_verified_'    : 'SourceAccount',
+    'outgoing_payment_rejected_'    : 'SourceAccount',
+    'inter_account_transfer_'       : 'SourceAccount',
+}
+
+
+TX_ACCOUNT_TYPE_ID_MAP = {
+    'cash_deposit_'                 : 'CashDeposit',
+    'verify_cash_deposit_'          : 'VerifyCashDeposit',
+    'cash_withdrawal_'              : 'CashWithdrawal',
+    'incoming_payment_'             : 'IncomingPayment',
+    'outgoing_payment_unverified_'  : 'UnverifiedOutgoingPayment',
+    'outgoing_payment_verified_'    : 'VerifiedOutgoingPayment',
+    'outgoing_payment_rejected_'    : 'RejectedOutgoingPayment',
+    'inter_account_transfer_'       : 'InterAccountTransfer',
+}
+
+
+def extract_body_messages_from_event_record(event_record: dict, logger=get_logger())->dict:
+    event_body_messages = dict()
+    try:
+        event_record_body = json.loads(event_record['body'])
+        event_body_messages = json.loads(event_record_body['Message'])
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    debug_log('event_body_messages={}', variable_as_list=[event_body_messages,], logger=logger)
+    return event_body_messages
+
+
+def extract_s3_record_from_event_body_message_record(event_body_message_record: dict, logger=get_logger())->dict:
+    s3_record = dict()
+    try:
+        if event_body_message_record['eventSource'] == 'aws:s3':
+            if event_body_message_record['eventName'] in SUPPORTED_EVENTS:
+                s3_record = event_body_message_record['s3']
+                logger.info('ACCEPTED S3 RECORD: s3_record={}'.format(s3_record))
+            else:
+                logger.warning('Unsupported event type: {}'.format(event_body_message_record['eventName']))
+        else:
+            logger.error('Not an S3 event. Event Source: {}'.format(event_body_message_record['eventSource']))
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        logger.error('REJECT S3 RECORD: event_body_message_record={}'.format(event_body_message_record))
+    debug_log('s3_record={}', variable_as_list=[s3_record,], logger=logger)
+    return s3_record
+
+
+def extract_s3_event_messages(event: dict, logger=get_logger())->tuple:
+    messages = list()
+    try:
+        for record in event['Records']:
+            event_record_body_message = extract_body_messages_from_event_record(event_record=record, logger=logger)
+            for s3_record in event_record_body_message['Records']:
+                extracted_s3_record = extract_s3_record_from_event_body_message_record(event_body_message_record=s3_record, logger=logger)
+                if extracted_s3_record:
+                    if len(extracted_s3_record) > 0:
+                        messages.append(extracted_s3_record)
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    logger.info('ACCEPTED RECORDS QTY: {}'.format(len(messages)))
+    return tuple(messages)
+
+
 ###############################################################################
 ###                                                                         ###
 ###                         M A I N    H A N D L E R                        ###
@@ -134,6 +219,11 @@ def handler(
         logger  = get_logger(level=logging.DEBUG)
     
     debug_log('event={}', variable_as_list=[event], logger=logger)
+
+    s3_records = extract_s3_event_messages(event=event, logger=logger)
+    debug_log('s3_records={}', variable_as_list=[s3_records,], logger=logger)
+    for s3_record in s3_records:
+        debug_log('s3_record={}', variable_as_list=[s3_record,], logger=logger)
     
     return {"Result": "Ok", "Message": None}    # Adapt to suite the use case....
 
