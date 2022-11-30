@@ -294,6 +294,32 @@ def process_s3_record(
             s3_payload_dict = json.loads(s3_payload_json)
             debug_log('s3_payload_dict={}', variable_as_list=[s3_payload_dict,], logger=logger)
             logger.info('STEP COMPLETE: S3 Payload Retrieved and Converted')
+
+
+            request_id = extract_request_id(key=record['object']['key'], logger=logger)
+            if request_id is None:
+                logger.error('Unable to determine request ID - rejecting event.')
+                return False
+            s3_payload_dict['RequestId'] = request_id
+            logger.info('STEP COMPLETE: S3 Payload Enriched with Request ID')
+
+
+            s3_payload_dict['EventSourceDataResource'] = dict()
+            s3_payload_dict['EventSourceDataResource']['S3Key'] = record['object']['key']
+            s3_payload_dict['EventSourceDataResource']['S3Bucket'] = record['bucket']['name']
+            logger.info('STEP COMPLETE: S3 Payload Enriched with Event Source Data')
+
+
+            tx_type_and_reference_account = determine_tx_type_and_reference_account(data=s3_payload_dict, logger=logger)
+            s3_payload_dict['TransactionType'] = tx_type_and_reference_account['TxType']
+            s3_payload_dict['ReferenceAccount'] = tx_type_and_reference_account['ReferenceAccount']
+            logger.info(
+                'STEP COMPLETE: Transaction Type "{}" identified for reference account "{}"'.format(
+                    tx_type_and_reference_account['TxType'],
+                    tx_type_and_reference_account['ReferenceAccount']
+                )
+            )
+
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
         return False
