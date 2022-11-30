@@ -25,3 +25,5 @@ $$$$$$$$\ $$  /\$$\ $$$$$$$  |\$$$$$$$\ $$ |      $$ |$$ | $$ | $$ |\$$$$$$$\ $$
 
 > Logo created with [http://patorjk.com/software/taag/](http://patorjk.com/software/taag/#p=display&f=Big%20Money-nw&t=R%20E%20D%20I%20S%0AExperiment)
 
+> _**Note**_: I am also using this opportunity to experiment with [Podman](https://podman.io/) as a replacement for Docker, since the latter is going all commercial with less and less "opensourceness".
+
