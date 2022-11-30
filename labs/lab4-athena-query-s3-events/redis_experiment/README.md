@@ -57,9 +57,31 @@ CONTAINER ID  IMAGE                           COMMAND               CREATED     
 c1e439839b07  docker.io/library/redis:latest  redis-server --sa...  4 seconds ago  Up 4 seconds ago  127.0.0.1:6379->6379/tcp  lab4-redis
 ```
 
+The log for my experiment was obtained by running `podman logs lab4-redis` and yielded the following output:
+
+```text
+1:C 30 Nov 2022 06:30:20.319 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+1:C 30 Nov 2022 06:30:20.319 # Redis version=7.0.5, bits=64, commit=00000000, modified=0, pid=1, just started
+1:C 30 Nov 2022 06:30:20.319 # Configuration loaded
+1:M 30 Nov 2022 06:30:20.320 # Server initialized
+1:M 30 Nov 2022 06:30:20.320 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+```
+
 For python, install the client:
 
 ```shell
 pip3 install redis
 ```
+
+Perform a basic test as per the [GitHub Example](https://github.com/redis/redis-py#basic-example):
+
+```python
+>>> import redis
+>>> r = redis.Redis(host='localhost', port=6379, db=0)
+>>> r.set('foo', 'bar')
+True
+>>> r.get('foo')
+b'bar'
+```
+
 
