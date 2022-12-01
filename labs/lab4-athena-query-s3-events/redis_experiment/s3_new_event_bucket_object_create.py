@@ -540,18 +540,18 @@ TRANSACTION_STEPS_BY_TYPE = {
         'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False },
     },
     'UnverifiedOutgoingPayment': {
-        'CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False },
-        'CheckForAvailableFunds'        :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False },
-        'SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False },
-        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False },
-        'SendToExternalInstitution'     :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True  },
-        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True  },
-        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False },
+        'CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        'CheckForAvailableFunds'        :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        'SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        'SendToExternalInstitution'     :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },
+        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },
+        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
     },
     'VerifiedOutgoingPayment': {
-        'RetrieveReferencedTransaction' :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False },
-        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False },
-        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False },
+        'RetrieveReferencedTransaction' :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
     },
     'RejectedOutgoingPayment': {
         'CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
@@ -580,8 +580,8 @@ TRANSACTION_STEPS_BY_TYPE = {
     'verify_cash_deposit_'          : 'TargetAccount',
     'cash_withdrawal_'              : 'SourceAccount',
     'incoming_payment_'             : 'TargetAccount',
-    'outgoing_payment_unverified_'  : 'SourceAccount',
-    'outgoing_payment_verified_'    : 'SourceAccount',
+    
+    
     
     
 """
