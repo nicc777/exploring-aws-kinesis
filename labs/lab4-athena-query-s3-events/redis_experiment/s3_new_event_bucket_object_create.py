@@ -514,15 +514,24 @@ def update_object_table_add_event(
 
 TRANSACTION_STEPS_BY_TYPE = {
     'CashDeposit': {
-
+        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessing': False   },
+        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessing': False   },
+        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessing': True    },
     },
-     'VerifyCashDeposit': {},
-     'CashWithdrawal': {},
-     'IncomingPayment': {},
-     'UnverifiedOutgoingPayment': {},
-     'VerifiedOutgoingPayment': {},
-     'RejectedOutgoingPayment': {},
-     'InterAccountTransfer': {},
+    'VerifyCashDeposit': {
+        'CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessing': False   },
+        'RetrieveReferencedTransaction' :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessing': False   },
+        'SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessing': False   },
+        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessing': False   },
+        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessing': False   },
+        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessing': True    },
+    },
+    'CashWithdrawal': {},
+    'IncomingPayment': {},
+    'UnverifiedOutgoingPayment': {},
+    'VerifiedOutgoingPayment': {},
+    'RejectedOutgoingPayment': {},
+    'InterAccountTransfer': {},
 }
 
 
