@@ -512,6 +512,20 @@ def update_object_table_add_event(
 ###############################################################################
 
 
+TRANSACTION_STEPS_BY_TYPE = {
+    'CashDeposit': {
+
+    },
+     'VerifyCashDeposit': {},
+     'CashWithdrawal': {},
+     'IncomingPayment': {},
+     'UnverifiedOutgoingPayment': {},
+     'VerifiedOutgoingPayment': {},
+     'RejectedOutgoingPayment': {},
+     'InterAccountTransfer': {},
+}
+
+
 def process_s3_record(
     record: dict,
     logger=get_logger(),
