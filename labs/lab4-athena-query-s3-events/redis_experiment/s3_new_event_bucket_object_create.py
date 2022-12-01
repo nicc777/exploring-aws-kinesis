@@ -635,6 +635,8 @@ def process_s3_record(
                 return False
             logger.info('STEP COMPLETE: Account Processing State is OK')
 
+            # TODO Set-up the transaction tracking for the account in the cache (Transaction Steps)
+
             update_object_table_add_event(
                 record=record, 
                 transaction_data=s3_payload_dict,
