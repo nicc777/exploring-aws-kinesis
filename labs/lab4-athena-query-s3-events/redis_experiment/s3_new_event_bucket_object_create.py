@@ -10,6 +10,7 @@ from inspect import getframeinfo, stack
 import copy
 import redis
 import chardet 
+from decimal import Decimal
 
 
 ###############################################################################
@@ -127,6 +128,27 @@ def get_s3_object_payload(
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     debug_log('key_json_data={}', variable_as_list=[key_json_data,], logger=logger)
     return key_json_data
+
+
+def create_dynamodb_record(
+    record_data: dict,
+    boto3_clazz=boto3,
+    logger=get_logger()
+)->bool:
+    try:
+        client=get_client(client_name='dynamodb', region='eu-central-1', boto3_clazz=boto3_clazz)
+        response = client.put_item(
+            TableName=os.getenv('DYNAMODB_OBJECT_TABLE_NAME'),
+            Item=record_data,
+            ReturnValues='NONE',
+            ReturnConsumedCapacity='TOTAL',
+            ReturnItemCollectionMetrics='SIZE'
+        )
+        debug_log(message='response={}', variable_as_list=[response,], logger=logger)
+        return True
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+    return False
 
 
 ###############################################################################
@@ -351,6 +373,135 @@ def extract_request_id(key: str, logger=get_logger())->str:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
     return request_id
 
+def update_object_table(
+    record: dict, 
+    transaction_data: dict,
+    tx_type_and_reference_account: dict,
+    event_type: str='InitialEvent',
+    boto3_clazz=boto3,
+    logger=get_logger()
+):
+    try:
+        reference_account_number = tx_type_and_reference_account['ReferenceAccount']
+        if reference_account_number is None:
+            logger.error('Invalid Account Number')
+            return
+        if isinstance(reference_account_number, str) is False:
+            logger.error('Invalid Account Number Object Type')
+            return
+        tx_date = Decimal(datetime.utcfromtimestamp(transaction_data['EventTimeStamp']).strftime('%Y%m%d'))
+        tx_time = Decimal(datetime.utcfromtimestamp(transaction_data['EventTimeStamp']).strftime('%H%M%S'))
+        zero = Decimal('0')
+        if tx_date.compare(zero) <= 0:
+            logger.error('Invalid tx_date value')
+            return
+        if tx_time.compare(zero) <= 0:
+            logger.error('Invalid tx_date value')
+            return
+
+        
+        object_state_key = {
+            'PK'                : { 'S'     : 'KEY#{}'.format(record['object']['key'])              },
+            'SK'                : { 'S'     : 'STATE'                                               },
+        }
+        object_state_data = {
+            'TransactionDate'   : { 'N'     : '{}'.format(tx_date)                                  },
+            'TransactionTime'   : { 'N'     : '{}'.format(tx_time)                                  },
+            'InEventBucket'     : { 'BOOL'  : True                                                  },
+            'InArchiveBucket'   : { 'BOOL'  : False                                                 },
+            'InRejectedBucket'  : { 'BOOL'  : False                                                 },
+            'AccountNumber'     : { 'S'     : '{}'.format(reference_account_number)                 },
+            'Processed'         : { 'BOOL'  : False                                                 },
+        }
+        object_state = {**object_state_key, **object_state_data}
+        
+
+        object_event_key = {
+            'PK'                : { 'S'     : 'KEY#{}'.format(record['object']['key'])              },
+            'SK'                : { 'S'     : 'EVENT#{}'.format(transaction_data['EventTimeStamp']) },
+        }
+        object_event_data = {
+            'TransactionDate'   : { 'N'     : '{}'.format(tx_date)                                  },
+            'TransactionTime'   : { 'N'     : '{}'.format(tx_time)                                  },
+            'EventType'         : { 'S'     : event_type                                        },
+            'AccountNumber'     : { 'S'     : '{}'.format(reference_account_number)                 },
+            'ErrorState'        : { 'BOOL'  : False                                                 },
+            'ErrorReason'       : { 'S'     : 'no-error'                                            },
+        }
+        object_event = {**object_event_key, **object_event_data}
+
+
+        create_dynamodb_record(
+            record_data=object_state,
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
+        logger.info('OBJECT STATE RECORD CREATED')
+        create_dynamodb_record(
+            record_data=object_event,
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
+        logger.info('OBJECT STATE EVENT RECORD CREATED')
+
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
+
+def update_object_table_add_event(
+    record: dict, 
+    transaction_data: dict,
+    tx_type_and_reference_account: dict,
+    event_type: str='InitialEvent',
+    is_error: bool=False,
+    error_message: str='no-error',
+    boto3_clazz=boto3,
+    logger=get_logger()
+):
+    try:
+        reference_account_number = tx_type_and_reference_account['ReferenceAccount']
+        if reference_account_number is None:
+            logger.error('Invalid Account Number')
+            return
+        if isinstance(reference_account_number, str) is False:
+            logger.error('Invalid Account Number Object Type')
+            return
+        tx_date = Decimal(datetime.utcfromtimestamp(transaction_data['EventTimeStamp']).strftime('%Y%m%d'))
+        tx_time = Decimal(datetime.utcfromtimestamp(transaction_data['EventTimeStamp']).strftime('%H%M%S'))
+        zero = Decimal('0')
+        if tx_date.compare(zero) <= 0:
+            logger.error('Invalid tx_date value')
+            return
+        if tx_time.compare(zero) <= 0:
+            logger.error('Invalid tx_date value')
+            return
+
+        object_event_key = {
+            'PK'                : { 'S'     : 'KEY#{}'.format(record['object']['key'])              },
+            'SK'                : { 'S'     : 'EVENT#{}'.format(transaction_data['EventTimeStamp']) },
+        }
+        object_event_data = {
+            'TransactionDate'   : { 'N'     : '{}'.format(tx_date)                                  },
+            'TransactionTime'   : { 'N'     : '{}'.format(tx_time)                                  },
+            'EventType'         : { 'S'     : event_type                                            },
+            'AccountNumber'     : { 'S'     : '{}'.format(reference_account_number)                 },
+            'ErrorState'        : { 'BOOL'  : is_error                                              },
+            'ErrorReason'       : { 'S'     : error_message                                         },
+        }
+        object_event = {**object_event_key, **object_event_data}
+
+
+        logger.info('OBJECT STATE RECORD CREATED')
+        create_dynamodb_record(
+            record_data=object_event,
+            boto3_clazz=boto3_clazz,
+            logger=logger
+        )
+        logger.info('OBJECT STATE EVENT RECORD CREATED')
+
+    except:
+        logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+
 
 ###############################################################################
 ###                                                                         ###
@@ -416,6 +567,71 @@ def process_s3_record(
                 logger.error('Cannot Continue - Reject Message')
                 return False
             logger.info('STEP COMPLETE: Global Transaction Processing State is OK')
+
+            update_object_table(
+                record=record, 
+                transaction_data=s3_payload_dict,
+                tx_type_and_reference_account=tx_type_and_reference_account,
+                event_type='InitialEvent',
+                boto3_clazz=boto3_clazz,
+                logger=logger
+            )
+            logger.info('STEP COMPLETE: Event Object Table Updated')
+
+
+            if tx_type_and_reference_account['TxType'] == 'unknown':
+                logger.error(
+                    'Transaction Type not recognized and/or not supported. The Transaction will NOT be send for further processing. S3 bucket "{}" key "{}"'.format(
+                        record['object']['key'],
+                        record['bucket']['name']
+                    )
+                )
+                update_object_table_add_event(
+                    record=record, 
+                    transaction_data=s3_payload_dict,
+                    tx_type_and_reference_account=tx_type_and_reference_account,
+                    event_type='TxAbortEvent',
+                    is_error=True,
+                    error_message='Transaction Type Not Recognized',
+                    boto3_clazz=boto3_clazz,
+                    logger=logger
+                )
+                logger.info('STEP COMPLETE: Event Object Table Updated with Event')
+                return False
+
+
+            if tx_type_and_reference_account['ReferenceAccount'] == 'unknown':
+                logger.error(
+                    'Reference Account Number not recognized and/or not supported. The Transaction will NOT be send for further processing. S3 bucket "{}" key "{}"'.format(
+                        record['object']['key'],
+                        record['bucket']['name']
+                    )
+                )
+                update_object_table_add_event(
+                    record=record, 
+                    transaction_data=s3_payload_dict,
+                    tx_type_and_reference_account=tx_type_and_reference_account,
+                    event_type='TxAbortEvent',
+                    is_error=True,
+                    error_message='Reference Account Number Not Recognized',
+                    boto3_clazz=boto3_clazz,
+                    logger=logger
+                )
+                logger.info('STEP COMPLETE: Event Object Table Updated with Event')
+                return False
+
+
+            update_object_table_add_event(
+                record=record, 
+                transaction_data=s3_payload_dict,
+                tx_type_and_reference_account=tx_type_and_reference_account,
+                event_type='InitialEvent',
+                is_error=False,
+                error_message='no-error',
+                boto3_clazz=boto3_clazz,
+                logger=logger
+            )
+            logger.info('STEP COMPLETE: Event Object Table Updated with Event')
 
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
@@ -603,15 +819,49 @@ class MockAwsS3Client:
         return response
 
 
+class MockDynamoDbClient:
+
+    def __init__(self, response: dict=dict()):
+        self.response = {
+            'ConsumedCapacity': {
+                'TableName': 'lab4_event_objects_v1', 
+                'CapacityUnits': 2.0
+            }, 
+            'ResponseMetadata': {
+                'RequestId': '...', 
+                'HTTPStatusCode': 200, 
+                'HTTPHeaders': {
+                    'server': 'Server', 
+                    'date': 'Thu, 01 Dec 2022 06:44:52 GMT', 
+                    'content-type': 'application/x-amz-json-1.0', 
+                    'content-length': '78', 
+                    'connection': 'keep-alive', 
+                    'x-amzn-requestid': '...', 
+                    'x-amz-crc32': '2469452655'
+                }, 
+                'RetryAttempts': 0
+            }
+        }
+        if len(response) > 0:
+            self.response = response
+
+    def put_item(self, *args, **kwargs):
+        return self.response
+
+
 class MockBoto3:
     
-    def __init__(self, s3_client=MockAwsS3Client()):
+    def __init__(self, s3_client=MockAwsS3Client(), dynamodb_client=MockDynamoDbClient()):
         self.s3_client = s3_client
+        self.dynamodb_client = dynamodb_client
 
     def client(self, *args, **kwargs):
         for n in args:
             if n == 's3':
                 return self.s3_client
+            elif n == 'dynamodb':
+                return self.dynamodb_client
+        raise Exception('LOCAL MOCK FAIL: Unknown client requested.')
 
 
 if __name__ == '__main__':
