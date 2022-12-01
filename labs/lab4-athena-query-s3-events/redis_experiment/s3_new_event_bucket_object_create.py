@@ -561,7 +561,18 @@ TRANSACTION_STEPS_BY_TYPE = {
         'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True  },
         'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False },
     },
-    'InterAccountTransfer': {},
+    'InterAccountTransfer': {
+        'CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'TargetAccountFieldName': ''    },  # Account 1
+        'BuildSecondaryAccountRecord'   :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'TargetAccountFieldName': ''    },  # Account 2
+        'CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'TargetAccountFieldName': ''    },  # Account 2
+        'SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'TargetAccountFieldName': ''    },  # Account 1
+        'SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'TargetAccountFieldName': ''    },  # Account 2
+        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'TargetAccountFieldName': ''    },  # Account 1
+        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'TargetAccountFieldName': ''    },  # Account 2
+        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'TargetAccountFieldName': ''    },  # Account 1
+        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'TargetAccountFieldName': ''    },  # Account 2
+        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False },
+    },
 }
 
 
