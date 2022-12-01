@@ -514,71 +514,67 @@ def update_object_table_add_event(
 
 TRANSACTION_STEPS_BY_TYPE = {
     'CashDeposit': {
-        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False },
-        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True  },
-        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False },
+        '001_CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
+        '002_UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },
+        '002_UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
     },
     'VerifyCashDeposit': {
-        'CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
-        'RetrieveReferencedTransaction' :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
-        'SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
-        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
-        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },
-        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
+        '001_CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
+        '002_RetrieveReferencedTransaction' :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
+        '003_SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
+        '004_CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
+        '005_UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },
+        '006_UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
     },
     'CashWithdrawal': {
-        'CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'CheckForAvailableFunds'        :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },
-        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
+        '001_CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '002_CheckForAvailableFunds'        :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '003_SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '004_CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '005_UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },
+        '006_UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
     },
     'IncomingPayment': {
-        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
-        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },
-        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
+        '001_CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
+        '002_UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },
+        '003_UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
     },
     'UnverifiedOutgoingPayment': {
-        'CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'CheckForAvailableFunds'        :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'SendToExternalInstitution'     :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },
-        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },
-        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
+        '001_CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '002_CheckForAvailableFunds'        :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '003_SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '004_CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '005_SendToExternalInstitution'     :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },
+        '006_UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },
+        '007_UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
     },
     'VerifiedOutgoingPayment': {
-        'RetrieveReferencedTransaction' :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '001_RetrieveReferencedTransaction' :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '002_CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '003_UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
     },
     'RejectedOutgoingPayment': {
-        'CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'RetrieveReferencedTransaction' :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
-        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },
-        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
+        '001_CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '002_RetrieveReferencedTransaction' :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '003_SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '004_CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },
+        '005_UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },
+        '006_UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
     },
     'InterAccountTransfer': {
-        'CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },  # Account 1
-        'BuildSecondaryAccountRecord'   :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },  # Account 2
-        'CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },  # Account 2
-        'SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },  # Account 1
-        'SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },  # Account 2
-        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },  # Account 1
-        'CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },  # Account 2
-        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },  # Account 1
-        'UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },  # Account 2
-        'UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
+        '001_CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'SourceAccount'    },  # Account 1
+        '002_BuildSecondaryAccountRecord'   :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },  # Account 2
+        '003_CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },  # Account 2
+        '004_SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },  # Account 1
+        '005_SetUpdatedBalances'            :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },  # Account 2
+        '006_CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },  # Account 1
+        '007_CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },  # Account 2
+        '008_UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'SourceAccount'    },  # Account 1
+        '009_UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },  # Account 2
+        '010_UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
     },
 }
 
-"""
-    'cash_deposit_'                 : 'TargetAccount',
-
-"""
 
 def process_s3_record(
     record: dict,
