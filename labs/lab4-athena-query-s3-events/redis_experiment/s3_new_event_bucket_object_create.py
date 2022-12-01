@@ -225,12 +225,14 @@ def cache_get_state(
 
 
         logger.info('CACHED STATE RETRIEVED: {} ({})'.format(state, state_reason))
-        if state not in CONFIGURED_STATES[state_type]:
-            logger.error('Unrecognized value for state for "{}"'.format(state_type))
-            state = 'fail'
-            return state
+        if state_type.startswith('account_state_') is False:
+            if state not in CONFIGURED_STATES[state_type]:
+                logger.error('Unrecognized value for state for "{}"'.format(state_type))
+                state = 'fail'
+                return state
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
+        state = 'fail'
     return state
 
 
@@ -620,6 +622,18 @@ def process_s3_record(
                 logger.info('STEP COMPLETE: Event Object Table Updated with Event')
                 return False
 
+            account_processing_state = cache_get_state(
+                host=cache['Environment']['Data']['REDIS_HOST'],
+                port=cache['Environment']['Data']['REDIS_PORT'],
+                state_type='account_state_{}'.format(tx_type_and_reference_account['ReferenceAccount']),
+                default_state_if_none_found='all-ok',
+                default_state_reason_if_none_found='Previous Account State Instance Not Found - Assuming New Account and ALL OK',
+                logger=logger
+            )
+            if account_processing_state != 'all-ok':
+                logger.error('Cannot Continue - Reject Message')
+                return False
+            logger.info('STEP COMPLETE: Account Processing State is OK')
 
             update_object_table_add_event(
                 record=record, 
