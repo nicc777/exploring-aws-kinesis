@@ -700,6 +700,26 @@ def process_s3_record(
             logger.info('STEP COMPLETE: Account Processing State is OK')
 
             # TODO Set-up the transaction tracking for the account in the cache (Transaction Steps)
+            transaction_workflow_config = TRANSACTION_STEPS_BY_TYPE[tx_type_and_reference_account['TxType']]
+            qty_steps = len(transaction_workflow_config)
+            cache_create_state(
+                host=cache['Environment']['Data']['REDIS_HOST'],
+                port=cache['Environment']['Data']['REDIS_PORT'],
+                state_type='tx_flow_{}_steps_qty'.format(request_id),
+                state='{}'.format(qty_steps),
+                state_reason='Workflow Setup for event request ID {}'.format(request_id),
+                logger=logger
+            )
+            for key, val in transaction_workflow_config.items():
+                redis_key = 'tx_flow_{}_{}'.format(request_id, key)
+                cache_create_state(
+                    host=cache['Environment']['Data']['REDIS_HOST'],
+                    port=cache['Environment']['Data']['REDIS_PORT'],
+                    state_type=redis_key,
+                    state='{}'.format(val),
+                    state_reason='Workflow Setup for event request ID {} - step named "{}"'.format(request_id, key),
+                    logger=logger
+                )
 
             update_object_table_add_event(
                 record=record, 
