@@ -716,7 +716,7 @@ def process_s3_record(
                     host=cache['Environment']['Data']['REDIS_HOST'],
                     port=cache['Environment']['Data']['REDIS_PORT'],
                     state_type=redis_key,
-                    state='{}'.format(val),
+                    state='{}'.format(json.dumps(val)),
                     state_reason='Workflow Setup for event request ID {} - step named "{}"'.format(request_id, key),
                     logger=logger
                 )
