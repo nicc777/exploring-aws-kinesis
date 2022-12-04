@@ -518,7 +518,7 @@ TRANSACTION_STEPS_BY_TYPE = {
     'CashDeposit': {
         '001_CommitTransactionEvent'        :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
         '002_UpdateBalanceRecords'          :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': True,     'ReferenceAccountFieldName': 'TargetAccount'    },
-        '002_UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
+        '003_UpdateObjectStatus'            :   { 'BlockAccountStateOnFail': False, 'BlockGlobalTransactionProcessingOnFail': True,     'RollbackOnFail': False,    'ReferenceAccountFieldName': None               },
     },
     'VerifyCashDeposit': {
         '001_CalculateUpdatedBalances'      :   { 'BlockAccountStateOnFail': True,  'BlockGlobalTransactionProcessingOnFail': False,    'RollbackOnFail': False,    'ReferenceAccountFieldName': 'TargetAccount'    },
@@ -719,7 +719,7 @@ def process_s3_record(
                     port=cache['Environment']['Data']['REDIS_PORT'],
                     state_type=redis_key,
                     state='{}'.format(json.dumps(val)),
-                    state_reason='Workflow Setup for event request ID {} - step named "{}"'.format(request_id, key),
+                    create_state_reason=False,
                     logger=logger
                 )
 
