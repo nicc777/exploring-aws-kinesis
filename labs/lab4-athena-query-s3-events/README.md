@@ -357,6 +357,8 @@ From the diagram, the following errors could occur:
 
 From what I can see, it is crucial for the Transaction Processing Lambda functions (7) to know the state of the pipeline and account before proceeding with the transaction.
 
+> _**Important**_: Not all failures will lead to the whole system needed be stopped to resolve an error. Some problems, for example in DynamoDB, will lead to this scenario where everything has to suspend operations until the database is available again. However, sometimes only one particular account has an issue (inconsistency perhaps?), while will require a lock on operations only for that account, while all other transactions are processed as per normal. Therefore, operational processes have to run within a certain context, knowing what the scope of the problem is.
+
 I am going to experiment with [AWS Elastic Cache Global Datastore Service](https://www.amazonaws.cn/en/elasticache/global-datastore/) as a pipeline state cache.
 
 # Implementation
