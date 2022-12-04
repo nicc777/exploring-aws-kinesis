@@ -173,12 +173,14 @@ def cache_create_state(
     state_type: str='tx_processing_state',
     state: str='pending',
     state_reason: str='No Reason Provided',
+    create_state_reason: bool=True,
     logger=get_logger()
 )->bool:
     try:
         r = redis.Redis(host=host, port=port, db=0)
         r.set('{}'.format(state_type), '{}'.format(state))
-        r.set('{}_reason'.format(state_type), '{}'.format(state_reason))
+        if create_state_reason is True:
+            r.set('{}_reason'.format(state_type), '{}'.format(state_reason))
         return True
     except:
         logger.error('EXCEPTION: {}'.format(traceback.format_exc()))
