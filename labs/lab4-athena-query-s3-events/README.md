@@ -366,6 +366,14 @@ I am going to experiment with [AWS Elastic Cache Global Datastore Service](https
 
 ![AWS Architecture](../../images/design-Lab4-AWS_Architecture.drawio.png)
 
+Adding elastic cache will require the Lambda functions to also be deployed in a VPC in order for all the Security Groups to be properly set-up to allow access from the Lambda Functions to the Redis Cache.
+
+The Redis Cache will be used as a state repository and will control two types of state:
+
+1. Global state, which will either allow transaction processing or not
+2. Account level state, which allows transaction processing on individual account level.
+
+TODO - `I still have to work out a lot of the implementation details`
 
 # Implementation
 
