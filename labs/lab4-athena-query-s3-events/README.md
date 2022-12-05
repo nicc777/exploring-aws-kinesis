@@ -364,7 +364,7 @@ I am going to experiment with [AWS Elastic Cache Global Datastore Service](https
 
 ## AWS Infrastructure
 
-TODO
+![AWS Architecture](../../images/design-Lab4-AWS_Architecture.drawio.png)
 
 
 # Implementation
