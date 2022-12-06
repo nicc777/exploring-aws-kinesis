@@ -83,6 +83,8 @@ def build_cash_deposit_event(data: dict)->dict:
     event_data['Currency']['10-cents']          = data['Coins-10']
     event_data['Currency']['5-cents']           = data['Coins-5']
 
+    event_data['CustomerNumber']                = data['CustomerNumber']
+
     return event_data
 
 
@@ -114,6 +116,8 @@ def build_verify_cash_deposit_event(data: dict)->dict:
     event_data['VerifiedByEmployeeId']          = data['Verified by Employee ID']
     event_data['FinalFinding']                  = data['Final Finding']
 
+    event_data['CustomerNumber']                = data['CustomerNumber']
+
     return event_data
 
 
@@ -127,6 +131,7 @@ def build_incoming_payment_event(data: dict)->dict:
     event_data['SourceInstitution']             = data['Source Bank']
     event_data['SourceAccount']                 = data['Source Reference']
     event_data['Reference']                     = data['Reference']
+    event_data['CustomerNumber']                = data['CustomerNumber']
 
     return event_data
 
@@ -141,6 +146,7 @@ def build_outgoing_payment_unverified_event(data: dict)->dict:
     event_data['TargetInstitution']             = data['Destination Bank']
     event_data['TargetAccount']                 = data['Destination Account Reference']
     event_data['Reference']                     = data['Reference']
+    event_data['CustomerNumber']                = data['CustomerNumber']
 
     return event_data
 
@@ -189,6 +195,8 @@ def build_cash_withdrawal_event(data: dict)->dict:
     event_data['Currency']['10-cents']          = data['Coins-10']
     event_data['Currency']['5-cents']           = data['Coins-5']
 
+    event_data['CustomerNumber']                = data['CustomerNumber']
+
     return event_data
 
 
@@ -201,6 +209,7 @@ def build_inter_account_transfer_event(data: dict)->dict:
     event_data['TargetAccount']                 = data['Destination Account Reference']
     event_data['Amount']                        = data['Amount']
     event_data['Reference']                     = data['Reference']
+    event_data['CustomerNumber']                = data['CustomerNumber']
 
     return event_data
 
