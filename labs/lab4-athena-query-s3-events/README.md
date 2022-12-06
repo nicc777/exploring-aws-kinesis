@@ -331,6 +331,7 @@ Table Name: `lab4_accounts_v1`
 |                         |                                                        | - BalanceAvailable (Number) (value in CENTS)                                                                |
 |                         |                                                        | - StatementIdentifier (String) (Default: date format YYYYMM)                                                |
 |                         |                                                        | - CustomerNumber (String)                                                                                   |
+|                         |                                                        | - TransactionSequence (Number) (Increments with each new record. Start at "1")                              |
 |                         |                                                        |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 ```
