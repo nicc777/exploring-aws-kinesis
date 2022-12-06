@@ -83,7 +83,7 @@ The following buckets will be created:
 
 Any transaction that failed, for example due to insufficient funds, goes to the `rejected` bucket. The ide is that events in this bucket should not be re-run in a disaster recovery scenario, as we already know that these events will fail based on business logic error, time sensitive transaction errors etc.
 
-The SNS topic from the `lab4-new-events-v2` bucket streams into a FIFO SQS Queue.
+When all transactions are persisted in the accounts table in DynamoDB, the database command(s) are written to another bucket called `lab4-transaction-commands-xxx`. This is the 1st tier "backup" that will be used in order to restore account data. However, if errors (like missing data) is detected, a fallback will be to rerun from the original which by now would be in the `lab4-archive-events-xxx` bucket. The major difference between using these two data restore sources is that the transaction commands archive does not have to deal with any logic or processing - it is simply re-running all DynamoDB commands to restore data. In contrast, processing from the original event data requires some caution, as we do not want to again perform certain operations, for example calling an external party required to complete a transaction (think about third party payments as an example - they have already being paid, so we are only interested in restoring the DynamoDB commands and not do the external payment again, effectively paying them twice!).
 
 ## Event Data
 
