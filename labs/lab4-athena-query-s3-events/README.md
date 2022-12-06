@@ -17,6 +17,7 @@
   - [Restoring / Recovery Planning and Thinking](#restoring--recovery-planning-and-thinking)
     - [Points of Failure/Restore](#points-of-failurerestore)
   - [AWS Infrastructure](#aws-infrastructure)
+    - [Triggering Step Functions from SQS FIFO Queue (Design Strategy)](#triggering-step-functions-from-sqs-fifo-queue-design-strategy)
 - [Implementation](#implementation)
   - [Deploying the DynamoDB Stack](#deploying-the-dynamodb-stack)
   - [Deploying the New Event S3 Bucket Resources](#deploying-the-new-event-s3-bucket-resources)
@@ -390,6 +391,14 @@ The Redis Cache will be used as a state repository and will control two types of
 2. Account level state, which allows transaction processing on individual account level.
 
 TODO - `I still have to work out a lot of the implementation details`
+
+### Triggering Step Functions from SQS FIFO Queue (Design Strategy)
+
+AWS Step Functions cannot directly subscribe to SQS, and therefore we will need another Lambda function to act as a proxy.
+
+Since the SQS queue is a FIFO queue bound to the Account Number (the message group ID), it will guarantee transactions per account are processed one at a time in the correct order. 
+
+However, since the proxy has to wait for the transaction logic to complete before removing the message from the queue, the step function needs to be executed synchronously.
 
 # Implementation
 
