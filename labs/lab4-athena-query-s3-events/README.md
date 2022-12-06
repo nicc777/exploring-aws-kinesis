@@ -394,11 +394,13 @@ TODO - `I still have to work out a lot of the implementation details`
 
 ### Triggering Step Functions from SQS FIFO Queue (Design Strategy)
 
-AWS Step Functions cannot directly subscribe to SQS, and therefore we will need another Lambda function to act as a proxy.
+AWS Step Functions cannot directly subscribe to SQS, and therefore we will need another Lambda function to act as a proxy (`lab4_transaction_init` Lambda function).
 
 Since the SQS queue is a FIFO queue bound to the Account Number (the message group ID), it will guarantee transactions per account are processed one at a time in the correct order. 
 
 However, since the proxy has to wait for the transaction logic to complete before removing the message from the queue, the step function needs to be executed synchronously.
+
+The proxy function is therefore extremely basic: it will get a message from the queue and then call the step function and wait for a result before removing the message from the queue. A timeout should generate an exception so that the transaction can be retried. However, the entire system needs to be aware of the timeout, and I still need to think about how to deal with transactions to third parties that time out, even though those transactions may end being received successfully at the remote service end-point. Perhaps a decoupled queue would work, and we assume the event was submitted successfully to the remote third party until we can verify otherwise.
 
 # Implementation
 
