@@ -309,8 +309,8 @@ Table Name: `lab4_accounts_v1`
 | Name: PK                | Name: SK                                               |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 |                         |                                                        |                                                                                                             |
-| <<account-number>>      | TRANSACTIONS#<<type>>#<<event-key>>                    | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
-|                         |   Types: PENDING or VERIFIED                           | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
+| <<account-number>>      | TRANSACTION#<<type>>#<<event-key>>                     | - TransactionDate (NUMBER, format YYYYMMDD)                                                                 |
+|                         |   Types: PENDING, VERIFIED or REVERSAL                 | - TransactionTime (NUMBER, format HHMMSS)                                                                   |
 |                         |                                                        | - EventKey (STRING, links to <<object-key>>)                                                                |
 |                         |                                                        | - EventRawData (String, containing JSON of original transaction)                                            |
 |                         |                                                        | - Amount (Number)                                                                                           |
@@ -319,11 +319,9 @@ Table Name: `lab4_accounts_v1`
 |                         |                                                        | - PreviousRequestIdReference (String, default="n/a")                                                        |
 |                         |                                                        | - EffectOnActualBalance (String) (Either "None", "Increase" or "Decrease" with "Amount")                    |
 |                         |                                                        | - EffectOnAvailableBalance (String) (Either "None", "Increase" or "Decrease" with "Amount")                 |
-|                         |                                                        |                                                                                                             |
-| <<account-number>>      | SAVINGS#BALANCE#<type>>                                | - LastTransactionDate (NUMBER, format YYYYMMDD)                                                             |
-|                         |    Types: ACTUAL or AVAILABLE                          | - LastTransactionTime (NUMBER, format HHMMSS)                                                               |
-|                         |                                                        | - LastEventKey (STRING, links to <<object-key>>)                                                            |
-|                         |                                                        | - Balance (Number)                                                                                          |
+|                         |                                                        | - BalanceActual (Number) (value in CENTS)                                                                   |
+|                         |                                                        | - BalanceAvailable (Number) (value in CENTS)                                                                |
+|                         |                                                        | - StatementIdentifier (String) (Default: date format YYYYMM)                                                |
 |                         |                                                        |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 ```
@@ -337,14 +335,11 @@ Global Secondary Indexes:
 | Partition Key (PK)              | Sort Key (ST) Attribute               |                                 |
 +---------------------------------+---------------------------------------+---------------------------------+
 | EventKey                        | SK                                    | EventKeyIdx                     |
-+---------------------------------+---------------------------------------+--------------------------------+
+| StatementIdentifier             | SK                                    | StatementIdentifierIdx          |
++---------------------------------+---------------------------------------+---------------------------------+
 ```
 
-Notes:
-
-* The `SAVINGS#BALANCE` balances reflect the balance of all `TRANSACTIONS#VERIFIED` transactions. Unverified transactions does not yet influence the final balance.
-* The Available balance is the balance available for transactions. 
-* It should be accepted that any cash will only be released once the transaction is a `TRANSACTIONS#VERIFIED` type transaction.
+> _**Update 2022-12-06**_: The table has been updated to show only a single line entry for each transaction processed, and balances are maintained with each new line entry. I have also added a statement field, which in this case aligns with the year and month, therefore all transaction for a givin month will appear on that months statement. In this example, this saves on batch processing to generate statements, but keep in mind that there are numerous approaches to this feature.
 
 ## Restoring / Recovery Planning and Thinking
 
