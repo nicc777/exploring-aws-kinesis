@@ -115,7 +115,8 @@ Effect on Available Balance: None
         "1-euro-bills": 3,
         "20-cents": 2,
         "5-cents": 1
-    }
+    },
+    "CustomerNumber": "<<customer number>>"
 }
 ```
 
@@ -141,7 +142,8 @@ Effect on Available Balance: Increase Balance by `Amount`
         "20-cents": 2
     },
     "VerifiedByEmployeeId": "1234567890",
-    "FinalFinding": "5 cents was from incorrect currency and rejected. The customer was informed that the coins are available for collection at the branch."
+    "FinalFinding": "5 cents was from incorrect currency and rejected. The customer was informed that the coins are available for collection at the branch.",
+    "CustomerNumber": "<<customer number>>"
 }
 ```
 
@@ -164,7 +166,8 @@ Business Rules:
     "Reference": "Some Free Form Text",
     "Currency": {
         "50-euro-bills": 4
-    }
+    },
+    "CustomerNumber": "<<customer number>>"
 }
 ```
 
@@ -181,7 +184,8 @@ Effect on Available Balance: Increase Balance by `Amount`
     "Amount": "123.45",
     "SourceInstitution": "Source Bank",
     "SourceAccount": "Source Account Number",
-    "Reference": "Some Free Form Text"
+    "Reference": "Some Free Form Text",
+    "CustomerNumber": "<<customer number>>"
 }
 ```
 
@@ -198,7 +202,8 @@ Effect on Available Balance: Decrease Balance by `Amount`
     "Amount": "123.45",
     "TargetInstitution": "Source Bank",
     "TargetAccount": "Source Account Number",
-    "Reference": "Some Free Form Text"
+    "Reference": "Some Free Form Text",
+    "CustomerNumber": "<<customer number>>"
 }
 ```
 
@@ -215,7 +220,8 @@ _**Note**_: The `<<request-id>>` corresponds to the original request ID for the 
     "EventTimeStamp": 1234567890,
     "SourceAccount": "<<account number>>",
     "Reference": "Some Free Form Text",
-    "PreviousRequestIdReference": "<<request-id>>"
+    "PreviousRequestIdReference": "<<request-id>>",
+    "CustomerNumber": "<<customer number>>"
 }
 ```
 
@@ -232,7 +238,8 @@ Effect on Available Balance: Increase Balance by `RejectedAmount`
     "EventTimeStamp": 1234567890,
     "SourceAccount": "<<account number>>",
     "Reason": "Incorrect account number (account not found)",
-    "PreviousRequestIdReference": "<<request-id>>"
+    "PreviousRequestIdReference": "<<request-id>>",
+    "CustomerNumber": "<<customer number>>"
 }
 ```
 
@@ -251,7 +258,8 @@ Effect on Available Balance:
     "SourceAccount": "<<account number>>",
     "TargetAccount": "<<account number>>",
     "Amount": "123.45",
-    "Reference": "Some Free Form Text"
+    "Reference": "Some Free Form Text",
+    "CustomerNumber": "<<customer number>>"
 }
 ```
 
@@ -322,6 +330,7 @@ Table Name: `lab4_accounts_v1`
 |                         |                                                        | - BalanceActual (Number) (value in CENTS)                                                                   |
 |                         |                                                        | - BalanceAvailable (Number) (value in CENTS)                                                                |
 |                         |                                                        | - StatementIdentifier (String) (Default: date format YYYYMM)                                                |
+|                         |                                                        | - CustomerNumber (String)                                                                                   |
 |                         |                                                        |                                                                                                             |
 +-------------------------+--------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
 ```
@@ -336,6 +345,7 @@ Global Secondary Indexes:
 +---------------------------------+---------------------------------------+---------------------------------+
 | EventKey                        | SK                                    | EventKeyIdx                     |
 | StatementIdentifier             | SK                                    | StatementIdentifierIdx          |
+| CustomerNumber                  | SK                                    | CustomerNumberIdx               |
 +---------------------------------+---------------------------------------+---------------------------------+
 ```
 
