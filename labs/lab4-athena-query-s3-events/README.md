@@ -62,19 +62,28 @@ The implementation and sample code cannot be considered secure. There are numero
 
 ## S3 Buckets
 
+In this example, I use the S3 buckets as a collector for the event data into data files, where each file represents an event that happened - in this case some financial transaction.
+
+At this stage, the event has not yet been processed. Therefore, the event represents a "request" to perform a transaction without any validation having being done yet. For example, a request to withdraw cash will include all the relevant information to perform the action, but we do not know yet simple things, like does the account even exist and if it does, is there available funds?
+
+My reasoning for using this technique is to have some concrete repository containing all the original events that can be used to replay events in order to recover from some critical error. Once the transaction has been processed, the event data file will be moved to an archive folder, where it will go through the AWS S3 life cycle rules where it will eventually be archived in AWS Glacier. This is a nice solution in my opinion, as it provides a really affordable long term reliable archive of ALL events. Historical data can easily be send to other S3 buckets where additional processing, like data analytics or fraud detection analysis, can be run. Another great use case is when a new analytical system is used, you will have the ability to re-run all old events in order to either gain some new insight or even use the old data as training data for AI/ML.
+
 The following buckets will be created:
 
-| Bucket Name                                | Glacier | Processing                                                                             | 
-|--------------------------------------------|:-------:|----------------------------------------------------------------------------------------|
-| `lab4-new-events-qpwoeiryt`                | No      | Delete key after 1 day. Delete action triggers Lambda to move data to archive bucket   |
-| `lab4-archive-events-qpwoeiryt`            | Yes     | Move to glacier class after 3 days (if possible)                                       |
-| `lab4-archive-events-inventory-qpwoeiryt`  | No      |                                                                                        |
-| `lab4-rejected-events-qpwoeiryt`           | Yes     | Move to glacier class after 3 days (if possible)                                       |
-| `lab4-rejected-events-inventory-qpwoeiryt` | No      |                                                                                        |
+| Bucket Name                                     | Glacier | Processing                                                                             | 
+|-------------------------------------------------|:-------:|----------------------------------------------------------------------------------------|
+| `lab4-new-events-v2`                            | No      | Delete key after 1 day. Delete action triggers Lambda to move data to archive bucket   |
+| `lab4-archive-events-v2`                        | Yes     | Move to glacier class after 3 days (if possible)                                       |
+| `lab4-archive-events-inventory-v2`              | No      |                                                                                        |
+| `lab4-rejected-events-v2`                       | Yes     | Move to glacier class after 3 days (if possible)                                       |
+| `lab4-rejected-events-inventory-v2`             | No      |                                                                                        |
+| `lab4-transaction-commands-v2`                  | Yes     | Move to glacier class after 3 days (if possible)                                       |
+| `lab4-transaction_commands-inventory-v2`        | No      |                                                                                        |
 
-Any transaction that failed, for example due to insufficient funds, goes to the `rejected` bucket.
 
-The SNS topic from the `lab4-new-events-qpwoeiryt` bucket streams into a FIFO SQS Queue.
+Any transaction that failed, for example due to insufficient funds, goes to the `rejected` bucket. The ide is that events in this bucket should not be re-run in a disaster recovery scenario, as we already know that these events will fail based on business logic error, time sensitive transaction errors etc.
+
+The SNS topic from the `lab4-new-events-v2` bucket streams into a FIFO SQS Queue.
 
 ## Event Data
 
@@ -539,11 +548,11 @@ The `Message` field contains the actual S3 event
                 "s3SchemaVersion": "1.0",
                 "configurationId": "...",
                 "bucket": {
-                    "name": "lab4-new-events-qpwoeiryt",
+                    "name": "lab4-new-events-v2",
                     "ownerIdentity": {
                         "principalId": "..."
                     },
-                    "arn": "arn:aws:s3:::lab4-new-events-qpwoeiryt"
+                    "arn": "arn:aws:s3:::lab4-new-events-v2"
                 },
                 "object": {
                     "key": "some_file.txt",
@@ -582,11 +591,11 @@ The `Message` field contains the actual S3 event
                 "s3SchemaVersion": "1.0",
                 "configurationId": "...",
                 "bucket": {
-                    "name": "lab4-new-events-qpwoeiryt",
+                    "name": "lab4-new-events-v2",
                     "ownerIdentity": {
                         "principalId": "..."
                     },
-                    "arn": "arn:aws:s3:::lab4-new-events-qpwoeiryt"
+                    "arn": "arn:aws:s3:::lab4-new-events-v2"
                 },
                 "object": {
                     "key": "some_file.txt",
