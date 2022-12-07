@@ -58,7 +58,7 @@ States:
         IntervalSeconds: 2
         MaxAttempts: 6
         BackoffRate: 2
-    End: true
+    Next: FinanlizeTransaction
   QueryAccountBalances:
     Type: Task
     Resource: arn:aws:states:::lambda:invoke
@@ -92,6 +92,9 @@ States:
       - Variable: $.stateInput.TransactionType
         StringEquals: IncomingPayment
         Next: IncomingPaymentCommandBuilder
+      - Variable: $.stateInput.TransactionType
+        StringEquals: PaymentUnverified
+        Next: OutgoingPaymentUnverifiedCommandBuilder
     Default: EventRejectionHandler
   CashWithdrawalCommandBuilder:
     Type: Task
@@ -109,6 +112,28 @@ States:
         IntervalSeconds: 2
         MaxAttempts: 6
         BackoffRate: 2
+    Next: FinanlizeTransaction
+  FinanlizeTransaction:
+    Type: Parallel
+    Branches:
+      - StartAt: ExecuteCommandQueue
+        States:
+          ExecuteCommandQueue:
+            Type: Task
+            Resource: arn:aws:states:::sqs:sendMessage
+            Parameters:
+              MessageBody.$: $
+              QueueUrl: CHANGEME-Lab4AccountTableCommandQueueURL
+            End: true
+      - StartAt: EventCleanupQueue
+        States:
+          EventCleanupQueue:
+            Type: Task
+            Resource: arn:aws:states:::sqs:sendMessage
+            Parameters:
+              MessageBody.$: $
+              QueueUrl: CHANGEME-EventCleanupQueueURL
+            End: true
     End: true
   IncomingPaymentCommandBuilder:
     Type: Task
@@ -126,4 +151,21 @@ States:
         IntervalSeconds: 2
         MaxAttempts: 6
         BackoffRate: 2
-    End: true
+    Next: FinanlizeTransaction
+  OutgoingPaymentUnverifiedCommandBuilder:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    OutputPath: $.Payload
+    Parameters:
+      Payload.$: $
+      FunctionName: lab4_account_table_payment_unverified_command_builder
+    Retry:
+      - ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          - Lambda.TooManyRequestsException
+        IntervalSeconds: 2
+        MaxAttempts: 6
+        BackoffRate: 2
+    Next: FinanlizeTransaction
