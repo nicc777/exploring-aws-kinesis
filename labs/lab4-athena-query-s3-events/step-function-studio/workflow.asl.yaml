@@ -1,4 +1,4 @@
-Comment: A description of my state machine
+Comment: Transaction Processing State Engine
 StartAt: ReadEventData
 States:
   ReadEventData:
@@ -236,3 +236,4 @@ States:
         MaxAttempts: 6
         BackoffRate: 2
     Next: CommandBuilderInErrorState
+TimeoutSeconds: 60
