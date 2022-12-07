@@ -1,0 +1,351 @@
+﻿{
+  "Comment": "Transaction Processing State Engine",
+  "StartAt": "ReadEventData",
+  "States": {
+    "ReadEventData": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "laab4-read-event-data"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "IsExternalVerificationType"
+    },
+    "IsExternalVerificationType": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.stateInput.VerifiedTransactionType",
+          "BooleanEquals": true,
+          "Next": "QueryAccountRequestid"
+        }
+      ],
+      "Default": "QueryAccountBalances"
+    },
+    "QueryAccountRequestid": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "lab4_query_account_requestid"
+      },
+      "Next": "QueryAccountRequestidError",
+      "Catch": [
+        {
+          "ErrorEquals": []
+        }
+      ],
+      "Retry": [
+        {
+          "ErrorEquals": [],
+          "BackoffRate": 1,
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2
+        }
+      ]
+    },
+    "QueryAccountRequestidError": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.stateInput.RejectEvent",
+          "BooleanEquals": true,
+          "Next": "EventRejectionHandler"
+        }
+      ],
+      "Default": "QueryAccountBalances"
+    },
+    "EventRejectionHandler": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "lab4_event_rejection_handler"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "FinanlizeTransaction"
+    },
+    "QueryAccountBalances": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "lab4_query_account_balances"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "QueryAccountBalancesError"
+    },
+    "QueryAccountBalancesError": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.stateInput.RejectEvent",
+          "BooleanEquals": true,
+          "Next": "EventRejectionHandler"
+        }
+      ],
+      "Default": "TransactionTypeChoice"
+    },
+    "TransactionTypeChoice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.stateInput.TransactionType",
+          "StringEquals": "CashWithdrawal",
+          "Next": "CashWithdrawalCommandBuilder"
+        },
+        {
+          "Variable": "$.stateInput.TransactionType",
+          "StringEquals": "IncomingPayment",
+          "Next": "IncomingPaymentCommandBuilder"
+        },
+        {
+          "Variable": "$.stateInput.TransactionType",
+          "StringEquals": "PaymentUnverified",
+          "Next": "OutgoingPaymentUnverifiedCommandBuilder"
+        },
+        {
+          "Variable": "$.stateInput.TransactionType",
+          "StringEquals": "PaymentVerified",
+          "Next": "OutgoingPaymentVerifiedCommandBuilder"
+        },
+        {
+          "Variable": "$.stateInput.TransactionType",
+          "StringEquals": "PaymentRejected",
+          "Next": "OutgoingPaymentRejectedCommandBuilder"
+        },
+        {
+          "Variable": "$.stateInput.TransactionType",
+          "StringEquals": "InterAccountTransfer",
+          "Next": "InterAccountTransferCommandBuilder"
+        }
+      ],
+      "Default": "EventRejectionHandler"
+    },
+    "CashWithdrawalCommandBuilder": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "lab4_account_table_cash_withdrawal_command_builder"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CommandBuilderInErrorState"
+    },
+    "CommandBuilderInErrorState": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.stateInput.RejectEvent",
+          "BooleanEquals": true,
+          "Next": "EventRejectionHandler"
+        }
+      ],
+      "Default": "FinanlizeTransaction"
+    },
+    "FinanlizeTransaction": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "ExecuteCommandQueue",
+          "States": {
+            "ExecuteCommandQueue": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::sqs:sendMessage",
+              "Parameters": {
+                "MessageBody.$": "$",
+                "QueueUrl": "CHANGEME-Lab4AccountTableCommandQueueURL"
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "EventCleanupQueue",
+          "States": {
+            "EventCleanupQueue": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::sqs:sendMessage",
+              "Parameters": {
+                "MessageBody.$": "$",
+                "QueueUrl": "CHANGEME-EventCleanupQueueURL"
+              },
+              "End": true
+            }
+          }
+        }
+      ],
+      "End": true
+    },
+    "IncomingPaymentCommandBuilder": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "lab4_account_table_incoming_payment_command_builder"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CommandBuilderInErrorState"
+    },
+    "OutgoingPaymentUnverifiedCommandBuilder": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "lab4_account_table_payment_unverified_command_builder"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CommandBuilderInErrorState"
+    },
+    "OutgoingPaymentVerifiedCommandBuilder": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "lab4_account_table_payment_verified_command_builder"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CommandBuilderInErrorState"
+    },
+    "OutgoingPaymentRejectedCommandBuilder": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "lab4_account_table_payment_rejected_command_builder"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CommandBuilderInErrorState"
+    },
+    "InterAccountTransferCommandBuilder": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "lab4_account_table_transfers_command_builder"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CommandBuilderInErrorState"
+    }
+  },
+  "TimeoutSeconds": 60
+}
