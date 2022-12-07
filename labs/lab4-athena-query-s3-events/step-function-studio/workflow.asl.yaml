@@ -35,6 +35,11 @@ States:
     Next: QueryAccountRequestidError
     Catch:
       - ErrorEquals: []
+    Retry:
+      - ErrorEquals: []
+        BackoffRate: 1
+        IntervalSeconds: 1
+        MaxAttempts: 2
   QueryAccountRequestidError:
     Type: Choice
     Choices:
