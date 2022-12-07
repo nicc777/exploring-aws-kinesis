@@ -95,6 +95,12 @@ States:
       - Variable: $.stateInput.TransactionType
         StringEquals: PaymentUnverified
         Next: OutgoingPaymentUnverifiedCommandBuilder
+      - Variable: $.stateInput.TransactionType
+        StringEquals: PaymentVerified
+        Next: OutgoingPaymentVerifiedCommandBuilder
+      - Variable: $.stateInput.TransactionType
+        StringEquals: PaymentRejected
+        Next: OutgoingPaymentRejectedCommandBuilder
     Default: EventRejectionHandler
   CashWithdrawalCommandBuilder:
     Type: Task
@@ -159,6 +165,40 @@ States:
     Parameters:
       Payload.$: $
       FunctionName: lab4_account_table_payment_unverified_command_builder
+    Retry:
+      - ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          - Lambda.TooManyRequestsException
+        IntervalSeconds: 2
+        MaxAttempts: 6
+        BackoffRate: 2
+    Next: FinanlizeTransaction
+  OutgoingPaymentVerifiedCommandBuilder:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    OutputPath: $.Payload
+    Parameters:
+      Payload.$: $
+      FunctionName: lab4_account_table_payment_verified_command_builder
+    Retry:
+      - ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          - Lambda.TooManyRequestsException
+        IntervalSeconds: 2
+        MaxAttempts: 6
+        BackoffRate: 2
+    Next: FinanlizeTransaction
+  OutgoingPaymentRejectedCommandBuilder:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    OutputPath: $.Payload
+    Parameters:
+      Payload.$: $
+      FunctionName: lab4_account_table_payment_rejected_command_builder
     Retry:
       - ErrorEquals:
           - Lambda.ServiceException
