@@ -32,6 +32,23 @@ States:
     Parameters:
       Payload.$: $
       FunctionName: lab4_query_account_requestid
+    Next: Choice
+    Catch:
+      - ErrorEquals: []
+  Choice:
+    Type: Choice
+    Choices:
+      - Variable: $.stateInput.RejectEvent
+        BooleanEquals: true
+        Next: EventRejectionHandler
+    Default: QueryAccountBalances
+  EventRejectionHandler:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    OutputPath: $.Payload
+    Parameters:
+      Payload.$: $
+      FunctionName: lab4_event_rejection_handler
     Retry:
       - ErrorEquals:
           - Lambda.ServiceException
@@ -41,7 +58,7 @@ States:
         IntervalSeconds: 2
         MaxAttempts: 6
         BackoffRate: 2
-    Next: QueryAccountBalances
+    End: true
   QueryAccountBalances:
     Type: Task
     Resource: arn:aws:states:::lambda:invoke
