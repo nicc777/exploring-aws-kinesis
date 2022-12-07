@@ -118,7 +118,14 @@ States:
         IntervalSeconds: 2
         MaxAttempts: 6
         BackoffRate: 2
-    Next: FinanlizeTransaction
+    Next: CommandBuilderInErrorState
+  CommandBuilderInErrorState:
+    Type: Choice
+    Choices:
+      - Variable: $.stateInput.RejectEvent
+        BooleanEquals: true
+        Next: EventRejectionHandler
+    Default: FinanlizeTransaction
   FinanlizeTransaction:
     Type: Parallel
     Branches:
@@ -157,7 +164,7 @@ States:
         IntervalSeconds: 2
         MaxAttempts: 6
         BackoffRate: 2
-    Next: FinanlizeTransaction
+    Next: CommandBuilderInErrorState
   OutgoingPaymentUnverifiedCommandBuilder:
     Type: Task
     Resource: arn:aws:states:::lambda:invoke
@@ -174,7 +181,7 @@ States:
         IntervalSeconds: 2
         MaxAttempts: 6
         BackoffRate: 2
-    Next: FinanlizeTransaction
+    Next: CommandBuilderInErrorState
   OutgoingPaymentVerifiedCommandBuilder:
     Type: Task
     Resource: arn:aws:states:::lambda:invoke
@@ -191,7 +198,7 @@ States:
         IntervalSeconds: 2
         MaxAttempts: 6
         BackoffRate: 2
-    Next: FinanlizeTransaction
+    Next: CommandBuilderInErrorState
   OutgoingPaymentRejectedCommandBuilder:
     Type: Task
     Resource: arn:aws:states:::lambda:invoke
@@ -208,4 +215,4 @@ States:
         IntervalSeconds: 2
         MaxAttempts: 6
         BackoffRate: 2
-    Next: FinanlizeTransaction
+    Next: CommandBuilderInErrorState
