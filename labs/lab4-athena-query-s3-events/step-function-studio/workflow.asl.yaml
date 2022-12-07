@@ -101,6 +101,9 @@ States:
       - Variable: $.stateInput.TransactionType
         StringEquals: PaymentRejected
         Next: OutgoingPaymentRejectedCommandBuilder
+      - Variable: $.stateInput.TransactionType
+        StringEquals: InterAccountTransfer
+        Next: InterAccountTransferCommandBuilder
     Default: EventRejectionHandler
   CashWithdrawalCommandBuilder:
     Type: Task
@@ -206,6 +209,23 @@ States:
     Parameters:
       Payload.$: $
       FunctionName: lab4_account_table_payment_rejected_command_builder
+    Retry:
+      - ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          - Lambda.TooManyRequestsException
+        IntervalSeconds: 2
+        MaxAttempts: 6
+        BackoffRate: 2
+    Next: CommandBuilderInErrorState
+  InterAccountTransferCommandBuilder:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    OutputPath: $.Payload
+    Parameters:
+      Payload.$: $
+      FunctionName: lab4_account_table_transfers_command_builder
     Retry:
       - ErrorEquals:
           - Lambda.ServiceException
