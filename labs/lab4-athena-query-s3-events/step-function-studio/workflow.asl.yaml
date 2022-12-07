@@ -32,10 +32,10 @@ States:
     Parameters:
       Payload.$: $
       FunctionName: lab4_query_account_requestid
-    Next: Choice
+    Next: QueryAccountRequestidError
     Catch:
       - ErrorEquals: []
-  Choice:
+  QueryAccountRequestidError:
     Type: Choice
     Choices:
       - Variable: $.stateInput.RejectEvent
@@ -66,6 +66,57 @@ States:
     Parameters:
       Payload.$: $
       FunctionName: lab4_query_account_balances
+    Retry:
+      - ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          - Lambda.TooManyRequestsException
+        IntervalSeconds: 2
+        MaxAttempts: 6
+        BackoffRate: 2
+    Next: QueryAccountBalancesError
+  QueryAccountBalancesError:
+    Type: Choice
+    Choices:
+      - Variable: $.stateInput.RejectEvent
+        BooleanEquals: true
+        Next: EventRejectionHandler
+    Default: TransactionTypeChoice
+  TransactionTypeChoice:
+    Type: Choice
+    Choices:
+      - Variable: $.stateInput.TransactionType
+        StringEquals: CashWithdrawal
+        Next: CashWithdrawalCommandBuilder
+      - Variable: $.stateInput.TransactionType
+        StringEquals: IncomingPayment
+        Next: IncomingPaymentCommandBuilder
+    Default: EventRejectionHandler
+  CashWithdrawalCommandBuilder:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    OutputPath: $.Payload
+    Parameters:
+      Payload.$: $
+      FunctionName: lab4_account_table_cash_withdrawal_command_builder
+    Retry:
+      - ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          - Lambda.TooManyRequestsException
+        IntervalSeconds: 2
+        MaxAttempts: 6
+        BackoffRate: 2
+    End: true
+  IncomingPaymentCommandBuilder:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    OutputPath: $.Payload
+    Parameters:
+      Payload.$: $
+      FunctionName: lab4_account_table_incoming_payment_command_builder
     Retry:
       - ErrorEquals:
           - Lambda.ServiceException
